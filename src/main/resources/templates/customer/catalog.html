@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{catalog.page_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/homepage.css}"/>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<main class="container py-4 customer-page">
+    <div class="top-bar d-flex justify-content-between align-items-center mb-3">
+        <h1 th:text="#{catalog.title}">100 phim mới nhất (TMDB)</h1>
+        <a th:href="@{/customer/home}" class="btn btn-outline-light btn-sm" th:text="#{nav.home}">Trang chủ</a>
+    </div>
+
+    <form class="search-form mb-3" th:action="@{/customer/catalog}" method="get">
+        <div class="search-row">
+            <input type="text" name="q" th:value="${searchQuery}" th:placeholder="#{home.search_placeholder}"/>
+            <select name="genre">
+                <option value="" th:text="#{filter.all_genres}">Tất cả thể loại</option>
+                <option th:each="g : ${tmdbGenres}" th:value="${g.id}" th:text="${g.name}"
+                        th:selected="${selectedGenre != null and selectedGenre == g.id.toString()}"></option>
+            </select>
+            <button class="button" type="submit" th:text="#{filter.search}">Tìm</button>
+            <a th:if="${searchQuery != '' or selectedGenre != ''}" th:href="@{/customer/catalog}" class="btn btn-link text-light" th:text="#{catalog.clear_filter}">Xóa lọc</a>
+        </div>
+    </form>
+
+    <p th:if="${tmdbError != null}" class="alert alert-warning" th:text="${tmdbError}"></p>
+    <p class="text-muted small mb-2" th:if="${catalogCards != null and !#lists.isEmpty(catalogCards)}"
+       th:text="#{catalog.showing_count(${catalogCards.size()})}"></p>
+    <div class="parent currFilm" th:if="${catalogCards != null and !#lists.isEmpty(catalogCards)}">
+        <div th:each="m : ${catalogCards}" class="film-card">
+            <a th:href="@{/customer/movies/{tid}(tid=${m.tmdbId})}">
+                <div class="image-wrapper">
+                    <img th:src="${m.posterUrl != null and #strings.startsWith(m.posterUrl, 'http')} ? ${m.posterUrl} : @{/assets/img/poster.jpg}"
+                         th:alt="${m.title}" loading="lazy"/>
+                </div>
+                <div class="film-title" th:text="${m.title}"></div>
+                <div class="description" th:if="${m.genresLabel != null}" th:text="${m.genresLabel}"></div>
+                <div class="description" th:if="${m.voteAverage != null}">
+                    <span th:text="'★ ' + ${#numbers.formatDecimal(m.voteAverage, 1, 1)}"></span>
+                    <span th:if="${m.voteCount != null}"
+                          th:text="' · ' + ${#numbers.formatInteger(m.voteCount, 0, 'COMMA')} + ' ' + #{catalog.votes_suffix}"></span>
+                </div>
+                <div class="description" th:if="${m.overview != null}"
+                     th:text="${#strings.abbreviate(m.overview, 90)}"></div>
+                <span th:if="${m.hasShowtimes}" class="badge bg-success mt-1" th:text="#{catalog.in_cinema_badge}">Đang chiếu tại rạp</span>
+            </a>
+        </div>
+    </div>
+    <p th:if="${catalogCards == null or #lists.isEmpty(catalogCards)}" class="empty-state-card"
+       th:text="${tmdbError != null} ? #{home.tmdb_load_failed} : #{home.tmdb_empty}"></p>
+</main>
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

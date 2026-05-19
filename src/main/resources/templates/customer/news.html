@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head('Tin tức')}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/news.css}"/>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<div class="ncc-content-page customer-page">
+    <p class="title">Tin tức</p>
+    <div class="grid" th:if="${!#lists.isEmpty(articles)}">
+        <a th:each="a : ${articles}" th:href="@{/customer/news/{id}(id=${a.id})}" class="card">
+            <img th:src="${a.thumbnailUrl != null} ? @{${a.thumbnailUrl}} : @{/assets/img/poster.jpg}" th:alt="${a.title}"/>
+            <div class="text">
+                <p class="date" th:text="${a.date}"></p>
+                <p class="desc" th:text="${a.title}"></p>
+            </div>
+        </a>
+    </div>
+    <p th:if="${#lists.isEmpty(articles)}" style="color:#ccc;">Chưa có tin tức.</p>
+</div>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

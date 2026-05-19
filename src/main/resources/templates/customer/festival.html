@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head('Liên hoan phim')}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/festival.css}"/>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<div class="banner"></div>
+<div class="event-list customer-page">
+    <h2 class="title-h2">Liên hoan &amp; sự kiện điện ảnh</h2>
+    <a th:each="a : ${articles}" th:href="@{/customer/festival/{id}(id=${a.id})}" class="event-item">
+        <img th:src="${a.thumbnailUrl != null} ? @{${a.thumbnailUrl}} : @{/assets/img/poster.jpg}"
+             th:alt="${a.title}"/>
+        <div class="event-details">
+            <div class="event-header">
+                <h2 th:text="${a.title}"></h2>
+                <p class="time" th:text="${a.date}"></p>
+            </div>
+            <p th:utext="${#strings.abbreviate(a.contentHtml, 200)}"></p>
+        </div>
+    </a>
+    <p th:if="${#lists.isEmpty(articles)}" style="color:#ccc;padding:24px;">Chưa có sự kiện.</p>
+</div>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

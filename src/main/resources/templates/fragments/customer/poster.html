@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  src: URL http(s) hoac duong dan /assets/...
+-->
+<img th:fragment="img(src, alt)"
+     th:src="${src != null and #strings.startsWith(src, 'http')} ? ${src} : (${src != null and !#strings.isEmpty(src)} ? @{${src}} : @{/assets/img/poster.jpg})"
+     th:alt="${alt}"/>
+</html>

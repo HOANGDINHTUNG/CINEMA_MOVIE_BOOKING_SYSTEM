@@ -1,0 +1,11 @@
+# Copy to application-local.properties (gitignored) and fill in your keys.
+# Get keys: https://www.themoviedb.org/settings/api
+
+# Cach 1 (khuyen nghi): dat trong file nay
+tmdb.api-key=YOUR_TMDB_V3_API_KEY
+tmdb.bearer-token=YOUR_TMDB_V4_BEARER_TOKEN
+
+# Cach 2: bien moi truong (PowerShell)
+# $env:TMDB_API_KEY="..."
+# $env:TMDB_BEARER_TOKEN="..."
+# Hoac VITE_TMDB_V3_KEY / VITE_TMDB_V4_TOKEN (React) — Spring cung doc duoc

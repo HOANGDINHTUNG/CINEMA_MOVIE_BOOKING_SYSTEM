@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Hồ sơ nhân viên')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/staff/sidebar :: sidebar('profile')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4">
+            <h1 class="text-xl font-semibold text-gray-800">Hồ sơ nhân viên</h1>
+        </div>
+        <div class="p-6 max-w-lg">
+            <form th:action="@{/staff/profile}" th:object="${profileUpdate}" method="post"
+                  class="bg-white rounded-lg shadow p-6 space-y-4">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Họ tên</label>
+                    <input th:field="*{fullName}" required class="w-full border rounded px-3 py-2"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                    <input th:field="*{phoneNumber}" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg">Lưu</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

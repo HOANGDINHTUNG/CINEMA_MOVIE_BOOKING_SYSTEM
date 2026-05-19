@@ -1,0 +1,198 @@
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../../assets/fonts/Montserrat/Montserrat-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../../assets/fonts/Montserrat/Montserrat-Italic-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+.main-footer {
+    background-color: #0B0D13;
+    color: #ccc;
+    text-align: center;
+    padding: 30px 20px;
+    font-size: 14px;
+    margin: 0;
+}
+
+.footer-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin-bottom: 20px;
+}
+
+.footer-nav a {
+    color: #ccc;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.footer-nav a:hover {
+    color: white;
+}
+
+.footer-icons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.footer-icons img {
+    height: 30px;
+    object-fit: contain;
+}
+
+.footer-info p {
+    margin: 4px 0;
+    line-height: 24px;
+}
+
+.footer-icons-top {
+    width: 138px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.footer-icons-bottom {
+    width: 300px;
+    display: flex;
+    justify-content: space-around;
+}
+
+@media (max-width: 1024px) {
+    .main-footer {
+        padding: 30px 20px;
+        background-color: #0B0D13;
+        color: #ccc;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .footer-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px 30px;
+        margin-bottom: 25px;
+    }
+
+    .footer-nav a {
+        font-size: 15px;
+        color: #ccc;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+
+    .footer-nav a:hover {
+        color: white;
+    }
+
+    .footer-icons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px 25px;
+        margin-bottom: 25px;
+    }
+
+    .footer-icons a img {
+        height: 30px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+
+    .footer-icons a img:hover {
+        transform: scale(1.05);
+    }
+
+    .footer-info {
+        padding: 0 20px;
+        font-size: 13.5px;
+        line-height: 1.6;
+        text-align: center;
+    }
+
+    .footer-info p {
+        margin: 6px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer-nav {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        /* 3 mục mỗi hàng */
+        gap: 10px 15px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .footer-nav a {
+        font-size: 14px;
+        padding: 5px;
+        color: #ccc;
+        text-decoration: none;
+    }
+
+    .footer-icons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px 15px;
+        margin-bottom: 20px;
+    }
+
+    .footer-icons img {
+        height: 26px;
+    }
+
+    .footer-info {
+        font-size: 13px;
+        padding: 10px 15px;
+        text-align: center;
+        line-height: 1.6;
+    }
+
+    .footer-info p {
+        margin: 5px 0;
+    }
+}
+
+@media (max-width: 390px) {
+    .footer-icons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .footer-icons-top,
+    .footer-icons-bottom {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .footer-icons-bottom {
+        gap: 15px;
+    }
+
+    .footer-icons-bottom a img {
+        width: 106px;
+        height: 35px;
+    }
+}

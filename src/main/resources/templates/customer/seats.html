@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{seat.page_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/movie-detail-page.css}"/>
+    <link rel="stylesheet" th:href="@{/css/customer/seats-booking.css}"/>
+</head>
+<body class="customer-site seats-booking-page" data-guide-page="seats"
+      th:attr="data-seat-lock-minutes=${seatLockMinutes},
+               data-label-no-seat=#{seat.no_seat_selected},
+               data-label-selected-progress=#{seat.selected_progress},
+               data-label-estimated-total=#{seat.estimated_total},
+               data-msg-seat-pick-at-least=#{seat.pick_at_least},
+               data-msg-seat-max=#{seat.max_seats},
+               data-msg-seat-confirm=#{seat.confirm_checkout}">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<script>document.getElementById('pageLoader')&&(document.getElementById('pageLoader').style.display='none');</script>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<div th:if="${seatMap == null}" class="seats-booking-main">
+    <p class="alert alert-danger" th:text="#{seat.not_found}">Không tìm thấy suất chiếu.</p>
+    <a th:href="@{/customer/home}" class="btn-seat-back" th:text="#{nav.home}">Trang chủ</a>
+</div>
+
+<main class="seats-booking-main" th:if="${seatMap != null}">
+    <div class="schedule-date-tabs" role="tablist" th:if="${showtimeDays != null and !#lists.isEmpty(showtimeDays)}">
+        <th:block th:each="day : ${showtimeDays}">
+            <a th:if="${day.date != selectedShowtimeDate}"
+               th:href="@{/customer/movies/{tid}(tid=${seatMap.tmdbId})}"
+               class="schedule-date-tab">
+                <span class="tab-month" th:text="${day.monthLabel}"></span>
+                <span class="tab-day" th:text="${day.dayNumber}"></span>
+                <span class="tab-weekday" th:text="${day.weekdayLabel}"></span>
+            </a>
+            <span th:if="${day.date == selectedShowtimeDate}" class="schedule-date-tab active">
+                <span class="tab-month" th:text="${day.monthLabel}"></span>
+                <span class="tab-day" th:text="${day.dayNumber}"></span>
+                <span class="tab-weekday" th:text="${day.weekdayLabel}"></span>
+            </span>
+        </th:block>
+    </div>
+
+    <div class="schedule-time-pills" th:if="${currentDaySlots != null and !#lists.isEmpty(currentDaySlots)}">
+        <a th:each="slot : ${currentDaySlots}"
+           th:href="@{/customer/showtimes/{id}/seats(id=${slot.showtimeId})}"
+           class="schedule-time-pill"
+           th:classappend="${slot.showtimeId == seatMap.showtimeId} ? ' active' : (${slot.soldOut} ? ' sold-out' : '')">
+            <span th:text="${#temporals.format(slot.startTime, 'HH:mm')}"></span>
+        </a>
+    </div>
+
+    <div class="seats-booking-top">
+        <p class="seats-showtime-label">
+            <span th:text="#{seat.showtime_label}">Giờ chiếu:</span>
+            <strong th:text="${#temporals.format(seatMap.startTime, 'HH:mm')}"></strong>
+        </p>
+        <p class="seats-lock-timer" th:if="${!seatMap.soldOut}">
+            <span th:text="#{seat.lock_timer}">Thời gian chọn ghế:</span>
+            <strong id="seatLockCountdown">--:--</strong>
+        </p>
+    </div>
+
+    <p th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></p>
+    <p th:if="${seatMap.soldOut}" class="alert alert-warning" th:text="#{showtime.sold_out}">Hết vé</p>
+
+    <div class="seats-screen-wrap" th:if="${!seatMap.soldOut}">
+        <img th:src="@{/assets/icon/screen 1.png}" alt="screen"/>
+        <h2 class="seats-room-name" th:text="${seatMap.roomName}"></h2>
+    </div>
+
+    <form id="seatForm" th:if="${!seatMap.soldOut}"
+          th:action="@{/customer/showtimes/{id}/lock(id=${seatMap.showtimeId})}" method="post"
+          th:attr="data-base-price=${seatMap.basePrice}, data-vip-multiplier=${vipMultiplier}, data-max-seats=${maxSeatsPerBooking}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div class="seat-grid" id="seatGrid">
+            <div th:each="row : ${seatsByRow}" class="seat-row">
+                <label th:each="s : ${row.value}"
+                       th:class="'seat ' + (${s.status.name() == 'BOOKED' or s.status.name() == 'LOCKED'} ? 'booked' : (${s.seatType == 'VIP'} ? 'vip' : 'normal'))">
+                    <input type="checkbox" name="seatIds" th:value="${s.seatId}"
+                           th:attr="data-seat-type=${s.seatType}, data-seat-label=${s.label}"
+                           th:disabled="${s.status.name() != 'AVAILABLE'}"/>
+                    <span th:text="${s.label}"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="seats-legend">
+            <span><span class="seat booked">★</span> <span th:text="#{seat.legend.booked}">Đã đặt</span></span>
+            <span><span class="seat selected"></span> <span th:text="#{seat.legend.yours}">Ghế bạn chọn</span></span>
+            <span><span class="seat normal"></span> <span th:text="#{seat.legend.standard}">Ghế thường</span></span>
+            <span><span class="seat vip"></span> <span th:text="#{seat.legend.vip}">Ghế VIP</span></span>
+        </div>
+    </form>
+
+    <div class="seat-checkout-bar" th:if="${!seatMap.soldOut}">
+        <div class="seat-checkout-summary">
+            <p class="seat-summary-title" id="seatSummaryTitle" th:text="#{seat.no_seat_selected}">Chưa chọn ghế</p>
+            <p class="seat-summary-detail" id="seatSummaryDetail"></p>
+            <p class="seat-summary-total" id="seatSummaryTotal"></p>
+        </div>
+        <div class="seat-checkout-actions">
+            <a th:if="${seatMap.tmdbId != null}"
+               th:href="@{/customer/movies/{tid}(tid=${seatMap.tmdbId})}"
+               class="btn-seat-back" th:text="#{common.back}">Quay lại</a>
+            <button type="submit" form="seatForm" class="btn-seat-pay" id="seatSubmitBtn" disabled
+                    th:text="#{seat.checkout}">Thanh toán</button>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+<script th:src="@{/js/seat-booking.js}" defer></script>
+</body>
+</html>

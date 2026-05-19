@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Quản lý phim rạp')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('movies')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-semibold text-gray-800">Phim đang / đã đăng tại rạp</h1>
+            <a th:href="@{/admin/movies/import}"
+               class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium">
+                <i class="fas fa-plus mr-1"></i> Đăng phim từ TMDB
+            </a>
+        </div>
+        <div class="p-6">
+            <p th:if="${successMessage}" class="mb-4 p-3 rounded bg-green-100 text-green-800" th:text="${successMessage}"></p>
+            <p th:if="${errorMessage}" class="mb-4 p-3 rounded bg-red-100 text-red-800" th:text="${errorMessage}"></p>
+            <p class="mb-4 text-sm text-gray-600">
+                Metadata (tên, poster, mô tả) lấy từ TMDB. Tại đây chỉ quản lý thời lượng, độ tuổi, giá mặc định và ẩn phim.
+            </p>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">ID</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">TMDB</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Tên (TMDB)</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Thời lượng</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Độ tuổi</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Trạng thái</th>
+                        <th class="px-4 py-3 text-right font-semibold text-gray-600">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                    <tr th:each="m : ${movies.content}" class="hover:bg-gray-50">
+                        <td class="px-4 py-3" th:text="${m.movieId}"></td>
+                        <td class="px-4 py-3 text-gray-500" th:text="${m.tmdbId}"></td>
+                        <td class="px-4 py-3 font-medium" th:text="${m.displayTitle}"></td>
+                        <td class="px-4 py-3" th:text="${m.duration} + ' phút'"></td>
+                        <td class="px-4 py-3" th:text="${m.ageLabel != null ? m.ageLabel : '—'}"></td>
+                        <td class="px-4 py-3">
+                            <span th:classappend="${m.status.name() == 'ACTIVE'} ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'"
+                                  class="px-2 py-1 rounded text-xs font-semibold" th:text="${m.status}"></span>
+                        </td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <form th:if="${m.tmdbId != null}" th:action="@{/admin/movies/{id}/sync-tmdb(id=${m.movieId})}" method="post" class="inline mr-2">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" name="lang" th:value="${lang}"/>
+                                <button type="submit" class="text-blue-600 hover:underline text-xs">Sync runtime</button>
+                            </form>
+                            <a th:href="@{/admin/movies/{id}/edit(id=${m.movieId}, lang=${lang})}"
+                               class="text-primary hover:underline mr-3">Cài đặt rạp</a>
+                            <form th:if="${m.status.name() == 'ACTIVE'}" th:action="@{/admin/movies/{id}/delete(id=${m.movieId})}" method="post" class="inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="text-red-600 hover:underline"
+                                        onclick="return confirm('Ẩn phim khỏi rạp?')">Ẩn</button>
+                            </form>
+                            <form th:if="${m.status.name() != 'ACTIVE'}" th:action="@{/admin/movies/{id}/activate(id=${m.movieId})}" method="post" class="inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="text-green-600 hover:underline">Kích hoạt</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${movies.empty}">
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">Chưa có phim đăng chiếu. Dùng «Đăng phim từ TMDB».</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

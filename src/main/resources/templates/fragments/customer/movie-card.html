@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<article th:fragment="card(m)" class="tmdb-movie-card" th:if="${m != null}">
+    <a class="tmdb-movie-card__link"
+       th:href="@{/customer/movies/{tid}(tid=${m.tmdbId})}">
+        <div class="tmdb-movie-card__poster">
+            <img th:replace="~{fragments/customer/poster :: img(src=${m.posterUrl}, alt=${m.title})}"/>
+            <span class="tmdb-movie-card__rating" th:if="${m.voteAverage != null}"
+                  th:text="${#numbers.formatDecimal(m.voteAverage, 1, 1)}">8.0</span>
+            <span class="tmdb-movie-card__badge" th:if="${m.hasShowtimes}" th:text="#{card.in_cinema}">Đang chiếu</span>
+        </div>
+        <h3 class="tmdb-movie-card__title" th:text="${m.title}">Phim</h3>
+        <p class="tmdb-movie-card__meta" th:if="${m.genresLabel != null or m.duration != null or m.releaseDateLabel != null}">
+            <span th:if="${m.genresLabel != null}" th:text="${m.genresLabel}"></span>
+            <span th:if="${m.duration != null}" th:text="' · ' + ${m.duration} + ' ' + #{common.minutes}"></span>
+            <span th:if="${m.releaseDateLabel != null}" th:text="' · ' + ${m.releaseDateLabel}"></span>
+        </p>
+        <p class="tmdb-movie-card__overview" th:if="${m.overview != null}" th:text="${m.overview}"></p>
+        <p class="tmdb-movie-card__showtime" th:if="${m.nextShowtime != null}"
+           th:text="#{card.next_showtime} + ': ' + ${#temporals.format(m.nextShowtime, 'dd/MM HH:mm')}"></p>
+    </a>
+</article>
+</body>
+</html>

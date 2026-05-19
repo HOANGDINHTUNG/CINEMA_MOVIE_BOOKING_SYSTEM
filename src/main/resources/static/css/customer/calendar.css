@@ -1,0 +1,501 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Montserrat", sans-serif;
+    background: #131119;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #ff3333;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px #ff4d4d, 0 0 25px #ff4d4d;
+}
+
+
+.auth button {
+    margin-left: 10px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 20px;
+    background: transparent;
+    color: white;
+    border: 1px solid #fff;
+    cursor: pointer;
+}
+
+.auth .login {
+    background: #e63946;
+    border: none;
+}
+
+.schedule-page .poster-link {
+    position: relative;
+    display: block;
+}
+
+.schedule-page .poster-link .tmdb-movie-card__rating {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+}
+
+main {
+    text-align: center;
+    justify-items: center;
+    padding: 100px 40px 20px 40px;
+}
+
+
+.title-bar h2 {
+    margin-bottom: 15px;
+}
+
+.date-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.date-buttons button {
+    font-family: "Montserrat", sans-serif;
+    background-color: transparent;
+    border: 1px solid #333;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.date-buttons button:hover {
+    background-color: #1F2937;
+}
+
+.date-buttons button.active {
+    background: linear-gradient(135deg, #dd0a1c, #f75959);
+    color: white;
+    border: none;
+}
+
+
+.note {
+    font-size: 16px;
+    color: #f08206;
+}
+
+.movies {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.movie-card {
+    width: 100%;
+    max-width: 628px;
+    min-height: 290px;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.247);
+}
+
+
+.movie-card img {
+    width: 220px;
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.3s ease-in-out;
+}
+
+.movie-card img:hover {
+    transform: scale(1.1);
+    z-index: 2;
+}
+
+
+.info {
+    padding: 15px;
+    flex: 1;
+    text-align: left;
+}
+
+.info h3,
+.info p,
+.info .age {
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+
+.top {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    margin-bottom: 5px;
+    color: rgba(109, 138, 156, 0.858)
+}
+
+.top span.format {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.247);
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    font-size: 16px;
+}
+
+
+.top .format {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.247);
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    font-size: 16px;
+}
+
+.format-1 {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.247);
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    font-size: 16px;
+    display: none;
+}
+
+
+.info h3 {
+    margin: 8px 0;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.age {
+    color: #ff4d4d;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+.showtimes {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.showtimes span {
+    background: transparent;
+    border: 1px solid white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.showtimes span:hover {
+    background-color: rgba(28, 55, 87, 0.779);
+    color: white;
+}
+.date-btn {
+    width: 93px;
+    height: 36px;
+    white-space: nowrap;
+    display: flex;
+    justify-content: center;
+}
+
+.date-buttons {
+    width: 95%;
+    flex-wrap: wrap;
+}
+.title-bar {
+    justify-items: center;
+}
+
+
+
+
+
+
+@media (max-width: 769px) {
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        overflow-x: hidden;
+    }
+    .title-bar {
+        margin-top: 100px;
+        justify-items: center;
+    }
+
+    main {
+        padding: 0; /* Loại bỏ padding gây co */
+    }
+
+    .movies {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .movie-card {
+        width: 358px; /* bạn muốn đúng con số này */
+        max-width: 100%; /* đề phòng màn nhỏ hơn */
+        box-sizing: border-box;
+        min-height: 100%;
+    }
+
+    .movie-card {
+        width: 100%;
+        max-width: 352px;
+        height: auto;
+    }
+
+    .movie-card img {
+        width: auto;
+        max-width: 150px;
+        height: auto;
+    }
+
+    .info h3 {
+        font-size: 14px;
+    }
+
+    .info p {
+        font-size: 14px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .category-time span {
+        font-size: 14px;
+    }
+
+    .showtimes span {
+        width: 37px;
+        height: 30px;
+        padding: 0;
+        font-size: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .top .format {
+        width: 40px;
+        height: 34px;
+        display: inline-block;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+
+    .info {
+        padding: 10px;
+        width: 100%;
+    }
+
+    .top span {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .movies {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .note {
+        font-size: 14px;
+    }
+
+    .date-buttons button {
+        width: 93px;
+        height: 36px;
+        text-align: center;
+        white-space: nowrap;
+    }
+}
+
+
+@media (max-width: 490px) {
+    .header-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .category-time {
+        display: none;
+    }
+
+    .movies {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        text-align: center;
+        justify-items: center;
+    }
+
+    .date-buttons {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .date-buttons button {
+        width: 93px;
+        height: 36px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .movie-card img {
+
+        height: auto;
+    }
+
+    .movie-card {
+        width: 120%;
+    }
+
+    h3 {
+        width: 70%;
+    }
+
+    h2 {
+        font-size: 16px;
+    }
+
+    .info .age {
+        font-size: 12px;
+    }
+
+    .top .format {
+        display: none;
+    }
+
+    .title-format {
+        display: flex;
+    }
+
+    .format-1 {
+        width: 40px;
+        height: 34px;
+        display: inline-block;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        display: inline;
+        justify-content: center;
+        margin-top: 10px;
+        margin-left: 5px;
+    }
+
+}
+
+
+@media (max-width: 391px) {
+    .header-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .category-time {
+        display: none;
+    }
+
+    .movies {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        text-align: center;
+        justify-items: center;
+    }
+
+    .date-buttons {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .date-buttons button {
+        width: 93px;
+        height: 36px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .movie-card img {
+
+        height: auto;
+    }
+
+
+    .movie-card {
+        width: 100%;
+        max-width: 358px;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    h3 {
+        width: 70%;
+    }
+
+    h2 {
+        font-size: 16px;
+    }
+
+    .info .age {
+        font-size: 12px;
+    }
+
+    .top .format {
+        display: none;
+    }
+
+    .title-format {
+        display: flex;
+    }
+
+    .format-1 {
+        width: 40px;
+        height: 34px;
+        display: inline-block;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        display: inline;
+        justify-content: center;
+        margin-top: 10px;
+        margin-left: 5px;
+    }
+
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Import phim TMDB')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('movies')}"></div>
+    <div class="ml-64 flex-1 p-6">
+        <h1 class="text-xl font-semibold mb-4">Đăng phim chiếu tại rạp (TMDB)</h1>
+        <p class="text-sm text-gray-600 mb-4">Chọn phim trên TMDB để đăng chiếu. Hệ thống tự lấy thời lượng, độ tuổi và tạo lịch mẫu 10 ngày.</p>
+        <p th:if="${tmdbError}" class="mb-4 p-3 rounded bg-red-100 text-red-800" th:text="${tmdbError}"></p>
+        <form method="get" th:action="@{/admin/movies/import}" class="flex gap-2 mb-6">
+            <input type="text" name="q" th:value="${searchQuery}" placeholder="Tìm phim trên TMDB..." class="border rounded px-3 py-2 flex-1"/>
+            <select name="lang" class="border rounded px-2">
+                <option value="vi-VN" th:selected="${lang == 'vi-VN'}">vi-VN</option>
+                <option value="en-US" th:selected="${lang == 'en-US'}">en-US</option>
+            </select>
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Tìm</button>
+            <a th:href="@{/admin/movies}" class="px-4 py-2 border rounded">Quay lại</a>
+        </form>
+        <div th:if="${searchResults != null}" class="bg-white rounded shadow overflow-hidden">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-left">Poster</th>
+                    <th class="px-4 py-2 text-left">TMDB ID</th>
+                    <th class="px-4 py-2 text-left">Tên</th>
+                    <th class="px-4 py-2 text-left">Ngày</th>
+                    <th class="px-4 py-2"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${searchResults.results}" class="border-t">
+                    <td class="px-4 py-2">
+                        <img th:src="${item.posterUrl}" alt="" style="width:48px;height:72px;object-fit:cover;" th:if="${item.posterUrl != null}"/>
+                    </td>
+                    <td class="px-4 py-2" th:text="${item.tmdbId}"></td>
+                    <td class="px-4 py-2" th:text="${item.title}"></td>
+                    <td class="px-4 py-2" th:text="${item.releaseDate}"></td>
+                    <td class="px-4 py-2 text-right">
+                        <form th:action="@{/admin/movies/import}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="tmdbId" th:value="${item.tmdbId}"/>
+                            <input type="hidden" name="lang" th:value="${lang}"/>
+                            <button type="submit" class="text-green-700 hover:underline font-medium"
+                                    onclick="return confirm('Đăng phim này lên rạp và tạo lịch mẫu?')">Đăng chiếu</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(searchResults.results)}">
+                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">Không có kết quả</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="mt-4 text-gray-600 text-sm">Cần cấu hình biến môi trường <code>TMDB_API_KEY</code> trên server.</p>
+    </div>
+</div>
+</body>
+</html>

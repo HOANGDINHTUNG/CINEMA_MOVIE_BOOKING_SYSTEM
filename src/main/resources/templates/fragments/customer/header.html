@@ -1,0 +1,74 @@
+<header th:fragment="header" class="main-header" xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <div class="header-container">
+        <a th:href="@{/customer/home}" class="logo-and-title">
+            <span class="logo">
+                <img th:src="@{/assets/img/image.png}" alt="NCC Logo"/>
+            </span>
+            <span class="header-title">
+                <span class="header-title__vi" th:text="#{site.title}">TRUNG TÂM CHIẾU PHIM QUỐC GIA</span>
+                <span class="header-title__en" th:text="#{site.title.sub}">National Cinema Center</span>
+            </span>
+        </a>
+
+        <button type="button" class="menu-toggle" onclick="toggleMenu()" th:attr="aria-label=#{common.menu}" aria-expanded="false">
+            <span class="menu-toggle__bar"></span>
+            <span class="menu-toggle__bar"></span>
+            <span class="menu-toggle__bar"></span>
+        </button>
+
+        <nav class="nav-menu" id="mainNavMenu">
+            <a th:href="@{/customer/home}"
+               th:classappend="${#httpServletRequest != null and (#strings.contains(#httpServletRequest.requestURI, '/customer/home') or #strings.equals(#httpServletRequest.requestURI, '/customer'))} ? ' active' : ''"
+               th:text="#{nav.home}">Trang chủ</a>
+            <a th:href="@{/customer/calendar}"
+               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/calendar')} ? ' active' : ''"
+               th:text="#{nav.calendar}">Lịch chiếu</a>
+            <a th:href="@{/customer/news}"
+               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/news')} ? ' active' : ''"
+               th:text="#{nav.news}">Tin tức</a>
+            <a th:href="@{/customer/promotions}"
+               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/promotions')} ? ' active' : ''"
+               th:text="#{nav.promotions}">Khuyến mãi</a>
+            <a th:href="@{/customer/ticket-price}"
+               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/ticket-price')} ? ' active' : ''"
+               th:text="#{nav.ticket_price}">Giá vé</a>
+            <a th:href="@{/customer/festival}"
+               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/festival')} ? ' active' : ''"
+               th:text="#{nav.festival}">Liên hoan phim, Tuần phim</a>
+
+            <div class="nav-menu__auth nav-menu__auth--mobile" sec:authorize="!isAuthenticated()">
+                <a th:href="@{/login}" class="header-link" th:text="#{nav.login}">Đăng nhập</a>
+                <a th:href="@{/register}" class="header-link header-link--accent" th:text="#{nav.register}">Đăng ký</a>
+            </div>
+            <div class="nav-menu__auth nav-menu__auth--mobile" sec:authorize="isAuthenticated()">
+                <a th:href="@{/customer/bookings}" class="header-link" sec:authorize="hasRole('CUSTOMER')"
+                   th:text="#{nav.my_tickets}">Vé của tôi</a>
+                <form th:action="@{/logout}" method="post" class="header-logout-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="header-link header-link--button" th:text="#{nav.logout}">Đăng xuất</button>
+                </form>
+            </div>
+        </nav>
+
+        <div class="header-util">
+            <div class="header-lang">
+                <a th:href="${langViUrl}" class="header-lang__btn" th:classappend="${appLang == 'vi-VN'} ? ' active' : ''" th:text="#{ui.lang.vi}">VI</a>
+                <span class="header-lang__sep">|</span>
+                <a th:href="${langEnUrl}" class="header-lang__btn" th:classappend="${appLang == 'en-US'} ? ' active' : ''" th:text="#{ui.lang.en}">EN</a>
+            </div>
+            <div class="header-auth" sec:authorize="!isAuthenticated()">
+                <a th:href="@{/login}" class="header-link" th:text="#{nav.login}">Đăng nhập</a>
+                <a th:href="@{/register}" class="header-link header-link--accent" th:text="#{nav.register}">Đăng ký</a>
+            </div>
+            <div class="header-auth" sec:authorize="isAuthenticated()">
+                <a th:href="@{/customer/bookings}" class="header-link" sec:authorize="hasRole('CUSTOMER')"
+                   th:text="#{nav.my_tickets}">Vé của tôi</a>
+                <form th:action="@{/logout}" method="post" class="header-logout-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="header-link header-link--button" th:text="#{nav.logout}">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="slide(slide)" class="hero-slide">
+    <img th:src="${slide.backdropUrl != null ? slide.backdropUrl : slide.posterUrl}"
+         class="hero-banner-img"
+         th:alt="${slide.title}"
+         loading="lazy"/>
+    <div class="hero-slide-overlay" aria-hidden="true"></div>
+    <div class="hero-slide-content">
+        <p class="hero-meta" th:if="${slide.languageLabel != null or slide.releaseYear != null}">
+            <span th:if="${slide.languageLabel != null}" th:text="${slide.languageLabel}">VI</span><span
+                th:if="${slide.languageLabel != null and slide.releaseYear != null}"> • </span><span
+                th:if="${slide.releaseYear != null}" th:text="${slide.releaseYear}">2026</span>
+        </p>
+        <h2 class="hero-title" th:text="${slide.title}">Phim</h2>
+        <p class="hero-original"
+           th:if="${slide.originalTitle != null and !#strings.isEmpty(slide.originalTitle) and !#strings.equals(#strings.toUpperCase(slide.originalTitle), #strings.toUpperCase(slide.title))}"
+           th:text="${#strings.toUpperCase(slide.originalTitle)}">ORIGINAL</p>
+        <p class="hero-overview" th:if="${slide.overview != null}"
+           th:text="${#strings.abbreviate(slide.overview, 280)}"></p>
+        <div class="hero-actions">
+            <span class="hero-rating" th:if="${slide.voteAverage != null}"
+                  th:title="|★ ${#numbers.formatDecimal(slide.voteAverage, 1, 1)}|"
+                  th:aria-label="|★ ${#numbers.formatDecimal(slide.voteAverage, 1, 1)}|">
+                <span aria-hidden="true">★</span>
+            </span>
+            <a th:href="@{/customer/movies/{tid}(tid=${slide.tmdbId})}"
+               class="hero-btn-detail" th:text="#{home.hero.view_details}">XEM CHI TIẾT PHIM</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

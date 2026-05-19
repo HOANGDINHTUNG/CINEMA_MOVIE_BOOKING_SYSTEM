@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{calendar.page_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/calendar.css}"/>
+    <link rel="stylesheet" th:href="@{/css/customer/movie-cards.css}"/>
+</head>
+<body class="customer-site schedule-page">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<main class="schedule-main">
+    <section class="title-bar">
+        <h2>
+            <img th:src="@{/assets/icon/Background.png}" alt="" class="title-icon"/>
+            <span th:text="#{calendar.now_showing}">Phim đang chiếu</span>
+        </h2>
+
+        <form class="schedule-search" method="get" th:action="@{/customer/calendar}">
+            <input type="hidden" name="date" th:value="${#temporals.format(selectedDate, 'yyyy-MM-dd')}"/>
+            <div class="search-field">
+                <label for="searchQ" class="visually-hidden" th:text="#{calendar.search_label}">Tìm phim</label>
+                <i class="fas fa-search search-icon"></i>
+                <input type="search" id="searchQ" name="q" th:value="${searchQuery}"
+                       th:placeholder="#{calendar.search_placeholder}" autocomplete="off"/>
+            </div>
+            <div class="search-field search-field-select">
+                <label for="searchGenre" class="visually-hidden" th:text="#{filter.all_genres}">Thể loại</label>
+                <select id="searchGenre" name="genre">
+                    <option value="" th:text="#{filter.all_genres}">Tất cả thể loại</option>
+                    <option th:each="g : ${tmdbGenres}" th:value="${g.id}" th:text="${g.name}"
+                            th:selected="${selectedGenre != null and selectedGenre == g.id.toString()}"></option>
+                </select>
+            </div>
+            <button type="submit" class="btn-search-submit" th:text="#{filter.search}">Tìm</button>
+            <a th:if="${filtering}"
+               th:href="@{/customer/calendar(date=${#temporals.format(selectedDate, 'yyyy-MM-dd')})}"
+               class="btn-search-reset" th:text="#{calendar.clear_filter}">Xóa lọc</a>
+        </form>
+
+        <div class="date-buttons">
+            <a th:each="day : ${scheduleDays}"
+               class="date-btn"
+               th:classappend="${day.selected} ? 'active' : ''"
+               th:href="@{/customer/calendar(date=${#temporals.format(day.date, 'yyyy-MM-dd')}, q=${searchQuery}, genre=${selectedGenre})}"
+               th:text="${day.label}"></a>
+        </div>
+
+        <section class="movies">
+            <article th:each="card : ${scheduleMovies}" class="movie-card">
+                <a th:href="@{/customer/movies/{tid}(tid=${card.tmdbId})}" class="poster-link">
+                    <img th:replace="~{fragments/customer/poster :: img(${card.posterUrl}, ${card.title})}"/>
+                    <span class="tmdb-movie-card__rating" th:if="${card.voteAverage != null}"
+                          th:text="${#numbers.formatDecimal(card.voteAverage, 1, 1)}"></span>
+                </a>
+                <div class="info">
+                    <div class="top">
+                        <div class="category-time">
+                            <span th:text="${card.genresLabel}">Thể loại</span>
+                            <span th:if="${card.duration != null}" th:text="${card.duration + ' ' + #{common.minutes}}">120 phút</span>
+                        </div>
+                        <span class="format" th:text="${card.format}">2D</span>
+                    </div>
+                    <div class="title-format">
+                        <h3>
+                            <a th:href="@{/customer/movies/{tid}(tid=${card.tmdbId})}" th:text="${card.title}">Tên phim</a>
+                        </h3>
+                    </div>
+                    <p th:if="${card.overview != null}" class="schedule-overview" th:text="${card.overview}"></p>
+                    <p th:if="${card.releaseDate != null}">
+                        <span th:text="#{movie.release_date}">Khởi chiếu</span>:
+                        <span th:text="${#temporals.format(card.releaseDate, 'dd/MM/yyyy')}"></span>
+                    </p>
+                    <p class="age" th:if="${card.ageNote != null}"
+                       th:text="${(card.ageLabel != null ? card.ageLabel + ' - ' : '') + card.ageNote}"></p>
+                    <p><b th:text="#{calendar.showtime_list}">Lịch chiếu</b></p>
+                    <div class="showtimes">
+                        <th:block th:each="slot : ${card.slots}">
+                            <a th:if="${!slot.soldOut}"
+                               th:href="@{/customer/showtimes/{id}/seats(id=${slot.showtimeId})}"
+                               th:text="${slot.timeLabel}">20:00</a>
+                            <span th:if="${slot.soldOut}"
+                                  class="sold-out"
+                                  th:text="${slot.timeLabel}">20:00</span>
+                        </th:block>
+                    </div>
+                </div>
+            </article>
+
+            <p th:if="${#lists.isEmpty(scheduleMovies)}" class="schedule-empty">
+                <span th:if="${filtering}" th:text="#{calendar.empty_filtered}">Không có suất chiếu phù hợp với bộ lọc.</span>
+                <span th:unless="${filtering}" th:text="#{calendar.empty_day}">Chưa có suất chiếu trong ngày này.</span>
+            </p>
+        </section>
+
+        <p class="note" th:text="#{calendar.age_note}">
+            Lưu ý: Khán giả dưới 13 tuổi chỉ chọn suất chiếu kết thúc trước 22h và
+            Khán giả dưới 16 tuổi chỉ chọn suất chiếu kết thúc trước 23h.
+        </p>
+    </section>
+</main>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

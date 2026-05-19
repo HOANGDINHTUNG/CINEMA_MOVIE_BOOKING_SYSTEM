@@ -1,0 +1,565 @@
+/* Customer site base - load after Bootstrap in head fragment */
+body.customer-site {
+    background-color: #10141b !important;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+
+body.customer-site .main-header {
+    background: linear-gradient(180deg, rgba(11, 13, 19, 0.97) 0%, rgba(11, 13, 19, 0.88) 100%);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+body.customer-site .header-container {
+    background: rgba(16, 20, 27, 0.75);
+}
+
+body.customer-site .header-title {
+    display: block;
+}
+
+/* Beat Bootstrap .container on NCC layout blocks */
+body.customer-site .main-wrapper {
+    max-width: 1308px !important;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+body.customer-site .customer-page {
+    max-width: 1200px;
+    margin: 100px auto 48px;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+
+body.customer-site .customer-page .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+body.customer-site .ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(60, 60, 66, 0.38);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+body.customer-site .ticket-table th,
+body.customer-site .ticket-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #e8eaed;
+    font-size: 14px;
+}
+
+body.customer-site .ticket-table th {
+    background: rgba(0, 0, 0, 0.25);
+    font-weight: 600;
+}
+
+body.customer-site .profile-card {
+    max-width: 520px;
+    background: rgba(60, 60, 66, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 28px 32px;
+}
+
+body.customer-site .profile-card .profile-meta {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+body.customer-site .profile-card .profile-meta strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+body.customer-site .profile-card .form-control {
+    background: rgba(16, 20, 27, 0.9);
+    border: 1px solid #374151;
+    color: #fff;
+}
+
+body.customer-site .profile-card .form-control:focus {
+    border-color: #d32f2f;
+    box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.25);
+}
+
+body.customer-site .info-label {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+body.customer-site .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+body.customer-site .status-paid {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+body.customer-site .status-pending {
+    background: rgba(234, 179, 8, 0.2);
+    color: #fde047;
+}
+
+body.customer-site .status-cancelled {
+    background: rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+}
+
+body.customer-site #movieDetailBg main.container {
+    max-width: 1200px !important;
+    width: 100% !important;
+    margin: 100px auto 48px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+body.customer-site .error-page {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+body.customer-site .error-page h1 {
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+body.customer-site .error-page p {
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+body.customer-site.ticket-price-page .container,
+body.customer-site .ticket-price-wrap.container {
+    max-width: 1100px !important;
+    margin: 100px auto 48px !important;
+    width: 100% !important;
+}
+
+body.customer-site .carousel-indicators [data-bs-target] {
+    background-color: #d32f2f;
+}
+
+body.customer-site .calendar-intro {
+    color: #94a3b8;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Booking flow UX */
+body.customer-site .booking-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 20px 0 24px;
+    flex-wrap: wrap;
+}
+
+body.customer-site .booking-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+body.customer-site .booking-step.active {
+    color: #fff;
+}
+
+body.customer-site .booking-step .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+body.customer-site .booking-step.active .step-num {
+    background: #d32f2f;
+    border-color: #d32f2f;
+    color: #fff;
+}
+
+body.customer-site .booking-step-connector {
+    width: 32px;
+    height: 2px;
+    background: #334155;
+    margin: 0 6px;
+}
+
+body.customer-site .booking-step-connector.done {
+    background: #d32f2f;
+}
+
+body.customer-site .ux-hint {
+    background: rgba(211, 47, 47, 0.12);
+    border: 1px solid rgba(211, 47, 47, 0.35);
+    color: #fca5a5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+body.customer-site .seat-checkout-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: rgba(16, 20, 27, 0.97);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+body.customer-site #movieDetailBg main.container {
+    padding-bottom: 120px !important;
+}
+
+body.customer-site .seat-summary-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin: 0;
+    color: #fff;
+}
+
+body.customer-site .seat-summary-detail {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 2px 0 0;
+}
+
+body.customer-site .seat-summary-total {
+    font-size: 14px;
+    color: #fbbf24;
+    font-weight: 600;
+    margin: 4px 0 0;
+}
+
+body.customer-site .seat-checkout-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+body.customer-site .empty-state-card {
+    text-align: center;
+    padding: 48px 24px;
+    background: rgba(60, 60, 66, 0.35);
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+body.customer-site .empty-state-card p {
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+body.customer-site .quick-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 1308px;
+    margin: -8px auto 28px;
+    padding: 0 16px;
+}
+
+body.customer-site .quick-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(60, 60, 66, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+body.customer-site .quick-nav a:hover {
+    background: rgba(211, 47, 47, 0.25);
+    border-color: #d32f2f;
+    color: #fff;
+}
+
+body.customer-site .checkout-actions-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+body.customer-site .payment-tips {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #93c5fd;
+    margin-bottom: 20px;
+}
+
+body.customer-site .checkout-live-total {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+body.customer-site .table-responsive-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+    body.customer-site .seat-checkout-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 16px;
+    }
+
+    body.customer-site .seat-checkout-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    body.customer-site .seat-checkout-actions .btn-primary1,
+    body.customer-site .seat-checkout-actions .btn-outlinee1 {
+        flex: 1;
+        text-align: center;
+    }
+
+    body.customer-site .booking-step .step-label {
+        display: none;
+    }
+
+    body.customer-site .ticket-table {
+        font-size: 12px;
+    }
+
+    body.customer-site .ticket-table th,
+    body.customer-site .ticket-table td {
+        padding: 8px 10px;
+    }
+}
+
+body.customer-site #scroll-container {
+    padding-top: 0;
+}
+
+body.customer-site .carousel {
+    margin-top: 80px;
+}
+
+body.customer-site .hero-carousel {
+    margin-top: 80px;
+}
+
+body.customer-site .hero-carousel .carousel-item img,
+body.customer-site .hero-carousel .hero-banner-img {
+    object-fit: cover;
+    max-height: none;
+    height: 100%;
+    width: 100%;
+}
+
+body.customer-site .carousel:not(.hero-carousel) .carousel-item img {
+    object-fit: cover;
+    max-height: 520px;
+}
+
+/* Movie search */
+body.customer-site .movie-search-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(60, 60, 66, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+body.customer-site .search-field {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+body.customer-site .search-field input[type="search"],
+body.customer-site .search-field select {
+    width: 100%;
+    padding: 10px 12px 10px 40px;
+    background: rgba(16, 20, 27, 0.9);
+    border: 1px solid #374151;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+}
+
+body.customer-site .search-field-select select {
+    padding-left: 12px;
+}
+
+body.customer-site .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+body.customer-site .btn-search {
+    padding: 10px 20px;
+    white-space: nowrap;
+}
+
+body.customer-site .search-no-result {
+    color: #fca5a5;
+    background: rgba(211, 47, 47, 0.1);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+body.customer-site .search-no-result a {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* Onboarding guide */
+.ncc-guide-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.ncc-guide-overlay.active {
+    pointer-events: auto;
+}
+
+.ncc-guide-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.ncc-guide-spotlight {
+    position: absolute;
+    border: 2px solid #d32f2f;
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+    pointer-events: none;
+    transition: all 0.25s ease;
+}
+
+.ncc-guide-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    width: min(420px, calc(100% - 32px));
+    background: #1a1f2e;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    z-index: 10001;
+    pointer-events: auto;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.ncc-guide-panel h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    color: #fff;
+}
+
+.ncc-guide-panel p {
+    margin: 0 0 16px;
+    font-size: 14px;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.ncc-guide-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ncc-guide-step-dots {
+    font-size: 12px;
+    color: #64748b;
+    margin-right: auto;
+    align-self: center;
+}
+
+body.customer-site .guide-target-highlight {
+    position: relative;
+    z-index: 10000 !important;
+}
+
+@media (max-width: 768px) {
+    body.customer-site .customer-page {
+        margin-top: 88px;
+        padding: 0 16px 32px;
+    }
+
+    body.customer-site .carousel {
+        margin-top: 64px;
+    }
+
+    body.customer-site .movie-search-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    body.customer-site .search-field {
+        min-width: 100%;
+    }
+
+    body.customer-site .btn-search,
+    body.customer-site .btn-search-reset {
+        width: 100%;
+    }
+}

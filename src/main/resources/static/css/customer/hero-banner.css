@@ -1,0 +1,196 @@
+/* Hero banner */
+/* Banner full màn hình: full ngang + cao = viewport trừ header (80px) */
+body.customer-site {
+    --ncc-header-height: 80px;
+}
+
+.hero-carousel .carousel-inner,
+.hero-carousel .carousel-item {
+    height: 100%;
+}
+
+.hero-slide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.hero-banner-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    margin: 0;
+}
+
+.hero-slide-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(to right, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 42%, rgba(0, 0, 0, 0.08) 68%, transparent 100%),
+        linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, transparent 45%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hero-slide-content {
+    position: absolute;
+    left: clamp(24px, 5vw, 72px);
+    bottom: clamp(32px, 8%, 72px);
+    max-width: min(560px, 52vw);
+    z-index: 2;
+    text-align: left;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+}
+
+.hero-meta {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0 0 0.85rem;
+}
+
+.hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.08;
+    color: #fff;
+    margin: 0 0 0.35rem;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(720px, 92vw);
+}
+
+.hero-original {
+    font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(720px, 92vw);
+}
+
+.hero-overview {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.88);
+    margin: 0 0 1.35rem;
+    max-width: 480px;
+}
+
+.hero-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.hero-rating {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #eab308;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    line-height: 1;
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.55);
+}
+
+.hero-rating span {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.hero-btn-detail {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 28px;
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 999px;
+    color: #fff !important;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none !important;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.hero-btn-detail:hover {
+    background: rgba(0, 0, 0, 0.55);
+    border-color: #fff;
+    color: #fff !important;
+    transform: translateY(-1px);
+}
+
+
+/* 1. Tạo shape tròn, semi-transparent mặc định */
+.hero-carousel .carousel-control-prev,
+.hero-carousel .carousel-control-next {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(126, 126, 126, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    transition: background-color 0.3s ease;
+}
+
+/* 2. Hover thì tăng độ đậm (sáng lên) */
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    background-color: rgba(183, 183, 183, 0.5);
+}
+
+/* 3. Tùy chỉnh kích thước icon nếu cần */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 20px 20px;
+}
+
+.carousel.slide.carousel-fade {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.carousel.slide.carousel-fade.hero-carousel,
+body.customer-site #heroCarouselTmdb.hero-carousel {
+    margin-top: var(--ncc-header-height, 80px);
+    width: 100%;
+    max-width: 100%;
+    height: calc(100vh - var(--ncc-header-height, 80px));
+    min-height: calc(100vh - var(--ncc-header-height, 80px));
+}

@@ -1,0 +1,80 @@
+:root,
+[data-theme="light"] {
+    --theme-bg: #f5f5f5;
+    --theme-surface: #ffffff;
+    --theme-text: #1a1a1a;
+    --theme-muted: #666666;
+    --theme-header-bg: #0d1b2a;
+    --theme-header-text: #ffffff;
+    --theme-border: #dddddd;
+}
+
+[data-theme="dark"] {
+    --theme-bg: #121212;
+    --theme-surface: #1e1e1e;
+    --theme-text: #f0f0f0;
+    --theme-muted: #aaaaaa;
+    --theme-header-bg: #000000;
+    --theme-header-text: #ffffff;
+    --theme-border: #333333;
+}
+
+body.customer-site {
+    background-color: var(--theme-bg);
+    color: var(--theme-text);
+}
+
+body.customer-site .main-header {
+    background-color: var(--theme-header-bg);
+    color: var(--theme-header-text);
+}
+
+body.customer-site .body,
+body.customer-site .main-content {
+    background-color: var(--theme-bg);
+    color: var(--theme-text);
+}
+
+body.customer-site .movie-card,
+body.customer-site .quick-nav,
+body.customer-site .tmdb-movie-card {
+    background-color: var(--theme-surface);
+    border-color: var(--theme-border);
+}
+
+body.customer-site .main-content h1,
+body.customer-site .top-bar h1 {
+    color: var(--theme-text);
+}
+
+body.customer-site .film-card .film-title {
+    color: var(--theme-text, #fff);
+}
+
+body.customer-site .film-card .description {
+    color: var(--theme-muted, #5d6a81);
+}
+
+.theme-toggle-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 0.75rem;
+}
+
+.theme-toggle-bar .btn-lang,
+.theme-toggle-bar .btn-theme {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.theme-toggle-bar .btn-lang.active,
+.theme-toggle-bar .btn-theme.active {
+    background: rgba(255, 255, 255, 0.2);
+}

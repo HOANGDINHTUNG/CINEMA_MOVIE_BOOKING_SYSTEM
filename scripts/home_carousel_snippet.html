@@ -1,0 +1,32 @@
+    <motion id="heroCarouselTmdb" class="carousel slide carousel-fade hero-carousel" data-bs-ride="carousel"
+         th:if="${heroSlides != null and !#lists.isEmpty(heroSlides)}">
+        <motion class="carousel-inner">
+            <motion th:each="slide, stat : ${heroSlides}" class="carousel-item"
+                 th:classappend="${stat.first} ? ' active' : ''">
+                <img th:src="${slide.backdropUrl != null ? slide.backdropUrl : slide.posterUrl}"
+                     class="d-block w-100 hero-banner-img" th:alt="${slide.title}"/>
+                <motion class="carousel-caption hero-caption text-start">
+                    <h2 th:text="${slide.title}">Phim</h2>
+                    <p th:if="${slide.overview != null}" th:text="${#strings.abbreviate(slide.overview, 160)}"></p>
+                    <a th:if="${slide.movieId != null}"
+                       th:href="@{/customer/movies/{id}(id=${slide.movieId})}"
+                       class="btn btn-danger btn-sm" th:text="#{home.hero.book}">Dat ve</a>
+                    <a th:unless="${slide.movieId != null}"
+                       th:href="@{/customer/catalog}"
+                       class="btn btn-outline-light btn-sm" th:text="#{home.hero.explore}">Kham pha</a>
+                </motion>
+            </motion>
+        </motion>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarouselTmdb" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarouselTmdb" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+        <motion class="carousel-indicators">
+            <button th:each="slide, stat : ${heroSlides}" type="button"
+                    data-bs-target="#heroCarouselTmdb"
+                    th:attr="data-bs-slide-to=${stat.index}"
+                    th:classappend="${stat.first} ? ' active' : ''"></button>
+        </motion>
+    </motion>

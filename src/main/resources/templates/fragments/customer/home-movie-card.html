@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="card(m, showSchedule)" class="film-card" th:if="${m != null and m.tmdbId != null}">
+    <a th:href="@{/customer/movies/{tid}(tid=${m.tmdbId})}">
+        <div class="image-wrapper">
+            <img th:src="${m.posterUrl != null and #strings.startsWith(m.posterUrl, 'http')} ? ${m.posterUrl} : @{/assets/img/poster.jpg}"
+                 th:alt="${m.title}" loading="lazy"/>
+        </div>
+        <div class="film-title" th:text="${m.title}"></div>
+        <div class="description" th:if="${m.genresLabel != null}" th:text="${m.genresLabel}"></div>
+        <div class="description" th:if="${showSchedule and m.nextShowtime != null}"
+             th:text="|#{card.next_showtime}: ${#temporals.format(m.nextShowtime, 'dd/MM HH:mm')}|"></div>
+        <div class="description" th:if="${!showSchedule and m.releaseDateLabel != null}"
+             th:text="|#{movie.release_date}: ${m.releaseDateLabel}|"></div>
+        <div class="description" th:if="${!showSchedule and m.voteAverage != null}">
+            <span th:text="'★ ' + ${#numbers.formatDecimal(m.voteAverage, 1, 1)}"></span>
+        </div>
+        <span th:if="${showSchedule and m.hasShowtimes}" class="badge bg-success mt-1" th:text="#{card.in_cinema}">Đang chiếu</span>
+    </a>
+</div>
+</body>
+</html>

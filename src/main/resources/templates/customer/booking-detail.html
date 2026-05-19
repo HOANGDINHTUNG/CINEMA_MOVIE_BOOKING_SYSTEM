@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{booking.page_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/payment-success.css}"/>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<div class="customer-page">
+    <div th:replace="~{fragments/customer/booking-steps :: steps(3)}"></div>
+    <p th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></p>
+    <p th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></p>
+
+    <div class="success-container" th:if="${booking.status.name() == 'PAID'}">
+        <img th:src="@{/assets/icon/star icon.png}" alt="" class="success-icon"/>
+        <div class="success-title" th:text="#{booking.success_title}">Đặt vé thành công!</div>
+        <div class="success-note">
+            <span th:text="#{booking.order_id}">Mã đơn:</span>
+            <strong th:text="${booking.bookingId}"></strong>
+        </div>
+    </div>
+
+    <div class="success-container" th:if="${booking.status.name() == 'PENDING'}">
+        <div class="success-title" th:text="#{booking.pending_title}">Đặt vé chờ thanh toán</div>
+        <div class="success-note">
+            <span th:text="#{booking.pending_note}"></span>
+            <strong th:text="${booking.bookingId}"></strong>
+        </div>
+    </div>
+
+    <div class="success-container" th:if="${booking.status.name() == 'CANCELLED'}">
+        <div class="success-title" th:text="#{booking.cancelled_title}">Đơn đã hủy</div>
+        <div class="success-note">
+            <span th:text="#{booking.order_id}">Mã đơn:</span>
+            <strong th:text="${booking.bookingId}"></strong>
+        </div>
+    </div>
+
+    <div class="movie-info" style="margin-top:24px;">
+        <h2 class="section-title" th:text="#{booking.invoice_title}">Chi tiết hóa đơn</h2>
+        <p><b th:text="#{booking.movie}">Phim:</b> <span th:text="${booking.movieTitle}"></span></p>
+        <p><b th:text="#{booking.showtime}">Suất:</b> <span th:text="${#temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><b th:text="#{booking.room}">Phòng:</b> <span th:text="${booking.roomName}"></span></p>
+        <p><b th:text="#{booking.seats}">Ghế:</b> <span th:text="${#strings.listJoin(booking.seatLabels, ', ')}"></span></p>
+        <p><b th:text="#{booking.total}">Tổng tiền:</b> <span th:text="${booking.totalAmount} + ' đ'"></span></p>
+        <p><b th:text="#{booking.status}">Trạng thái:</b>
+            <span th:switch="${booking.status.name()}">
+                <span th:case="'PAID'" class="status-badge status-paid" th:text="#{booking.status.paid}">Đã thanh toán</span>
+                <span th:case="'PENDING'" class="status-badge status-pending" th:text="#{booking.status.pending}">Chờ thanh toán</span>
+                <span th:case="'CANCELLED'" class="status-badge status-cancelled" th:text="#{booking.status.cancelled}">Đã hủy</span>
+                <span th:case="*" class="status-badge" th:text="${booking.status}"></span>
+            </span>
+        </p>
+    </div>
+
+    <div class="home-btn-wrapper mt-4">
+        <form th:if="${booking.status.name() == 'PENDING'}" th:action="@{/customer/bookings/{id}/pay-vnpay(id=${booking.bookingId})}" method="post" class="d-inline me-2">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="btn btn-danger" th:text="#{booking.pay_vnpay}">Thanh toán VNPay</button>
+        </form>
+        <form th:if="${booking.cancellable}" th:action="@{/customer/bookings/{id}/cancel(id=${booking.bookingId})}"
+              method="post" class="d-inline">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="btn btn-danger" th:text="#{booking.cancel}">Hủy vé</button>
+        </form>
+        <a th:href="@{/customer/home}" class="home-btn"><span class="text" th:text="#{booking.back_home}">Về trang chủ</span></a>
+        <a th:href="@{/customer/bookings}" class="home-btn ms-2"><span class="text" th:text="#{booking.my_tickets}">Danh sách vé</span></a>
+    </div>
+</div>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

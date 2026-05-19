@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{movie.detail_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/movie-detail-page.css}"/>
+</head>
+<body class="customer-site movie-detail-page"
+      th:attr="data-msg-seat-pick-at-least=#{seat.pick_at_least},
+               data-msg-seat-max=#{seat.max_seats},
+               data-msg-seat-confirm=#{seat.confirm_checkout}">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<script>document.getElementById('pageLoader')&&(document.getElementById('pageLoader').style.display='none');</script>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<th:block th:if="${catalogDetail != null}"
+          th:with="d=${catalogDetail},
+                   voteCount=${catalogDetail.voteCount != null ? catalogDetail.voteCount : 0},
+                   scorePct=${catalogDetail.voteAverage != null ? T(java.lang.Math).round(catalogDetail.voteAverage * 10) : null},
+                   runtimeH=${catalogDetail.runtime != null ? catalogDetail.runtime / 60 : 0},
+                   runtimeM=${catalogDetail.runtime != null ? catalogDetail.runtime % 60 : 0}">
+
+    <header class="movie-detail-hero" id="movieDetailBg"
+            th:style="${d.backdropUrl != null} ? |background-image:url('${d.backdropUrl}');| : null">
+        <div class="movie-detail-hero__inner">
+            <div class="movie-detail-poster-col">
+                <img class="movie-detail-poster"
+                     th:src="${d.posterUrl != null} ? ${d.posterUrl} : @{/assets/img/poster.jpg}"
+                     th:alt="${d.title}"/>
+                <p class="movie-detail-poster-title"
+                   th:if="${d.originalTitle != null and !#strings.isEmpty(d.originalTitle)}"
+                   th:text="${d.originalTitle}"></p>
+            </div>
+
+            <div class="movie-detail-main">
+                <h1 th:text="${d.title}">Title</h1>
+                <p class="movie-detail-tagline"
+                   th:if="${d.tagline != null and !#strings.isEmpty(d.tagline)}"
+                   th:text="${d.tagline}"></p>
+
+                <div class="movie-detail-meta">
+                    <span th:if="${d.releaseDate != null}" th:text="${d.releaseDate}"></span>
+                    <span th:if="${d.runtime != null and d.runtime > 0}">
+                        <span th:if="${d.releaseDate != null}"> · </span>
+                        <th:block th:if="${runtimeH > 0}">
+                            <span th:text="${runtimeH}"></span>
+                            <span th:text="#{common.hour}"></span>
+                        </th:block>
+                        <span th:text="${runtimeM}"></span>
+                        <span th:text="#{common.min_abbr}"></span>
+                    </span>
+                    <span th:if="${d.ageLabel != null}" class="rating-badge">
+                        · <span th:text="#{movie.rating}">Rating</span>: <span th:text="${d.ageLabel}"></span>
+                    </span>
+                    <span th:if="${d.ageLabel == null and d.voteAverage != null}" class="rating-badge">
+                        · ★ <span th:text="${#numbers.formatDecimal(d.voteAverage, 1, 1)}"></span>/10
+                    </span>
+                </div>
+
+                <div class="movie-detail-genres" th:if="${!#lists.isEmpty(d.genres)}">
+                    <span class="movie-detail-genre-pill" th:each="g : ${d.genres}" th:text="${g.name}"></span>
+                </div>
+
+                <div class="movie-detail-actions">
+                    <div class="movie-detail-score" th:if="${scorePct != null}">
+                        <div class="movie-detail-score-ring" th:style="|--score:${scorePct}|">
+                            <span th:text="${scorePct} + '%'"></span>
+                        </div>
+                        <div class="movie-detail-score-text">
+                            <strong th:text="#{movie.user_score}">USER SCORE</strong>
+                            <span th:text="#{movie.user_score_from(${voteCount})}"></span>
+                        </div>
+                    </div>
+                    <button type="button"
+                            th:if="${d.trailerYoutubeKey != null}"
+                            class="btn-play-trailer"
+                            data-video-play
+                            th:attr="data-youtube-key=${d.trailerYoutubeKey},data-video-title=${d.title}">
+                        <i class="fa-solid fa-play"></i>
+                        <span th:text="#{movie.play_trailer}">Play Trailer</span>
+                    </button>
+                    <a th:if="${d.trailerUrl != null and d.trailerEmbedUrl == null}"
+                       th:href="${d.trailerUrl}" class="btn-play-trailer" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-play"></i>
+                        <span th:text="#{movie.play_trailer}">Play Trailer</span>
+                    </a>
+                </div>
+
+                <h2 class="movie-detail-section-title" th:text="#{movie.overview}">Overview</h2>
+                <p class="movie-detail-overview" th:if="${d.overview != null}" th:text="${d.overview}"></p>
+
+                <p class="movie-detail-credits" th:if="${d.director != null}">
+                    <span th:text="#{movie.director}">Director</span>:
+                    <span th:text="${d.director}"></span>
+                </p>
+                <p class="movie-detail-credits" th:if="${!#lists.isEmpty(d.writers)}">
+                    <span th:text="#{movie.writer}">Writer</span>:
+                    <span th:text="${#strings.listJoin(d.writers, ', ')}"></span>
+                </p>
+
+                <div class="movie-detail-social">
+                    <a th:if="${d.imdbId != null}"
+                       th:href="|https://www.imdb.com/title/${d.imdbId}|"
+                       class="imdb" target="_blank" rel="noopener" th:text="#{movie.imdb}">IMDb</a>
+                    <a th:if="${d.trailerUrl != null}"
+                       th:href="${d.trailerUrl}" target="_blank" rel="noopener" th:text="#{movie.youtube}">YouTube</a>
+                </div>
+
+                <div class="movie-detail-production" th:if="${!#lists.isEmpty(d.productionCompanies)}">
+                    <h3 th:text="#{movie.production}">Production Companies</h3>
+                    <div class="movie-detail-production-list">
+                        <span class="movie-detail-company-pill" th:each="co : ${d.productionCompanies}">
+                            <img th:if="${co.logoUrl != null}" th:src="${co.logoUrl}" th:alt="${co.name}" loading="lazy"/>
+                            <span th:text="${co.name + (co.originCountry != null ? ' (' + co.originCountry + ')' : '')}"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="movie-detail-body">
+        <section class="movie-detail-schedule" id="schedule"
+                 th:if="${showtimeDays != null and !#lists.isEmpty(showtimeDays)}">
+            <h2 th:text="#{movie.showtimes}">Chọn suất chiếu</h2>
+            <p class="movie-detail-age-note">
+                <span th:text="#{movie.note}">Lưu ý:</span>
+                <span th:text="#{movie.age_warning}"></span>
+            </p>
+            <div class="schedule-date-tabs" role="tablist">
+                <button type="button"
+                        th:each="day, dayStat : ${showtimeDays}"
+                        class="schedule-date-tab"
+                        th:classappend="${dayStat.first} ? ' active' : ''"
+                        th:attr="data-day-index=${dayStat.index}"
+                        role="tab"
+                        th:attrappend="aria-selected=${dayStat.first}">
+                    <span class="tab-month" th:text="${day.monthLabel}"></span>
+                    <span class="tab-day" th:text="${day.dayNumber}"></span>
+                    <span class="tab-weekday" th:text="${day.weekdayLabel}"></span>
+                </button>
+            </div>
+            <div th:each="day, dayStat : ${showtimeDays}"
+                 class="schedule-time-panel"
+                 th:classappend="${dayStat.first} ? ' active' : ''"
+                 th:attr="data-day-index=${dayStat.index}">
+                <div class="schedule-time-pills">
+                    <a th:each="s : ${day.slots}"
+                       th:href="@{/customer/showtimes/{id}/seats(id=${s.showtimeId})}"
+                       class="schedule-time-pill"
+                       th:classappend="${s.soldOut} ? ' sold-out' : ''">
+                        <span th:text="${#temporals.format(s.startTime, 'HH:mm')}"></span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <p th:if="${publishedAtCinema == false}"
+           class="movie-detail-empty" th:text="#{movie.not_at_cinema}">Phim chưa được đăng chiếu tại rạp.</p>
+        <p th:if="${publishedAtCinema and (showtimeDays == null or #lists.isEmpty(showtimeDays))}"
+           class="movie-detail-empty" th:text="#{movie.no_showtimes}"></p>
+
+        <section class="tmdb-strip tmdb-strip--cast" data-cast-section
+                 th:if="${d.cast != null and !d.cast.isEmpty()}"
+                 th:attr="data-cast-step=20,data-cast-count-template=${#messages.msg('movie.cast_showing', '__A__', '__B__')},data-cast-more-template=${#messages.msg('movie.cast_load_more', '__N__')}">
+            <div class="tmdb-strip__head">
+                <h2 class="tmdb-strip__title" th:text="#{movie.top_cast}">Top Cast</h2>
+                <p class="tmdb-strip__meta">
+                    <span data-cast-count-label
+                          th:text="#{movie.cast_showing(${T(java.lang.Math).min(20, #lists.size(d.cast))}, ${d.castTotalCount})}">20/27</span>
+                </p>
+            </div>
+            <div class="tmdb-strip__track movie-detail-cast-row">
+                <article class="movie-detail-cast-card"
+                         th:each="member, memberStat : ${d.cast}"
+                         data-cast-card
+                         th:classappend="${memberStat.index >= 20} ? ' is-collapsed' : ''">
+                    <img th:src="${member.profileUrl != null} ? ${member.profileUrl} : @{/assets/img/poster.jpg}"
+                         th:alt="${member.name}" loading="lazy"/>
+                    <p class="name" th:text="${member.name}"></p>
+                    <p class="role" th:text="${member.character != null and !#strings.isEmpty(member.character)} ? ${member.character} : '—'"></p>
+                    <a th:if="${member.personId != null}"
+                       class="cast-credit-link"
+                       th:href="|https://www.themoviedb.org/person/${member.personId}|"
+                       target="_blank" rel="noopener"
+                       th:text="#{movie.view_credit}">View credit</a>
+                </article>
+            </div>
+            <button type="button"
+                    class="tmdb-strip__more"
+                    data-cast-more
+                    th:if="${d.castTotalCount > 20}"
+                    th:text="#{movie.cast_load_more(${T(java.lang.Math).min(20, d.castTotalCount - 20)})}">Xem thêm</button>
+        </section>
+
+        <section class="tmdb-strip tmdb-strip--videos" th:if="${d.videoClips != null and !d.videoClips.isEmpty()}">
+            <div class="tmdb-strip__head">
+                <h2 class="tmdb-strip__title" th:text="#{movie.videos}">VIDEOS</h2>
+                <p class="tmdb-strip__meta" th:text="#{movie.video_count(${d.videoClipTotalCount})}">69 videos</p>
+            </div>
+            <div class="tmdb-strip__track tmdb-video-row">
+                <button type="button" class="tmdb-video-card" th:each="v : ${d.videoClips}"
+                        data-video-play
+                        th:attr="data-youtube-key=${v.youtubeKey},data-video-title=${v.name},data-watch-url=${v.watchUrl}">
+                    <div class="tmdb-video-card__thumb">
+                        <img th:src="${v.thumbUrl}" th:alt="${v.name}" loading="lazy"/>
+                        <span class="tmdb-video-card__play" aria-hidden="true"></span>
+                        <span class="tmdb-video-card__badges">
+                            <span class="vid-badge vid-badge--type"
+                                  th:if="${v.type != null}"
+                                  th:text="${v.type}"></span>
+                            <span class="vid-badge vid-badge--yt" th:text="#{movie.youtube}">YouTube</span>
+                        </span>
+                    </div>
+                    <p class="tmdb-video-card__name" th:text="${v.name}">Title</p>
+                    <p class="tmdb-video-card__date" th:if="${v.publishedAt != null}">
+                        <span th:text="#{movie.video_published}">Published</span>:
+                        <span th:text="${v.publishedAt}"></span>
+                    </p>
+                </button>
+            </div>
+        </section>
+
+        <section class="tmdb-strip tmdb-strip--images"
+                 th:if="${(d.backdropGalleryUrls != null and !d.backdropGalleryUrls.isEmpty())
+                     or (d.posterGalleryUrls != null and !d.posterGalleryUrls.isEmpty())
+                     or (d.logoGalleryUrls != null and !d.logoGalleryUrls.isEmpty())}">
+            <h2 class="tmdb-strip__title tmdb-strip__title--solo" th:text="#{movie.images}">IMAGES</h2>
+
+            <div class="tmdb-image-block" th:if="${d.backdropGalleryUrls != null and !d.backdropGalleryUrls.isEmpty()}">
+                <h3 class="tmdb-image-block__label" th:text="#{movie.image_backdrops}">Backdrops</h3>
+                <div class="tmdb-strip__track tmdb-image-row tmdb-image-row--backdrop">
+                    <img th:each="url : ${d.backdropGalleryUrls}" th:src="${url}" alt="" loading="lazy"/>
+                </div>
+            </div>
+            <div class="tmdb-image-block" th:if="${d.posterGalleryUrls != null and !d.posterGalleryUrls.isEmpty()}">
+                <h3 class="tmdb-image-block__label" th:text="#{movie.image_posters}">Posters</h3>
+                <div class="tmdb-strip__track tmdb-image-row tmdb-image-row--poster">
+                    <img th:each="url : ${d.posterGalleryUrls}" th:src="${url}" alt="" loading="lazy"/>
+                </div>
+            </div>
+            <div class="tmdb-image-block" th:if="${d.logoGalleryUrls != null and !d.logoGalleryUrls.isEmpty()}">
+                <h3 class="tmdb-image-block__label" th:text="#{movie.image_logos}">Logos</h3>
+                <div class="tmdb-strip__track tmdb-image-row tmdb-image-row--logo">
+                    <img th:each="url : ${d.logoGalleryUrls}" th:src="${url}" alt="" loading="lazy"/>
+                </div>
+            </div>
+        </section>
+
+        <section class="tmdb-strip tmdb-strip--movies tmdb-movie-carousel" th:if="${d.similarMovies != null and !d.similarMovies.isEmpty()}">
+            <div class="tmdb-strip__head tmdb-strip__head--nav">
+                <h2 class="tmdb-strip__title" th:text="#{movie.similar}">Similar</h2>
+                <div class="tmdb-row-nav" role="group" th:attr="aria-label=#{movie.similar}">
+                    <button type="button" class="tmdb-row-nav__btn" data-scroll="prev"
+                            th:attr="aria-label=#{movie.carousel_prev}">&lt;</button>
+                    <button type="button" class="tmdb-row-nav__btn" data-scroll="next"
+                            th:attr="aria-label=#{movie.carousel_next}">&gt;</button>
+                </div>
+            </div>
+            <div class="tmdb-strip__track tmdb-movie-row" data-row-scroll>
+                <a class="tmdb-movie-card" th:each="m : ${d.similarMovies}"
+                   th:href="@{/customer/movies/{id}(id=${m.tmdbId})}">
+                    <div class="tmdb-movie-card__poster-wrap">
+                        <img th:src="${m.posterUrl != null} ? ${m.posterUrl} : @{/assets/img/poster.jpg}"
+                             th:alt="${m.title}" loading="lazy"/>
+                    </div>
+                    <p class="tmdb-movie-card__title" th:text="${m.title}">Title</p>
+                    <p class="tmdb-movie-card__date" th:if="${m.releaseDate != null}" th:text="${m.releaseDate}"></p>
+                    <p class="tmdb-movie-card__rating" th:if="${m.voteAverage != null}">
+                        <span th:text="#{movie.rating_short}">Rating</span>:
+                        <span th:text="${#numbers.formatDecimal(m.voteAverage, 1, 1)}"></span>
+                    </p>
+                </a>
+            </div>
+        </section>
+
+        <section class="tmdb-strip tmdb-strip--movies tmdb-movie-carousel" th:if="${d.recommendedMovies != null and !d.recommendedMovies.isEmpty()}">
+            <div class="tmdb-strip__head tmdb-strip__head--nav">
+                <h2 class="tmdb-strip__title" th:text="#{movie.recommended}">Recommended</h2>
+                <div class="tmdb-row-nav" role="group" th:attr="aria-label=#{movie.recommended}">
+                    <button type="button" class="tmdb-row-nav__btn" data-scroll="prev"
+                            th:attr="aria-label=#{movie.carousel_prev}">&lt;</button>
+                    <button type="button" class="tmdb-row-nav__btn" data-scroll="next"
+                            th:attr="aria-label=#{movie.carousel_next}">&gt;</button>
+                </div>
+            </div>
+            <div class="tmdb-strip__track tmdb-movie-row" data-row-scroll>
+                <a class="tmdb-movie-card" th:each="m : ${d.recommendedMovies}"
+                   th:href="@{/customer/movies/{id}(id=${m.tmdbId})}">
+                    <div class="tmdb-movie-card__poster-wrap">
+                        <img th:src="${m.posterUrl != null} ? ${m.posterUrl} : @{/assets/img/poster.jpg}"
+                             th:alt="${m.title}" loading="lazy"/>
+                    </div>
+                    <p class="tmdb-movie-card__title" th:text="${m.title}">Title</p>
+                    <p class="tmdb-movie-card__date" th:if="${m.releaseDate != null}" th:text="${m.releaseDate}"></p>
+                    <p class="tmdb-movie-card__rating" th:if="${m.voteAverage != null}">
+                        <span th:text="#{movie.rating_short}">Rating</span>:
+                        <span th:text="${#numbers.formatDecimal(m.voteAverage, 1, 1)}"></span>
+                    </p>
+                </a>
+            </div>
+        </section>
+
+    </div>
+</th:block>
+
+<div th:if="${catalogDetail == null}" class="movie-detail-body">
+    <p class="movie-detail-empty" th:text="#{movie.load_failed}">Không tải được thông tin phim.</p>
+    <a th:href="@{/customer/home}" class="btn-play-trailer" style="display:inline-block;margin-top:16px;"
+       th:text="#{common.back}">Quay lại</a>
+</div>
+
+<div id="movieVideoModal" class="movie-video-modal" hidden aria-hidden="true">
+    <div class="movie-video-modal__backdrop" data-video-modal-close tabindex="-1"></div>
+    <div class="movie-video-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="movieVideoModalTitle">
+        <button type="button" class="movie-video-modal__close" data-video-modal-close
+                th:attr="aria-label=#{common.close}">&times;</button>
+        <h3 id="movieVideoModalTitle" class="movie-video-modal__title"></h3>
+        <div class="movie-video-modal__player">
+            <iframe id="movieVideoModalIframe" class="movie-video-modal__iframe"
+                    title="Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen></iframe>
+        </div>
+        <a id="movieVideoModalYoutube" class="movie-video-modal__youtube" href="#" target="_blank" rel="noopener"
+           th:text="#{movie.trailer_youtube}">Xem trên YouTube</a>
+    </div>
+</div>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+<script th:src="@{/js/movie-detail-schedule.js}" defer></script>
+<script th:src="@{/js/movie-detail-tmdb.js}" defer></script>
+</body>
+</html>

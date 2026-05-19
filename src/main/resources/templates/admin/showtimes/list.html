@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Lịch chiếu')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('showtimes')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-semibold">Quản lý lịch chiếu</h1>
+            <a th:href="@{/admin/showtimes/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-plus mr-1"></i> Tạo suất chiếu
+            </a>
+        </div>
+        <div class="p-6">
+            <p th:if="${successMessage}" class="mb-4 p-3 rounded bg-green-100 text-green-800" th:text="${successMessage}"></p>
+            <div class="bg-white rounded-lg shadow overflow-x-auto">
+                <table class="min-w-full text-sm divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Phim</th>
+                        <th class="px-4 py-3 text-left">Phòng</th>
+                        <th class="px-4 py-3 text-left">Bắt đầu</th>
+                        <th class="px-4 py-3 text-left">Giá</th>
+                        <th class="px-4 py-3 text-left">Trạng thái</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                    <tr th:each="s : ${showtimes}" class="hover:bg-gray-50">
+                        <td class="px-4 py-3" th:text="${s.movie.title}"></td>
+                        <td class="px-4 py-3" th:text="${s.room.roomName}"></td>
+                        <td class="px-4 py-3" th:text="${#temporals.format(s.startTime, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td class="px-4 py-3" th:text="${s.basePrice} + 'đ'"></td>
+                        <td class="px-4 py-3" th:text="${s.status}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

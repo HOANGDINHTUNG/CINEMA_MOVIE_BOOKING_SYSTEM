@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head('Thông báo')}"></th:block>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<div class="customer-page error-page">
+    <h1>Không thể thực hiện</h1>
+    <p th:text="${message}">Đã xảy ra lỗi nghiệp vụ.</p>
+    <a th:href="@{/customer/home}" class="btn btn-danger me-2">Về trang chủ</a>
+    <a href="javascript:history.back()" class="btn btn-outline-light">Quay lại</a>
+</div>
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

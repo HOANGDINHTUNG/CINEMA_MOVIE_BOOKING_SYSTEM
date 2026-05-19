@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Tra cứu vé')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/staff/sidebar :: sidebar('lookup')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 sticky top-0 z-10">
+            <h1 class="text-xl font-semibold text-gray-800">Tra cứu vé / đơn</h1>
+        </div>
+        <div class="p-6 max-w-lg">
+            <p th:if="${errorMessage}" class="mb-4 p-3 rounded bg-red-100 text-red-800" th:text="${errorMessage}"></p>
+            <form method="post" th:action="@{/staff/lookup}" class="bg-white rounded-lg shadow p-6 space-y-4">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mã đơn (booking ID)</label>
+                    <input type="number" name="bookingId" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <div class="text-center text-gray-400 text-sm">hoặc</div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mã vé (ticket code)</label>
+                    <input type="text" name="ticketCode" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg font-medium">Tìm kiếm</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

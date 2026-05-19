@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{checkout.page_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/payment.css}"/>
+</head>
+<body class="customer-site" data-guide-page="checkout"
+      th:attr="data-msg-checkout-confirm=#{checkout.confirm_mode},
+               data-msg-checkout-online=#{checkout.mode_online},
+               data-msg-checkout-counter=#{checkout.mode_counter}">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<div class="payment-page">
+    <div th:replace="~{fragments/customer/booking-steps :: steps(2)}"></div>
+    <div class="checkout-actions-top">
+        <a th:href="@{/customer/showtimes/{id}/seats(id=${seatMap.showtimeId})}" class="btn btn-sm btn-outline-light"
+           th:text="'← ' + #{checkout.change_seats}">← Đổi ghế</a>
+    </div>
+    <p class="payment-tips" th:text="#{checkout.hint}"></p>
+    <p th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></p>
+
+    <form id="checkoutForm" th:action="@{/customer/checkout}" th:object="${checkoutRequest}" method="post"
+          th:attr="data-estimated-total=${estimatedTotal}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <input type="hidden" th:field="*{showtimeId}"/>
+        <input type="hidden" th:each="sid : ${seatIds}" name="seatIds" th:value="${sid}"/>
+
+        <div class="payment-main">
+            <div class="movie-info">
+                <h2 class="section-title" th:text="#{checkout.movie_info}">Thông tin phim</h2>
+                <div class="info-label" th:text="#{checkout.movie}">Phim</div>
+                <div class="info-value bold" th:text="${seatMap.movieTitle}"></div>
+                <br/>
+                <div class="movie-info-columns">
+                    <div class="left-column">
+                        <div class="info-label" th:text="#{checkout.datetime}">Ngày giờ chiếu</div>
+                        <div class="info-value">
+                            <span class="highlight" th:text="${#temporals.format(seatMap.startTime, 'HH:mm')}"></span>
+                            <span th:text="' - ' + ${#temporals.format(seatMap.startTime, 'dd/MM/yyyy')}"></span>
+                        </div>
+                        <br/>
+                        <div class="info-label" th:text="#{checkout.room}">Phòng chiếu</div>
+                        <div class="info-value bold" th:text="${seatMap.roomName}"></div>
+                    </div>
+                    <div class="right-column">
+                        <div class="info-label" th:text="#{checkout.seats}">Ghế</div>
+                        <div class="info-value bold" th:text="${#strings.listJoin(seatLabels, ', ')}"></div>
+                    </div>
+                </div>
+                <div class="checkout-summary mt-3" th:if="${estimatedTotal != null}">
+                    <div class="info-label" th:text="#{checkout.ticket_subtotal}">Tạm tính (vé)</div>
+                    <div class="info-value bold highlight"
+                         th:text="${#numbers.formatDecimal(estimatedTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                    <p class="checkout-hint" th:text="#{checkout.combo_note}"></p>
+                </div>
+            </div>
+
+            <div class="ticket-details" th:if="${combos != null && !combos.isEmpty()}">
+                <h2 class="section-title" th:text="#{checkout.combo_title}">Combo bắp nước (tùy chọn)</h2>
+                <table class="ticket-table">
+                    <thead>
+                    <tr>
+                        <th th:text="#{checkout.combo}">Combo</th>
+                        <th th:text="#{checkout.price}">Giá</th>
+                        <th th:text="#{checkout.quantity}">Số lượng</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="c : ${combos}">
+                        <td th:text="${c.name}"></td>
+                        <td th:text="${c.price} + 'đ'"></td>
+                        <td>
+                            <input type="number" th:name="'combo_' + ${c.comboId}" min="0" value="0"
+                                   class="form-control" style="max-width:100px"
+                                   th:attr="data-price=${c.price}"/>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="payment-info info">
+            <h2 class="section-title" th:text="#{checkout.payment_title}">Phương thức thanh toán</h2>
+            <p class="mb-3">
+                <span th:text="#{checkout.estimated_total}">Tổng dự kiến:</span>
+                <span class="checkout-live-total" id="checkoutLiveTotal"
+                      th:text="${#numbers.formatDecimal(estimatedTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+            </p>
+            <div class="payment-method">
+                <input type="radio" th:field="*{paymentMode}" value="ONLINE" id="online"/>
+                <label for="online">
+                    <span class="radio-icon"></span>
+                    <img th:src="@{/assets/icon/vnpay 1.svg}" alt="Online" style="height:28px"/>
+                    <span th:text="#{checkout.pay_online}">Thanh toán ngay (Online)</span>
+                </label>
+            </div>
+            <div class="payment-method">
+                <input type="radio" th:field="*{paymentMode}" value="COUNTER" id="counter"/>
+                <label for="counter">
+                    <span class="radio-icon"></span>
+                    <span th:text="#{checkout.pay_counter}">Thanh toán tại quầy (giữ ghế 15 phút)</span>
+                </label>
+            </div>
+            <br/>
+            <button type="submit" class="btn btn-danger" th:text="#{checkout.confirm}">Xác nhận đặt vé</button>
+        </div>
+    </form>
+</div>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Tổng quan')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('dashboard')}"></div>
+    <div class="ml-64 flex-1 p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Tổng quan hệ thống</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a th:href="@{/admin/movies}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+                <i class="fas fa-film text-3xl text-primary mb-3"></i>
+                <h2 class="font-semibold text-gray-800">Quản lý phim</h2>
+                <p class="text-sm text-gray-500 mt-1">Thêm, sửa, vô hiệu hóa phim</p>
+            </a>
+            <a th:href="@{/admin/showtimes}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+                <i class="fas fa-calendar-alt text-3xl text-primary mb-3"></i>
+                <h2 class="font-semibold text-gray-800">Lịch chiếu</h2>
+                <p class="text-sm text-gray-500 mt-1">Tạo suất chiếu, quản lý phòng</p>
+            </a>
+            <a th:href="@{/admin/reports}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+                <i class="fas fa-chart-line text-3xl text-primary mb-3"></i>
+                <h2 class="font-semibold text-gray-800">Báo cáo</h2>
+                <p class="text-sm text-gray-500 mt-1">Doanh thu theo tháng / top phim</p>
+            </a>
+            <a th:href="@{/admin/profile}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+                <i class="fas fa-user text-3xl text-primary mb-3"></i>
+                <h2 class="font-semibold text-gray-800">Hồ sơ</h2>
+                <p class="text-sm text-gray-500 mt-1">Cập nhật thông tin admin</p>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,136 @@
+/* Responsive — trang chủ & catalog (không Swiper mockup cũ) */
+
+@media (min-width: 769px) {
+    .body {
+        margin-top: 24px;
+    }
+
+    .main-wrapper {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 256px;
+        grid-template-areas: "content sidebar";
+        gap: 28px;
+    }
+
+    .main-wrapper > .main-content {
+        grid-area: content;
+        grid-column: 1;
+    }
+
+    .main-wrapper > .sidebar {
+        grid-area: sidebar;
+        grid-column: 2;
+    }
+
+    .parent {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .film-card {
+        max-width: 229px;
+    }
+
+    .sidebar .description {
+        display: none;
+    }
+}
+
+@media (min-width: 391px) and (max-width: 768px) {
+    .body {
+        margin: 0 24px;
+    }
+
+    .main-wrapper {
+        display: block;
+        width: 100%;
+        padding: 0 24px;
+        box-sizing: border-box;
+    }
+
+    .main-content,
+    .sidebar {
+        width: 100%;
+    }
+
+    .sidebar {
+        margin-top: 32px;
+    }
+
+    .parent {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .film-card > .description {
+        display: none;
+    }
+
+    .hero-title {
+        font-size: 1.75rem;
+    }
+
+    .hero-original {
+        font-size: 0.85rem;
+    }
+
+    .hero-overview {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        max-width: 100%;
+    }
+
+    .hero-slide-content {
+        bottom: clamp(24px, 6%, 48px);
+        left: 20px;
+        max-width: min(92vw, 480px);
+    }
+}
+
+@media (max-width: 390px) {
+    .body {
+        margin: 0 16px;
+    }
+
+    .main-wrapper {
+        display: block;
+        width: 100%;
+        padding: 0 16px;
+        box-sizing: border-box;
+    }
+
+    .sidebar {
+        margin-top: 32px;
+    }
+
+    .parent {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .film-card {
+        width: 100%;
+        max-width: 220px;
+        justify-self: center;
+    }
+
+    .film-card .description {
+        display: none;
+    }
+
+    .film-card .image-wrapper {
+        height: 310px;
+    }
+
+    .promotion .box,
+    .event .box {
+        width: 100%;
+        max-width: 220px;
+    }
+
+    .promotion .box img,
+    .event .box img {
+        width: 100%;
+        height: auto;
+        max-height: 140px;
+    }
+}

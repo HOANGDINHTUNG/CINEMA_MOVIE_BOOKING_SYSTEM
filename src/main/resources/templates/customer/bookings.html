@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{bookings.page_title})}"></th:block>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<div class="customer-page">
+    <h1 class="section-title" th:text="#{bookings.history_title}">Lịch sử đặt vé</h1>
+    <p th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></p>
+    <p th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></p>
+
+    <div class="table-responsive-wrap" th:if="${!#lists.isEmpty(bookings)}">
+    <table class="ticket-table">
+        <thead>
+        <tr>
+            <th th:text="#{bookings.col.id}">Mã đơn</th>
+            <th th:text="#{bookings.col.movie}">Phim</th>
+            <th th:text="#{bookings.col.showtime}">Suất chiếu</th>
+            <th th:text="#{bookings.col.seats}">Ghế</th>
+            <th th:text="#{bookings.col.total}">Tổng tiền</th>
+            <th th:text="#{bookings.col.status}">Trạng thái</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="b : ${bookings}">
+            <td th:text="${b.bookingId}"></td>
+            <td th:text="${b.movieTitle}"></td>
+            <td th:text="${#temporals.format(b.showtimeStart, 'dd/MM HH:mm')}"></td>
+            <td th:text="${#strings.listJoin(b.seatLabels, ', ')}"></td>
+            <td th:text="${b.totalAmount} + ' đ'"></td>
+            <td>
+                <span th:switch="${b.status.name()}">
+                    <span th:case="'PAID'" class="status-badge status-paid" th:text="#{booking.status.paid}">Đã thanh toán</span>
+                    <span th:case="'PENDING'" class="status-badge status-pending" th:text="#{booking.status.pending}">Chờ thanh toán</span>
+                    <span th:case="'CANCELLED'" class="status-badge status-cancelled" th:text="#{booking.status.cancelled}">Đã hủy</span>
+                    <span th:case="*" class="status-badge" th:text="${b.status}"></span>
+                </span>
+            </td>
+            <td>
+                <a th:href="@{/customer/bookings/{id}(id=${b.bookingId})}" class="btn btn-sm btn-outline-light" th:text="#{bookings.detail}">Chi tiết</a>
+                <form th:if="${b.cancellable}" th:action="@{/customer/bookings/{id}/cancel(id=${b.bookingId})}" method="post" style="display:inline">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-sm btn-danger" th:text="#{booking.cancel}">Hủy vé</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+    <div class="empty-state-card" th:if="${#lists.isEmpty(bookings)}">
+        <p th:text="#{bookings.empty}"></p>
+        <a th:href="@{/customer/home}" class="btn btn-danger me-2" th:text="#{booking.browse_movies}">Xem phim</a>
+        <a th:href="@{/customer/calendar}" class="btn btn-outline-light" th:text="#{nav.calendar}">Lịch chiếu</a>
+    </div>
+</div>
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

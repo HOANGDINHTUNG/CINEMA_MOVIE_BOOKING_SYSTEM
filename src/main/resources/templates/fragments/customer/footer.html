@@ -1,0 +1,42 @@
+<footer th:fragment="footer" class="main-footer" xmlns:th="http://www.thymeleaf.org">
+    <div class="footer-nav">
+        <a href="https://chieuphimquocgia.com.vn/policy" target="_blank" rel="noopener" th:text="#{footer.policy}">Chính sách</a>
+        <a th:href="@{/customer/calendar}" th:text="#{footer.showtimes}">Lịch chiếu</a>
+        <a th:href="@{/customer/bookings}" th:text="#{footer.my_tickets}">Vé của tôi</a>
+        <a href="https://chieuphimquocgia.com.vn/faqs" target="_blank" rel="noopener" th:text="#{footer.faq}">Hỏi đáp</a>
+        <a href="https://chieuphimquocgia.com.vn/contact" target="_blank" rel="noopener" th:text="#{footer.contact}">Liên hệ</a>
+    </div>
+
+    <div class="footer-icons">
+        <div class="footer-icons-top">
+            <a href="https://www.facebook.com/chieuphimquocgiavn/" target="_blank" rel="noopener">
+                <img th:src="@{/assets/img/Facebook.png}" alt="Facebook"/>
+            </a>
+            <a href="https://oa.zalo.me/ttcpqg" target="_blank" rel="noopener">
+                <img th:src="@{/assets/img/Zalo.png}" alt="Zalo"/>
+            </a>
+            <a href="https://www.youtube.com/@TrungtamChieuphimQuocgiaNCC" target="_blank" rel="noopener">
+                <img th:src="@{/assets/img/Youtube.png}" alt="YouTube"/>
+            </a>
+        </div>
+        <div class="footer-icons-bottom">
+            <a href="https://play.google.com/store/apps/details?id=vn.com.chieuphimquocgia.app" target="_blank" rel="noopener">
+                <img th:src="@{/assets/img/GG Play.png}" alt="Google Play"/>
+            </a>
+            <a href="https://apps.apple.com/vn/app/chi%E1%BA%BFu-phim-qu%E1%BB%91c-gia-ncc/id6446946150" target="_blank" rel="noopener">
+                <img th:src="@{/assets/img/App store.png}" alt="App Store"/>
+            </a>
+            <a href="http://online.gov.vn/Home/WebDetails/4519" target="_blank" rel="noopener">
+                <img th:src="@{/assets/img/Copyright.png}" alt=""/>
+            </a>
+        </div>
+    </div>
+
+    <div class="footer-info">
+        <p><span th:text="#{footer.owner}">Cơ quan chủ quản:</span> <strong th:text="#{footer.owner.name}"></strong></p>
+        <p th:text="#{footer.copyright}"></p>
+        <p><span th:text="#{footer.license}"></span> <strong th:text="#{footer.director}"></strong></p>
+        <p th:text="#{footer.address}"></p>
+        <p th:text="#{footer.rights}"></p>
+    </div>
+</footer>

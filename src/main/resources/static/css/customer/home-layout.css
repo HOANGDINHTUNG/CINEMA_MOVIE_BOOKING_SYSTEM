@@ -1,0 +1,231 @@
+/* Montserrat Variable Font - Regular */
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../../assets/fonts/Montserrat/Montserrat-VariableFont_wght.ttf') format('truetype');
+    /* hỗ trợ weight từ 100 đến 900 */
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Montserrat Variable Font - Italic */
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../../assets/fonts/Montserrat/Montserrat-Italic-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    background-color: #10141b;
+    color: white;
+
+}
+
+h1 {
+    font-weight: 700;
+    font-size: 20px;
+    color: white;
+    font-style: normal;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sidebar .top-bar .btn {
+    font-size: 12px;
+    padding: 4px 10px;
+    white-space: nowrap;
+}
+
+.top-bar>button {
+    text-decoration: underline;
+}
+
+button {
+    background: none;
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    line-height: 24px;
+}
+
+.parent {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+}
+.main-wrapper {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 256px;
+    grid-template-areas: "content sidebar";
+    gap: 28px;
+    max-width: 1308px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.main-wrapper > .main-content {
+    grid-area: content;
+    grid-column: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.main-wrapper > .sidebar {
+    grid-area: sidebar;
+    grid-column: 2;
+    align-self: start;
+}
+
+a {
+    text-decoration: none !important;
+}
+.film-card {
+    width: 229px;
+    min-height: 378px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.film-card .image-wrapper {
+    width: 100%;
+    height: 290px;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex ;
+    justify-content: center;
+}
+
+.film-card .image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    border-radius: 12px;
+
+
+}
+
+.film-card .image-wrapper img:hover {
+    transform: scale(1.1);
+}
+
+.category {
+    margin-right: 20px;
+    font-size: 14px;
+}
+
+.description {
+    display: flex;
+    flex-wrap: wrap;              /* ✅ Cho phép xuống dòng */
+    margin:10px 0;
+    font-size: 14px;
+    color: #5D6A81;
+    word-break: break-word;       /* ✅ Nếu từ quá dài */
+    max-width: 100%;              /* ✅ Không tràn khung cha */
+}
+
+.description > div {
+    white-space: nowrap;          /* ✅ Tránh từ bị chia đôi ngang */
+}
+
+.film-card>.film-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    display: block;
+    height: 24px;
+    line-height: 22px; word-wrap: break-word;     /* ✅ tự ngắt từ nếu quá dài */
+    overflow-wrap: break-word; /* ✅ tương thích rộng hơn */
+    white-space: normal;
+    height: auto;  /* ✅ cho phép xuống dòng */
+}
+
+.container {
+    margin: auto;
+    padding: 0;
+}
+.promotion,.event{
+    margin-top:23px;
+}
+
+.promotion>img,
+.event>img {
+    width: 256px;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin: 18px 0;
+}
+
+.top-bar>h1 {
+    margin: 0;
+}
+
+.main-content h1::before {
+    content: "\2022\00A0";
+    color: red;
+    font-size: 2em;
+}
+
+.top-bar p {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 700;
+}
+
+.button {
+    margin-top: 23px;
+}
+
+.bar {
+    align-items: center;
+}
+
+.parent.currFilm .film-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.home-load-more-wrap {
+    text-align: center;
+    margin: 16px 0 8px;
+}
+
+.home-section-status {
+    color: #9aa5b5;
+    font-size: 0.9rem;
+    margin: 0 0 12px;
+}
+/* ===== Ngăn cuộn ngang khi vuốt hoặc trượt ===== */
+.card-container {
+    overflow-x: hidden;
+}
+.box img {
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.box img:hover {
+    transform: scale(1.1);
+    z-index: 10;
+    position: relative;
+}

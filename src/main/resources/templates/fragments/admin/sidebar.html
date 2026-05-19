@@ -1,0 +1,46 @@
+<aside th:fragment="sidebar(active)" xmlns:th="http://www.thymeleaf.org"
+       class="sidebar bg-white w-64 shadow-lg fixed h-full z-20">
+    <div class="p-4 flex items-center justify-center border-b border-gray-200">
+        <img th:src="@{/assets/img/image.png}" alt="Logo" class="h-10"/>
+        <span class="ml-2 text-xl font-bold text-gray-800">Admin Panel</span>
+    </div>
+    <nav class="py-4">
+        <a th:href="@{/admin/dashboard}"
+           th:classappend="${active == 'dashboard'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-tachometer-alt w-5"></i>
+            <span class="mx-3">Tổng quan</span>
+        </a>
+        <a th:href="@{/admin/movies}"
+           th:classappend="${active == 'movies'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-film w-5"></i>
+            <span class="mx-3">Quản lý phim</span>
+        </a>
+        <a th:href="@{/admin/showtimes}"
+           th:classappend="${active == 'showtimes'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-calendar-alt w-5"></i>
+            <span class="mx-3">Lịch chiếu</span>
+        </a>
+        <a th:href="@{/admin/reports}"
+           th:classappend="${active == 'reports'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-chart-line w-5"></i>
+            <span class="mx-3">Báo cáo</span>
+        </a>
+        <a th:href="@{/admin/profile}"
+           th:classappend="${active == 'profile'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-user w-5"></i>
+            <span class="mx-3">Hồ sơ</span>
+        </a>
+        <form th:action="@{/logout}" method="post" class="px-6 pt-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="w-full text-left sidebar-link flex items-center py-3 text-gray-700">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span class="mx-3">Đăng xuất</span>
+            </button>
+        </form>
+    </nav>
+</aside>

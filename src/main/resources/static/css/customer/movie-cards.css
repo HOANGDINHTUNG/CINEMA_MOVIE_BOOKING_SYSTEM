@@ -1,0 +1,110 @@
+.tmdb-movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 24px;
+}
+
+.tmdb-movie-card {
+    border-radius: 14px;
+    background: var(--theme-surface, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.12));
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tmdb-movie-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.tmdb-movie-card__link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    padding: 10px;
+}
+
+.tmdb-movie-card__poster {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #1a1f28;
+}
+
+.tmdb-movie-card__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.tmdb-movie-card:hover .tmdb-movie-card__poster img {
+    transform: scale(1.06);
+}
+
+.tmdb-movie-card__rating {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #f5c518;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.tmdb-movie-card__rating::before {
+    content: "★ ";
+}
+
+.tmdb-movie-card__badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: #c62828;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.tmdb-movie-card__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--theme-text, #fff);
+    margin: 10px 0 4px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.tmdb-movie-card__meta {
+    font-size: 0.72rem;
+    color: var(--theme-muted, #9aa5b5);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.tmdb-movie-card__overview {
+    font-size: 0.75rem;
+    color: var(--theme-muted, #7d8a9a);
+    margin: 6px 0 0;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.tmdb-movie-card__showtime {
+    font-size: 0.72rem;
+    color: #c9a227;
+    margin: 6px 0 0;
+    font-weight: 600;
+}

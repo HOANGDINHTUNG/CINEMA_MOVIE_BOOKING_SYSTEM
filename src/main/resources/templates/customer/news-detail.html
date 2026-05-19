@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(${article.title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/news.css}"/>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+
+<div class="ncc-content-page customer-page article-detail">
+    <a th:href="@{/customer/news}" class="back-link">&larr; Quay lại tin tức</a>
+    <h1 class="title" th:text="${article.title}"></h1>
+    <p class="date" th:text="${article.date}"></p>
+    <img th:if="${article.thumbnailUrl != null}" class="hero-img"
+         th:src="@{${article.thumbnailUrl}}" th:alt="${article.title}"/>
+    <div class="article-body" th:utext="${article.contentHtml}"></div>
+    <div th:if="${!#lists.isEmpty(article.imageUrls)}" class="article-gallery">
+        <img th:each="img : ${article.imageUrls}" th:src="@{${img}}" alt=""/>
+    </div>
+</div>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

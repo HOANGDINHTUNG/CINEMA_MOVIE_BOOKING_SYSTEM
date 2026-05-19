@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head('Không có quyền')}"></th:block>
+</head>
+<body class="customer-site">
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<div class="customer-page error-page">
+    <h1>403 — Không có quyền truy cập</h1>
+    <p>Bạn không có quyền xem trang này. Vui lòng đăng nhập bằng tài khoản phù hợp.</p>
+    <a th:href="@{/login}" class="btn btn-danger">Đăng nhập</a>
+</div>
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

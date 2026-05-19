@@ -1,0 +1,17 @@
+<nav th:fragment="steps(current)" class="booking-steps" xmlns:th="http://www.thymeleaf.org"
+     th:attr="aria-label=#{booking.steps_aria}">
+    <div class="booking-step" th:classappend="${current >= 1} ? ' active' : ''">
+        <span class="step-num">1</span>
+        <span class="step-label" th:text="#{booking.step.choose_seats}">Chọn ghế</span>
+    </div>
+    <div class="booking-step-connector" th:classappend="${current >= 2} ? ' done' : ''"></div>
+    <div class="booking-step" th:classappend="${current >= 2} ? ' active' : ''">
+        <span class="step-num">2</span>
+        <span class="step-label" th:text="#{booking.step.payment}">Thanh toán</span>
+    </div>
+    <div class="booking-step-connector" th:classappend="${current >= 3} ? ' done' : ''"></div>
+    <div class="booking-step" th:classappend="${current >= 3} ? ' active' : ''">
+        <span class="step-num">3</span>
+        <span class="step-label" th:text="#{booking.step.done}">Hoàn tất</span>
+    </div>
+</nav>
