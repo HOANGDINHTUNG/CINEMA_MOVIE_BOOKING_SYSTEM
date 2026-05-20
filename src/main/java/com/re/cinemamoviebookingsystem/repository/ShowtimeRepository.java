@@ -2,6 +2,7 @@ package com.re.cinemamoviebookingsystem.repository;
 
 import com.re.cinemamoviebookingsystem.entity.Showtime;
 import com.re.cinemamoviebookingsystem.enums.ShowtimeStatus;
+import com.re.cinemamoviebookingsystem.repository.projection.MovieShowtimeStatsRow;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,6 +36,20 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             """)
     List<Showtime> findUpcoming(@Param("now") LocalDateTime now,
                                 @Param("statuses") List<ShowtimeStatus> statuses);
+
+    @Query("""
+            SELECT s FROM Showtime s
+            JOIN FETCH s.movie m
+            JOIN FETCH s.room r
+            WHERE s.status IN :statuses
+            AND m.status = com.re.cinemamoviebookingsystem.enums.MovieStatus.ACTIVE
+            AND s.startTime >= :from
+            AND s.startTime < :to
+            ORDER BY s.startTime ASC
+            """)
+    List<Showtime> findScheduleWindow(@Param("from") LocalDateTime from,
+                                      @Param("to") LocalDateTime to,
+                                      @Param("statuses") List<ShowtimeStatus> statuses);
 
     @Query("""
             SELECT s FROM Showtime s
@@ -118,4 +133,20 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             """)
     List<Showtime> findUpcomingWithoutSeatRows(@Param("now") LocalDateTime now,
                                                @Param("statuses") List<ShowtimeStatus> statuses);
+
+    @Query("""
+            SELECT m.movieId AS movieId,
+                   COUNT(s) AS totalCount,
+                   SUM(CASE WHEN s.startTime > :now AND s.status IN :upcomingStatuses THEN 1 ELSE 0 END) AS upcomingCount,
+                   MIN(CASE WHEN s.startTime > :now AND s.status IN :upcomingStatuses THEN s.startTime ELSE NULL END) AS nextStartTime,
+                   MAX(s.startTime) AS lastStartTime
+            FROM Showtime s
+            JOIN s.movie m
+            WHERE m.movieId IN :movieIds
+            AND s.status <> com.re.cinemamoviebookingsystem.enums.ShowtimeStatus.CANCELLED
+            GROUP BY m.movieId
+            """)
+    List<MovieShowtimeStatsRow> findShowtimeStatsByMovieIds(@Param("movieIds") List<Long> movieIds,
+                                                            @Param("now") LocalDateTime now,
+                                                            @Param("upcomingStatuses") List<ShowtimeStatus> upcomingStatuses);
 }

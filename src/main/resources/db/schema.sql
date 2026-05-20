@@ -33,6 +33,7 @@ CREATE TABLE user_profiles (
     user_id BIGINT NOT NULL UNIQUE,
     full_name VARCHAR(100) NOT NULL,
     phone_number VARCHAR(15) NULL,
+    avatar_url VARCHAR(512) NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

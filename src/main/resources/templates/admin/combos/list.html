@@ -2,20 +2,34 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:replace="~{fragments/admin/head :: head('Combo')}"></th:block>
+    <style>
+        .combo-icon-cell { width: 3.5rem; }
+        .combo-icon {
+            width: 2.75rem; height: 2.75rem; border-radius: .75rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; font-size: 1.1rem;
+        }
+        .combo-icon--inactive { background: #f3f4f6; color: #6b7280; }
+    </style>
 </head>
 <body class="bg-gray-100">
 <div class="flex min-h-screen">
     <div th:replace="~{fragments/admin/sidebar :: sidebar('combos')}"></div>
     <div class="ml-64 flex-1">
         <div class="bg-white shadow-sm p-4 flex justify-between items-center">
-            <h1 class="text-xl font-semibold">Combo bắp nước</h1>
-            <a th:href="@{/admin/combos/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Thêm combo</a>
+            <h1 class="text-xl font-semibold flex items-center gap-2">
+                <i class="fas fa-popcorn text-amber-600"></i> Combo bắp nước
+            </h1>
+            <a th:href="@{/admin/combos/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-plus mr-1"></i> Thêm combo
+            </a>
         </div>
         <div class="p-6">
             <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
             <table class="min-w-full bg-white rounded-lg shadow text-sm">
                 <thead class="bg-gray-50">
                 <tr>
+                    <th class="px-4 py-3 combo-icon-cell"></th>
                     <th class="px-4 py-3 text-left">ID</th>
                     <th class="px-4 py-3 text-left">Tên</th>
                     <th class="px-4 py-3 text-left">Giá</th>
@@ -25,12 +39,28 @@
                 </thead>
                 <tbody>
                 <tr th:each="c : ${combos}" class="border-t hover:bg-gray-50">
-                    <td class="px-4 py-3" th:text="${c.comboId}"></td>
-                    <td class="px-4 py-3 font-medium" th:text="${c.name}"></td>
+                    <td class="px-4 py-3 combo-icon-cell">
+                        <span th:classappend="${c.status == 'INACTIVE'} ? ' combo-icon--inactive' : ''"
+                              class="combo-icon"
+                              th:with="icon=${T(com.re.cinemamoviebookingsystem.util.ComboIconSupport).iconClass(c.name, c.description)}">
+                            <i th:class="'fas ' + ${icon}"></i>
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-500" th:text="${c.comboId}"></td>
+                    <td class="px-4 py-3">
+                        <div class="font-medium" th:text="${c.name}"></div>
+                        <div class="text-xs text-gray-500 line-clamp-1" th:if="${c.description != null}"
+                             th:text="${c.description}"></div>
+                    </td>
                     <td class="px-4 py-3" th:text="${#numbers.formatDecimal(c.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
-                    <td class="px-4 py-3" th:text="${c.status}"></td>
+                    <td class="px-4 py-3">
+                        <span th:classappend="${c.status == 'ACTIVE'} ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'"
+                              class="px-2 py-0.5 rounded text-xs" th:text="${c.status}"></span>
+                    </td>
                     <td class="px-4 py-3 text-right">
-                        <a th:href="@{/admin/combos/{id}/edit(id=${c.comboId})}" class="text-primary hover:underline">Sửa</a>
+                        <a th:href="@{/admin/combos/{id}/edit(id=${c.comboId})}" class="text-primary hover:underline">
+                            <i class="fas fa-edit mr-1"></i>Sửa
+                        </a>
                     </td>
                 </tr>
                 </tbody>

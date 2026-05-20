@@ -1,93 +1,179 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <th:block th:replace="~{fragments/admin/head :: head('Quản lý phim rạp')}"></th:block>
-</head>
-<body class="bg-gray-100">
-<div class="flex min-h-screen">
-    <div th:replace="~{fragments/admin/sidebar :: sidebar('movies')}"></div>
-    <div class="ml-64 flex-1">
-        <div class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
-            <h1 class="text-xl font-semibold text-gray-800">Phim đang / đã đăng tại rạp</h1>
-            <a th:href="@{/admin/movies/import}"
-               class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium">
-                <i class="fas fa-plus mr-1"></i> Đăng phim từ TMDB
-            </a>
-        </div>
-        <div class="p-6">
-            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
-            <form method="get" class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-end">
-                <input type="hidden" name="lang" th:value="${lang}"/>
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Trạng thái</label>
-                    <select name="status" class="border rounded px-3 py-2 text-sm">
-                        <option value="">Tất cả</option>
-                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
-                                th:selected="${statusFilter == s}"></option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Tìm (tên / TMDB ID)</label>
-                    <input type="text" name="q" th:value="${keyword}" class="border rounded px-3 py-2 text-sm w-48"/>
-                </div>
-                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Lọc</button>
-            </form>
-            <form id="bulkSyncForm" th:action="@{/admin/movies/bulk-sync-tmdb}" method="post" class="bg-white rounded-lg shadow overflow-hidden">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <input type="hidden" name="lang" th:value="${lang}"/>
-                <div class="px-4 py-2 border-b bg-gray-50 flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Chọn phim rồi sync runtime TMDB</span>
-                    <button type="submit" class="text-sm bg-blue-600 text-white px-3 py-1 rounded"
-                            onclick="return document.querySelectorAll('#bulkSyncForm input[type=checkbox]:checked').length > 0">
-                        Sync đã chọn
-                    </button>
-                </div>
-                <table class="min-w-full text-sm divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-3 py-3 w-8"></th>
-                        <th class="px-4 py-3 text-left text-gray-600">ID</th>
-                        <th class="px-4 py-3 text-left text-gray-600">TMDB</th>
-                        <th class="px-4 py-3 text-left text-gray-600">Tên</th>
-                        <th class="px-4 py-3 text-left text-gray-600">TG</th>
-                        <th class="px-4 py-3 text-left text-gray-600">TT</th>
-                        <th class="px-4 py-3 text-right text-gray-600">Thao tác</th>
-                    </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                    <tr th:each="m : ${movies.content}" class="hover:bg-gray-50">
-                        <td class="px-3 py-3"><input type="checkbox" name="movieIds" th:value="${m.movieId}"/></td>
-                        <td class="px-4 py-3" th:text="${m.movieId}"></td>
-                        <td class="px-4 py-3" th:text="${m.tmdbId}"></td>
-                        <td class="px-4 py-3 font-medium" th:text="${m.displayTitle}"></td>
-                        <td class="px-4 py-3" th:text="${m.duration} + 'p'"></td>
-                        <td class="px-4 py-3">
-                            <span th:classappend="${m.status.name() == 'ACTIVE'} ? 'bg-green-100 text-green-800' : 'bg-gray-200'"
-                                  class="px-2 py-1 rounded text-xs" th:text="${m.status}"></span>
-                        </td>
-                        <td class="px-4 py-3 text-right text-xs whitespace-nowrap">
-                            <a th:href="@{/admin/movies/{id}/showtimes(id=${m.movieId})}" class="text-blue-600 hover:underline mr-2">Suất</a>
-                            <a th:href="@{/admin/movies/{id}/edit(id=${m.movieId}, lang=${lang})}" class="text-primary hover:underline mr-2">Sửa</a>
-                            <form th:if="${m.status.name() == 'ACTIVE'}" th:action="@{/admin/movies/{id}/delete(id=${m.movieId})}" method="post" class="inline">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button type="submit" class="text-red-600 hover:underline" onclick="return confirm('Ẩn phim?')">Ẩn</button>
-                            </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </form>
-            <div class="mt-4 flex gap-2 text-sm" th:if="${movies.totalPages > 1}">
-                <a th:if="${movies.hasPrevious()}"
-                   th:href="@{/admin/movies(page=${movies.number - 1}, status=${statusFilter}, q=${keyword}, lang=${lang})}"
-                   class="px-3 py-1 border rounded bg-white">Trước</a>
-                <span th:text="'Trang ' + (${movies.number} + 1) + ' / ' + ${movies.totalPages}"></span>
-                <a th:if="${movies.hasNext()}"
-                   th:href="@{/admin/movies(page=${movies.number + 1}, status=${statusFilter}, q=${keyword}, lang=${lang})}"
-                   class="px-3 py-1 border rounded bg-white">Sau</a>
-            </div>
-        </div>
-    </div>
-</div>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Quản lý phim rạp')}"></th:block>
+</head>
+<body class="bg-gray-100 admin-movies-page"
+      th:attr="data-lang=${lang},data-keyword=${keyword},data-csrf-param=${_csrf.parameterName},data-csrf-token=${_csrf.token}">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('movies')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-semibold text-gray-800">Quản lý phim rạp</h1>
+            <a th:href="@{/admin/movies/import}"
+               class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium">
+                <i class="fas fa-cloud-download-alt mr-1"></i> Đăng phim từ TMDB
+            </a>
+        </div>
+        <div class="p-6">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+
+            <div class="admin-movies-notice mb-6" th:if="${hubView}">
+                <p class="text-sm text-gray-700 leading-relaxed">
+                    <strong>Phân loại theo lịch chiếu tại rạp</strong> (dữ liệu suất trong hệ thống),
+                    <em>không</em> trùng với TMDB <em>Now Playing</em> / <em>Upcoming</em>.
+                    TMDB <em>Upcoming</em> là phim sắp ra mắt toàn cầu; tại đây
+                    <strong>Đang đợi lịch chiếu</strong> là phim đã đăng rạp nhưng admin chưa tạo suất.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" th:if="${phaseCounts != null}">
+                <a th:href="|@{/admin/movies(lang=${lang}, q=${keyword})}#section-has-schedule|"
+                   class="movie-kpi bg-white rounded-lg border p-4 block">
+                    <div class="text-xs text-gray-500 uppercase tracking-wide">Đã có lịch chiếu</div>
+                    <div class="text-2xl font-bold text-green-700 mt-1" th:text="${phaseCounts.hasSchedule}">0</div>
+                </a>
+                <a th:href="|@{/admin/movies(lang=${lang}, q=${keyword})}#section-ended|"
+                   class="movie-kpi bg-white rounded-lg border p-4 block">
+                    <div class="text-xs text-gray-500 uppercase tracking-wide">Hết chiếu tại rạp</div>
+                    <div class="text-2xl font-bold text-gray-700 mt-1" th:text="${phaseCounts.ended}">0</div>
+                </a>
+                <a th:href="|@{/admin/movies(lang=${lang}, q=${keyword})}#section-waiting|"
+                   class="movie-kpi bg-white rounded-lg border p-4 block">
+                    <div class="text-xs text-gray-500 uppercase tracking-wide">Đang đợi lịch chiếu</div>
+                    <div class="text-2xl font-bold text-amber-600 mt-1" th:text="${phaseCounts.waitingSchedule}">0</div>
+                </a>
+                <a th:href="@{/admin/movies(phase='INACTIVE', status=${statusFilter}, q=${keyword}, lang=${lang})}"
+                   th:classappend="${phaseFilter?.name() == 'INACTIVE'} ? ' is-active' : ''"
+                   class="movie-kpi bg-white rounded-lg border p-4 block">
+                    <div class="text-xs text-gray-500 uppercase tracking-wide">Đã ẩn</div>
+                    <div class="text-2xl font-bold text-red-700 mt-1" th:text="${phaseCounts.inactive}">0</div>
+                </a>
+            </div>
+
+            <form method="get" th:action="@{/admin/movies}" class="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-3 items-end">
+                <input type="hidden" name="lang" th:value="${lang}"/>
+                <th:block th:if="${!hubView}">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Giai đoạn</label>
+                        <select name="phase" class="border rounded px-3 py-2 text-sm">
+                            <option value="">Tất cả giai đoạn</option>
+                            <option th:each="p : ${phases}" th:value="${p}" th:text="${p.labelVi}"
+                                    th:selected="${phaseFilter == p}"></option>
+                        </select>
+                    </div>
+                </th:block>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Tìm (tên / TMDB ID)</label>
+                    <input type="text" name="q" th:value="${keyword}" class="border rounded px-3 py-2 text-sm w-52"/>
+                </div>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Lọc</button>
+                <a th:href="@{/admin/movies(lang=${lang})}" class="text-sm text-gray-600 px-2 py-2">Xóa lọc</a>
+            </form>
+
+            <th:block th:if="${hubView}">
+                <!-- 1. Đã có lịch chiếu -->
+                <section id="section-has-schedule" class="movie-section mb-10 scroll-mt-24">
+                    <div class="movie-section__head">
+                        <h2 class="movie-section__title">
+                            <i class="fas fa-calendar-check text-green-600"></i>
+                            Đã có lịch chiếu
+                        </h2>
+                        <span class="movie-section__count" th:text="${phaseCounts.hasSchedule} + ' phim · có suất sắp tới'">0</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">Phim ACTIVE đã được xếp suất và còn lịch chiếu trong tương lai.</p>
+                    <div th:if="${hasScheduleMovies == null || hasScheduleMovies.isEmpty()}"
+                         class="bg-white rounded-lg shadow p-8 text-center text-gray-500 text-sm">
+                        Chưa có phim nào có lịch chiếu sắp tới.
+                    </div>
+                    <div class="movie-grid" th:if="${hasScheduleMovies != null && !hasScheduleMovies.isEmpty()}"
+                         th:with="csrfParam=${_csrf.parameterName}, csrfToken=${_csrf.token}">
+                        <article th:each="movieItem : ${hasScheduleMovies}"
+                                 th:replace="~{fragments/admin/movie-card :: card(item=${movieItem}, lang=${lang}, csrfParam=${csrfParam}, csrfToken=${csrfToken})}"></article>
+                    </div>
+                </section>
+
+                <!-- 2. Hết chiếu tại rạp -->
+                <section id="section-ended" class="movie-section mb-10 scroll-mt-24">
+                    <div class="movie-section__head">
+                        <h2 class="movie-section__title">
+                            <i class="fas fa-flag-checkered text-gray-600"></i>
+                            Hết chiếu tại rạp
+                        </h2>
+                        <span class="movie-section__count"
+                              th:text="${endedTotal} + ' phim · hiển thị tối đa 60 mới nhất'">0</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">Đã từng có suất nhưng không còn suất tương lai (không phải TMDB Upcoming).</p>
+                    <div th:if="${endedMovies == null || endedMovies.isEmpty()}"
+                         class="bg-white rounded-lg shadow p-8 text-center text-gray-500 text-sm">
+                        Chưa có phim nào ở trạng thái hết chiếu.
+                    </div>
+                    <div class="movie-grid" th:if="${endedMovies != null && !endedMovies.isEmpty()}"
+                         th:with="csrfParam=${_csrf.parameterName}, csrfToken=${_csrf.token}">
+                        <article th:each="movieItem : ${endedMovies}"
+                                 th:replace="~{fragments/admin/movie-card :: card(item=${movieItem}, lang=${lang}, csrfParam=${csrfParam}, csrfToken=${csrfToken})}"></article>
+                    </div>
+                </section>
+
+                <!-- 3. Đang đợi lịch chiếu — cuộn tải thêm -->
+                <section id="section-waiting" class="movie-section scroll-mt-24"
+                         th:attr="data-initial-page=${waitingHasNext ? 1 : 0},
+                                  data-has-next=${waitingHasNext}">
+                    <div class="movie-section__head">
+                        <h2 class="movie-section__title">
+                            <i class="fas fa-hourglass-half text-amber-600"></i>
+                            Đang đợi lịch chiếu
+                        </h2>
+                        <span class="movie-section__count"
+                              th:text="${waitingTotal} + ' phim · cuộn xuống để tải thêm (20/lần)'">0</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">
+                        Phim đã đăng tại rạp (ACTIVE) nhưng chưa có suất — cần bấm <strong>Tạo lịch mẫu</strong> hoặc thêm lịch thủ công.
+                    </p>
+                    <div th:if="${waitingMovies == null || waitingMovies.isEmpty()}"
+                         id="waiting-empty"
+                         class="bg-white rounded-lg shadow p-8 text-center text-gray-500 text-sm">
+                        Không có phim đang chờ xếp lịch.
+                    </div>
+                    <div id="waiting-grid" class="movie-grid"
+                         th:classappend="${waitingMovies == null || waitingMovies.isEmpty()} ? ' hidden' : ''"
+                         th:with="csrfParam=${_csrf.parameterName}, csrfToken=${_csrf.token}">
+                        <article th:each="movieItem : ${waitingMovies}"
+                                  th:replace="~{fragments/admin/movie-card :: card(item=${movieItem}, lang=${lang}, csrfParam=${csrfParam}, csrfToken=${csrfToken})}"></article>
+                    </div>
+                    <div id="waiting-sentinel" class="infinite-sentinel" aria-hidden="true"></div>
+                    <div id="waiting-loading" class="infinite-loading hidden">
+                        <i class="fas fa-spinner fa-spin"></i> Đang tải thêm phim…
+                    </div>
+                    <p id="waiting-end" class="infinite-end hidden text-center text-sm text-gray-500 py-4">
+                        Đã hiển thị tất cả phim đang đợi lịch chiếu.
+                    </p>
+                </section>
+            </th:block>
+
+            <th:block th:unless="${hubView}">
+                <div th:if="${movies.content.isEmpty()}" class="bg-white rounded-lg shadow p-10 text-center text-gray-500">
+                    Không có phim phù hợp bộ lọc.
+                </div>
+                <div class="movie-grid" th:if="${!movies.content.isEmpty()}"
+                     th:with="csrfParam=${_csrf.parameterName}, csrfToken=${_csrf.token}">
+                    <article th:each="movieItem : ${movies.content}"
+                             th:replace="~{fragments/admin/movie-card :: card(item=${movieItem}, lang=${lang}, csrfParam=${csrfParam}, csrfToken=${csrfToken})}"></article>
+                </div>
+                <div class="mt-6 flex gap-2 text-sm items-center" th:if="${movies.totalPages > 1}">
+                    <a th:if="${movies.hasPrevious()}"
+                       th:href="@{/admin/movies(page=${movies.number - 1}, phase=${phaseFilter}, status=${statusFilter}, q=${keyword}, lang=${lang})}"
+                       class="px-3 py-1 border rounded bg-white">Trước</a>
+                    <span th:text="'Trang ' + (${movies.number} + 1) + ' / ' + ${movies.totalPages} + ' (' + ${movies.totalElements} + ' phim)'"></span>
+                    <a th:if="${movies.hasNext()}"
+                       th:href="@{/admin/movies(page=${movies.number + 1}, phase=${phaseFilter}, status=${statusFilter}, q=${keyword}, lang=${lang})}"
+                       class="px-3 py-1 border rounded bg-white">Sau</a>
+                </div>
+            </th:block>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/admin-movies.js}" th:if="${hubView}"></script>
+</body>
+</html>
+

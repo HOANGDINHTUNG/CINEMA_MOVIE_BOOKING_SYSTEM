@@ -21,5 +21,7 @@ public class ScheduleMovieCardDto {
     private String ageLabel;
     private String ageNote;
     private String format;
+    private String originLabel;
+    private String originCountryCode;
     private List<ScheduleSlotDto> slots;
 }

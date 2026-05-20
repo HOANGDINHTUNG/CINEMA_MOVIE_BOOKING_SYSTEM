@@ -1,0 +1,41 @@
+<aside th:fragment="sidebar" class="account-sidebar" xmlns:th="http://www.thymeleaf.org">
+    <div class="account-sidebar__user">
+        <span class="account-sidebar__avatar" th:if="${headerAvatarUrl == null or headerAvatarUrl == ''}">
+            <span th:text="${headerInitials}">U</span>
+        </span>
+        <img th:if="${headerAvatarUrl != null and headerAvatarUrl != ''}"
+             th:src="${headerAvatarUrl}" alt="" class="account-sidebar__avatar-img"/>
+        <div>
+            <p class="account-sidebar__name" th:text="${headerDisplayName}">User</p>
+            <p class="account-sidebar__hint" th:text="#{account.sidebar_hint}">Quản lý tài khoản</p>
+        </div>
+    </div>
+    <nav class="account-sidebar__nav" th:attr="aria-label=#{account.nav_aria}">
+        <a th:href="@{/customer/account}"
+           th:classappend="${accountSection == 'overview'} ? ' active' : ''">
+            <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+            <span th:text="#{account.overview}">Tổng quan</span>
+        </a>
+        <a th:href="@{/customer/profile}"
+           th:classappend="${accountSection == 'profile'} ? ' active' : ''">
+            <i class="fa-solid fa-user-pen" aria-hidden="true"></i>
+            <span th:text="#{account.profile}">Hồ sơ</span>
+        </a>
+        <a th:href="@{/customer/bookings}"
+           th:classappend="${accountSection == 'bookings'} ? ' active' : ''">
+            <i class="fa-solid fa-ticket" aria-hidden="true"></i>
+            <span th:text="#{nav.my_tickets}">Vé của tôi</span>
+        </a>
+        <a th:href="@{/customer/account/security}"
+           th:classappend="${accountSection == 'security'} ? ' active' : ''">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+            <span th:text="#{account.security}">Bảo mật</span>
+        </a>
+    </nav>
+    <div class="account-sidebar__footer">
+        <a th:href="@{/customer/home}" class="account-sidebar__link-muted">
+            <i class="fa-solid fa-film" aria-hidden="true"></i>
+            <span th:text="#{booking.browse_movies}">Xem phim</span>
+        </a>
+    </div>
+</aside>

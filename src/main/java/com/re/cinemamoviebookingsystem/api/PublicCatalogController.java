@@ -1,5 +1,6 @@
 package com.re.cinemamoviebookingsystem.api;
 
+import com.re.cinemamoviebookingsystem.dto.response.catalog.CinemaMovieCardDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.HomeBootstrapResponseDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.HomeMoviesResponseDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.MovieCatalogDetailDto;
@@ -87,5 +88,12 @@ public class PublicCatalogController {
             @RequestParam(defaultValue = "vi-VN") String lang,
             @RequestParam(defaultValue = "1") int page) {
         return tmdbHomeCatalogService.loadComingSoonApi(AppLanguage.fromParam(lang), page);
+    }
+
+    @GetMapping("/home/trending")
+    public List<CinemaMovieCardDto> homeTrending(
+            @RequestParam(defaultValue = "vi-VN") String lang,
+            @RequestParam(defaultValue = "week") String window) {
+        return tmdbHomeCatalogService.loadTrendingSidebar(AppLanguage.fromParam(lang), window);
     }
 }

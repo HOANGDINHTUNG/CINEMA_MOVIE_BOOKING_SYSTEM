@@ -4,6 +4,8 @@
         return;
     }
 
+    initHomePromoModal();
+
     const lang = body.dataset.appLang;
     const labels = {
         nextShowtime: body.dataset.labelNextShowtime || 'Suất gần nhất',
@@ -82,4 +84,113 @@
 
     setupLoadMore('loadMoreNowShowing', 'nowShowingLoadMoreWrap', 'nowShowingGrid', 'now-showing', 2);
     setupLoadMore('loadMoreComingSoon', 'comingSoonLoadMoreWrap', 'comingSoonGrid', 'coming-soon', 2);
+    initTrendingPeriodToggle(lang);
 })();
+
+function initTrendingPeriodToggle(lang) {
+    const toggle = document.getElementById('homeTrendingPeriodToggle');
+    const list = document.getElementById('trendingList');
+    if (!toggle || !list) {
+        return;
+    }
+
+    function buildTrendingItemHtml(movie) {
+        const title = movie.title || '';
+        const url = '/customer/movies/' + movie.tmdbId;
+        const poster = movie.posterUrl && movie.posterUrl.startsWith('http')
+            ? movie.posterUrl : '/assets/img/poster.jpg';
+        const rating = movie.voteAverage != null
+            ? '<span class="trending-item-rating">★ ' + Number(movie.voteAverage).toFixed(1) + '</span>' : '';
+        return '<div class="trending-item">'
+            + '<a href="' + url + '" class="trending-item-link">'
+            + '<div class="trending-item-poster"><img src="' + poster + '" alt="" loading="lazy"/></div>'
+            + '<div class="trending-item-meta"><span class="trending-item-title">'
+            + escapeHtmlTrending(title) + '</span>' + rating + '</div></a></div>';
+    }
+
+    function escapeHtmlTrending(text) {
+        if (!text) return '';
+        const el = document.createElement('div');
+        el.textContent = text;
+        return el.innerHTML;
+    }
+
+    toggle.querySelectorAll('[data-trending-window]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const windowKey = btn.getAttribute('data-trending-window');
+            if (!windowKey || btn.classList.contains('is-active')) {
+                return;
+            }
+            toggle.querySelectorAll('.home-period-toggle__btn').forEach(function (b) {
+                b.classList.toggle('is-active', b === btn);
+            });
+            list.classList.add('is-loading');
+            try {
+                const res = await fetch('/api/public/home/trending?lang='
+                    + encodeURIComponent(lang) + '&window=' + encodeURIComponent(windowKey));
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
+                const movies = await res.json();
+                list.innerHTML = '';
+                (movies || []).forEach(function (m) {
+                    if (m && m.tmdbId) {
+                        list.insertAdjacentHTML('beforeend', buildTrendingItemHtml(m));
+                    }
+                });
+                document.body.dataset.trendingWindow = windowKey;
+            } catch (e) {
+                console.error(e);
+            } finally {
+                list.classList.remove('is-loading');
+            }
+        });
+    });
+}
+
+function initHomePromoModal() {
+    const overlay = document.getElementById('homePromoModal');
+    if (!overlay) return;
+
+    const closeBtn = document.getElementById('homePromoCloseBtn');
+
+    function openPromo() {
+        overlay.hidden = false;
+        document.body.classList.add('home-promo-open');
+    }
+
+    function closePromo() {
+        overlay.hidden = true;
+        document.body.classList.remove('home-promo-open');
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            closePromo();
+        });
+    }
+
+    overlay.addEventListener('click', function (event) {
+        if (event.target === overlay) {
+            closePromo();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !overlay.hidden) {
+            closePromo();
+        }
+    });
+
+    /* Hiện popup mỗi lần vào trang chủ (sau loader) */
+    function scheduleOpen() {
+        setTimeout(openPromo, 320);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scheduleOpen);
+    } else {
+        scheduleOpen();
+    }
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{account.overview_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/account.css}"/>
+</head>
+<body class="customer-site account-page">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<div class="account-layout">
+    <div th:replace="~{fragments/customer/account-sidebar :: sidebar}"></div>
+    <main class="account-content">
+        <h1 class="account-content__title" th:text="#{account.overview_title}">Tổng quan tài khoản</h1>
+        <div th:replace="~{fragments/customer/alerts :: alerts}"></div>
+        <div class="account-stats">
+            <div class="account-stat-card">
+                <span class="account-stat-card__value" th:text="${overview.totalBookings}">0</span>
+                <span class="account-stat-card__label" th:text="#{account.stat.total}">Tổng đơn</span>
+            </div>
+            <div class="account-stat-card account-stat-card--paid">
+                <span class="account-stat-card__value" th:text="${overview.paidCount}">0</span>
+                <span class="account-stat-card__label" th:text="#{account.stat.paid}">Đã thanh toán</span>
+            </div>
+            <div class="account-stat-card account-stat-card--pending">
+                <span class="account-stat-card__value" th:text="${overview.pendingCount}">0</span>
+                <span class="account-stat-card__label" th:text="#{account.stat.pending}">Chờ thanh toán</span>
+            </div>
+            <div class="account-stat-card account-stat-card--held">
+                <span class="account-stat-card__value" th:text="${overview.heldCount}">0</span>
+                <span class="account-stat-card__label" th:text="#{account.stat.held}">Đang thanh toán</span>
+            </div>
+        </div>
+        <div class="account-quick-actions">
+            <h2 th:text="#{account.quick_actions}">Thao tác nhanh</h2>
+            <div class="account-quick-actions__grid">
+                <a th:href="@{/customer/bookings}" class="account-action-card">
+                    <i class="fa-solid fa-ticket" aria-hidden="true"></i>
+                    <span th:text="#{nav.my_tickets}">Vé của tôi</span>
+                </a>
+                <a th:href="@{/customer/profile}" class="account-action-card">
+                    <i class="fa-solid fa-user-pen" aria-hidden="true"></i>
+                    <span th:text="#{account.edit_profile}">Sửa hồ sơ</span>
+                </a>
+                <a th:href="@{/customer/home}" class="account-action-card">
+                    <i class="fa-solid fa-clapperboard" aria-hidden="true"></i>
+                    <span th:text="#{booking.browse_movies}">Đặt vé ngay</span>
+                </a>
+            </div>
+        </div>
+        <p class="account-note" th:if="${overview.upcomingPaidCount > 0}"
+           th:text="#{account.upcoming_hint(${overview.upcomingPaidCount})}">Bạn có suất chiếu sắp tới.</p>
+    </main>
+</div>
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

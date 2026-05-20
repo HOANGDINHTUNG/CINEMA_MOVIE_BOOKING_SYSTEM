@@ -8,12 +8,29 @@ body.customer-site {
 }
 
 body.customer-site .main-header {
-    background: linear-gradient(180deg, rgba(11, 13, 19, 0.97) 0%, rgba(11, 13, 19, 0.88) 100%);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    background: rgba(11, 13, 19, 0.16) !important;
+    background-color: transparent !important;
+    box-shadow: none;
+}
+
+body.customer-site.header-scrolled .main-header {
+    background: rgba(11, 13, 19, 0.5) !important;
 }
 
 body.customer-site .header-container {
-    background: rgba(16, 20, 27, 0.75);
+    background: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html.customer-smooth-scroll {
+        scroll-padding-top: 80px;
+    }
+
+    html.customer-smooth-scroll,
+    html.customer-smooth-scroll body.customer-site {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: none;
+    }
 }
 
 body.customer-site .header-title {

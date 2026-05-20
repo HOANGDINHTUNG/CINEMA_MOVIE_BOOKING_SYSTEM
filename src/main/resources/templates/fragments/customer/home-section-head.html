@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  title: text hiển thị
+  viewAllUrl: optional link
+  showPeriodToggle: boolean
+  activePeriod: 'day' | 'week'
+-->
+<div th:fragment="head(title, viewAllUrl, showPeriodToggle, activePeriod)" class="home-section-head"
+     th:classappend="${showPeriodToggle} ? ' home-section-head--with-period' : ''">
+    <div class="home-section-head__title-wrap">
+        <span class="home-section-head__dot" aria-hidden="true"></span>
+        <h2 class="home-section-head__title" th:text="${title}">Tiêu đề</h2>
+        <div th:if="${showPeriodToggle}" class="home-period-toggle" id="homeTrendingPeriodToggle" role="group"
+             th:attr="aria-label=#{home.period_toggle_aria}">
+            <button type="button" class="home-period-toggle__btn"
+                    data-trending-window="day"
+                    th:classappend="${activePeriod == 'day'} ? ' is-active' : ''"
+                    th:text="#{home.period.today}">Hôm nay</button>
+            <button type="button" class="home-period-toggle__btn"
+                    data-trending-window="week"
+                    th:classappend="${activePeriod == 'week'} ? ' is-active' : ''"
+                    th:text="#{home.period.week}">Tuần này</button>
+        </div>
+    </div>
+    <div th:if="${viewAllUrl != null}" class="home-section-head__actions">
+        <a class="home-section-head__link" th:href="${viewAllUrl}">
+            <span th:text="#{home.view_all}">Xem tất cả</span>
+            <span class="home-section-head__arrow" aria-hidden="true">→</span>
+        </a>
+    </div>
+</div>
+</body>
+</html>

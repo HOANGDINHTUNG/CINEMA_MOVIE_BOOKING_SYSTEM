@@ -11,6 +11,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -29,19 +31,27 @@ public class ProfileController {
             req.setPhoneNumber(profile.getPhoneNumber());
             model.addAttribute("profileUpdate", req);
         }
+        if ("/customer".equals(resolvePrefix())) {
+            model.addAttribute("accountSection", "profile");
+        }
         return resolveView("profile");
     }
 
     @PostMapping({"/customer/profile", "/staff/profile", "/admin/profile"})
     public String updateProfile(@Valid @ModelAttribute ProfileUpdateRequest profileUpdate,
                                 BindingResult bindingResult,
+                                @RequestParam(value = "avatar", required = false) MultipartFile avatar,
                                 RedirectAttributes redirectAttributes) {
         String prefix = resolvePrefix();
         if (bindingResult.hasErrors()) {
             return "redirect:" + prefix + "/profile";
         }
-        profileService.updateProfile(SecurityUtils.currentUserId(), profileUpdate);
-        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công");
+        try {
+            profileService.updateProfile(SecurityUtils.currentUserId(), profileUpdate, avatar);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
         return "redirect:" + prefix + "/profile";
     }
 

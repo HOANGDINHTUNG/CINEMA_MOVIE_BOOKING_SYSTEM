@@ -19,29 +19,37 @@
 
         <nav class="nav-menu" id="mainNavMenu">
             <a th:href="@{/customer/home}"
-               th:classappend="${#httpServletRequest != null and (#strings.contains(#httpServletRequest.requestURI, '/customer/home') or #strings.equals(#httpServletRequest.requestURI, '/customer'))} ? ' active' : ''"
+               th:classappend="${navActive == 'home'} ? ' active' : ''"
                th:text="#{nav.home}">Trang chủ</a>
             <a th:href="@{/customer/calendar}"
-               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/calendar')} ? ' active' : ''"
+               th:classappend="${navActive == 'calendar'} ? ' active' : ''"
                th:text="#{nav.calendar}">Lịch chiếu</a>
             <a th:href="@{/customer/news}"
-               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/news')} ? ' active' : ''"
+               th:classappend="${navActive == 'news'} ? ' active' : ''"
                th:text="#{nav.news}">Tin tức</a>
             <a th:href="@{/customer/promotions}"
-               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/promotions')} ? ' active' : ''"
+               th:classappend="${navActive == 'promotions'} ? ' active' : ''"
                th:text="#{nav.promotions}">Khuyến mãi</a>
             <a th:href="@{/customer/ticket-price}"
-               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/ticket-price')} ? ' active' : ''"
+               th:classappend="${navActive == 'ticket-price'} ? ' active' : ''"
                th:text="#{nav.ticket_price}">Giá vé</a>
             <a th:href="@{/customer/festival}"
-               th:classappend="${#httpServletRequest != null and #strings.contains(#httpServletRequest.requestURI, '/customer/festival')} ? ' active' : ''"
+               th:classappend="${navActive == 'festival'} ? ' active' : ''"
                th:text="#{nav.festival}">Liên hoan phim, Tuần phim</a>
 
             <div class="nav-menu__auth nav-menu__auth--mobile" sec:authorize="!isAuthenticated()">
                 <a th:href="@{/login}" class="header-link" th:text="#{nav.login}">Đăng nhập</a>
                 <a th:href="@{/register}" class="header-link header-link--accent" th:text="#{nav.register}">Đăng ký</a>
             </div>
-            <div class="nav-menu__auth nav-menu__auth--mobile" sec:authorize="isAuthenticated()">
+            <div class="nav-menu__user nav-menu__user--mobile" sec:authorize="isAuthenticated()">
+                <a th:href="@{/admin/dashboard}" class="header-link" sec:authorize="hasRole('ADMIN')"
+                   th:text="#{nav.admin_panel}">Quản lý Admin</a>
+                <a th:href="@{/staff/dashboard}" class="header-link" sec:authorize="hasRole('STAFF')"
+                   th:text="#{nav.staff_panel}">Quầy bán vé</a>
+                <a th:href="@{/customer/account}" class="header-link" sec:authorize="hasRole('CUSTOMER')"
+                   th:text="#{account.overview}">Tài khoản</a>
+                <a th:href="@{/customer/profile}" class="header-link" sec:authorize="hasRole('CUSTOMER')"
+                   th:text="#{account.profile}">Hồ sơ</a>
                 <a th:href="@{/customer/bookings}" class="header-link" sec:authorize="hasRole('CUSTOMER')"
                    th:text="#{nav.my_tickets}">Vé của tôi</a>
                 <form th:action="@{/logout}" method="post" class="header-logout-form">
@@ -61,13 +69,57 @@
                 <a th:href="@{/login}" class="header-link" th:text="#{nav.login}">Đăng nhập</a>
                 <a th:href="@{/register}" class="header-link header-link--accent" th:text="#{nav.register}">Đăng ký</a>
             </div>
-            <div class="header-auth" sec:authorize="isAuthenticated()">
-                <a th:href="@{/customer/bookings}" class="header-link" sec:authorize="hasRole('CUSTOMER')"
-                   th:text="#{nav.my_tickets}">Vé của tôi</a>
-                <form th:action="@{/logout}" method="post" class="header-logout-form">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="header-link header-link--button" th:text="#{nav.logout}">Đăng xuất</button>
-                </form>
+            <div class="header-user-menu" sec:authorize="isAuthenticated()">
+                <button type="button" class="header-user-menu__trigger" id="headerUserMenuBtn"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="headerUserDropdown">
+                    <span class="header-user-menu__avatar" th:if="${headerAvatarUrl == null or headerAvatarUrl == ''}">
+                        <span class="header-user-menu__initials" th:text="${headerInitials}">U</span>
+                    </span>
+                    <img th:if="${headerAvatarUrl != null and headerAvatarUrl != ''}"
+                         th:src="${headerAvatarUrl}" alt="" class="header-user-menu__avatar-img"/>
+                    <span class="header-user-menu__name" th:text="${headerDisplayName}">User</span>
+                    <i class="fa-solid fa-chevron-down header-user-menu__caret" aria-hidden="true"></i>
+                </button>
+                <div class="header-user-menu__dropdown" id="headerUserDropdown" hidden>
+                    <div class="header-user-menu__dropdown-head">
+                        <span class="header-user-menu__dropdown-name" th:text="${headerDisplayName}">User</span>
+                    </div>
+                    <a th:href="@{/admin/dashboard}" class="header-user-menu__item header-user-menu__item--accent"
+                       sec:authorize="hasRole('ADMIN')">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        <span th:text="#{nav.admin_panel}">Quản lý Admin</span>
+                    </a>
+                    <a th:href="@{/staff/dashboard}" class="header-user-menu__item"
+                       sec:authorize="hasRole('STAFF')">
+                        <i class="fa-solid fa-cash-register" aria-hidden="true"></i>
+                        <span th:text="#{nav.staff_panel}">Quầy bán vé</span>
+                    </a>
+                    <div class="header-user-menu__divider" sec:authorize="hasAnyRole('ADMIN','STAFF')"></div>
+                    <a th:href="@{/customer/account}" class="header-user-menu__item" sec:authorize="hasRole('CUSTOMER')">
+                        <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+                        <span th:text="#{account.overview}">Tổng quan</span>
+                    </a>
+                    <a th:href="@{/customer/profile}" class="header-user-menu__item" sec:authorize="hasRole('CUSTOMER')">
+                        <i class="fa-solid fa-user" aria-hidden="true"></i>
+                        <span th:text="#{account.profile}">Hồ sơ</span>
+                    </a>
+                    <a th:href="@{/customer/bookings}" class="header-user-menu__item" sec:authorize="hasRole('CUSTOMER')">
+                        <i class="fa-solid fa-ticket" aria-hidden="true"></i>
+                        <span th:text="#{nav.my_tickets}">Vé của tôi</span>
+                    </a>
+                    <a th:href="@{/customer/account/security}" class="header-user-menu__item" sec:authorize="hasRole('CUSTOMER')">
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                        <span th:text="#{account.security}">Bảo mật</span>
+                    </a>
+                    <div class="header-user-menu__divider" sec:authorize="hasRole('CUSTOMER')"></div>
+                    <form th:action="@{/logout}" method="post" class="header-user-menu__logout-form">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="header-user-menu__item header-user-menu__item--danger">
+                            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                            <span th:text="#{nav.logout}">Đăng xuất</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

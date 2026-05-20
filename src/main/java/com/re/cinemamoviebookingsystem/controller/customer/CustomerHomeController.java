@@ -47,6 +47,7 @@ public class CustomerHomeController {
         model.addAttribute("nowShowing", nowMovies);
         model.addAttribute("comingSoon", soonMovies);
         model.addAttribute("trending", trending);
+        model.addAttribute("trendingWindow", TmdbHomeCatalogService.TRENDING_WINDOW);
         model.addAttribute("nowHasMore", now != null && now.isHasMore());
         model.addAttribute("soonHasMore", soon != null && soon.isHasMore());
         model.addAttribute("homeError", bundle.getError());

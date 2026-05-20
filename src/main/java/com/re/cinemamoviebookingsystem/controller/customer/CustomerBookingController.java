@@ -252,8 +252,17 @@ public class CustomerBookingController {
     }
 
     @GetMapping("/bookings")
-    public String history(Model model) {
-        model.addAttribute("bookings", bookingHistoryService.getHistoryForUser(SecurityUtils.currentUserId()));
+    public String history(@RequestParam(value = "status", required = false) String status, Model model) {
+        var all = bookingHistoryService.getHistoryForUser(SecurityUtils.currentUserId());
+        if (status != null && !status.isBlank()) {
+            String filter = status.trim().toUpperCase();
+            all = all.stream()
+                    .filter(b -> b.getStatus().name().equals(filter))
+                    .toList();
+        }
+        model.addAttribute("bookings", all);
+        model.addAttribute("statusFilter", status != null ? status.trim().toUpperCase() : "ALL");
+        model.addAttribute("accountSection", "bookings");
         model.addAttribute("cinemaBrandName", cinemaProperties.getBrandName());
         return "customer/bookings";
     }

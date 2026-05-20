@@ -1,16 +1,19 @@
 # Ghi chú cơ sở dữ liệu
 
-## Ba file SQL trong `src/main/resources/db/`
+## Hai file SQL chính trong `src/main/resources/db/`
+
+**Quy ước dự án:** mọi thay đổi schema / dữ liệu mẫu **chỉ** ghi vào hai file sau — **không** tạo thêm `migration-*.sql`, `seed-*-generated.sql`, v.v.
 
 | File | Vai trò |
 |------|---------|
-| **`schema.sql`** | Schema đầy đủ để import thủ công (Workbench). **Không** tự chạy khi `spring bootRun`. |
-| **`seed.sql`** | Dữ liệu mẫu: roles, users, rooms, seats, combos. **Có** chạy mỗi lần khởi động (`spring.sql.init.mode=always`). |
-| **`schema-migration-legacy.sql`** | Script tùy chọn dọn DB cũ (xóa `genres`, truncate phim/suat cũ). Chạy tay, có backup. |
+| **`schema.sql`** | Schema đầy đủ (bảng, constraint, index). Import thủ công hoặc tham chiếu khi tạo DB mới. |
+| **`seed.sql`** | Toàn bộ dữ liệu mẫu (`INSERT IGNORE` …). **Tự chạy** mỗi lần khởi động (`spring.sql.init.data-locations=classpath:db/seed.sql`). |
 
-Khi dev bình thường: **Hibernate** (`ddl-auto=update`) đồng bộ bảng từ **entity**; `schema.sql` chỉ để bạn đọc / tạo DB mới từ đầu.
+Khi dev bình thường: **Hibernate** (`ddl-auto=update`) đồng bộ bảng từ **entity**; `schema.sql` là nguồn chân lý khi cần đọc / tạo DB sạch.
 
-**Trạng thái `HELD` (Đang thanh toán):** MySQL có `chk_booking_status` chỉ cho phép giá trị trong CHECK. App tự chạy `BookingStatusConstraintMigration` khi khởi động; hoặc chạy tay `db/migration-add-held-booking-status.sql`.
+**Trạng thái `HELD` (Đang thanh toán):** `schema.sql` đã có `HELD` trong `chk_booking_status`. DB cũ: app tự sửa constraint qua `BookingStatusConstraintMigration` (Java), không cần file SQL riêng.
+
+Script Python (`generate_*_seed.py`) nếu dùng thì **ghi kết quả vào `seed.sql`**, không xuất file SQL phụ.
 
 ## Bảng `movies` (mô hình mới)
 

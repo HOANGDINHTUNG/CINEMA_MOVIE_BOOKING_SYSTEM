@@ -1,29 +1,52 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:replace="~{fragments/customer/head :: head('Hồ sơ')}"></th:block>
+    <th:block th:replace="~{fragments/customer/head :: head(#{account.profile_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/account.css}"/>
 </head>
-<body class="customer-site">
+<body class="customer-site account-page">
 <div th:replace="~{fragments/customer/loader :: loader}"></div>
 <div th:replace="~{fragments/customer/header :: header}"></div>
-<div class="customer-page">
-    <h1 class="section-title">Hồ sơ cá nhân</h1>
-    <p th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></p>
-    <div class="profile-card">
-        <p class="profile-meta">Tên đăng nhập: <strong th:text="${profile.username}"></strong></p>
-        <p class="profile-meta mb-4">Email: <strong th:text="${profile.email}"></strong></p>
-        <form th:action="@{/customer/profile}" th:object="${profileUpdate}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <label class="info-label d-block mb-1">Họ tên</label>
-            <input class="form-control mb-3" th:field="*{fullName}" required/>
-            <label class="info-label d-block mb-1">Số điện thoại</label>
-            <input class="form-control mb-4" th:field="*{phoneNumber}"/>
-            <button type="submit" class="btn btn-danger">Lưu thay đổi</button>
-        </form>
-        <p class="mt-4 mb-0" style="font-size:13px;color:#94a3b8;">
-            <button type="button" class="btn btn-sm btn-outline-light" id="btnResetGuide">Xem lại hướng dẫn đặt vé</button>
-        </p>
-    </div>
+<div class="account-layout">
+    <div th:replace="~{fragments/customer/account-sidebar :: sidebar}"></div>
+    <main class="account-content">
+        <h1 class="account-content__title" th:text="#{account.profile_title}">Hồ sơ cá nhân</h1>
+        <div th:replace="~{fragments/customer/alerts :: alerts}"></div>
+        <div class="account-panel profile-panel">
+            <div class="profile-panel__header">
+                <div class="profile-avatar-block">
+                    <span class="profile-avatar" th:if="${profile.avatarUrl == null or profile.avatarUrl == ''}">
+                        <span th:text="${headerInitials}">U</span>
+                    </span>
+                    <img th:if="${profile.avatarUrl != null and profile.avatarUrl != ''}"
+                         th:src="${profile.avatarUrl}" alt="" class="profile-avatar profile-avatar--img"/>
+                    <div>
+                        <p class="profile-avatar-block__name" th:text="${profile.fullName}">—</p>
+                        <p class="profile-avatar-block__meta" th:text="${profile.email}">email</p>
+                    </div>
+                </div>
+            </div>
+            <form th:action="@{/customer/profile}" th:object="${profileUpdate}" method="post"
+                  enctype="multipart/form-data" class="account-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <label class="account-form__label" th:text="#{account.avatar_label}">Ảnh đại diện</label>
+                <input type="file" class="form-control account-form__input" name="avatar" accept="image/jpeg,image/png,image/webp"/>
+                <p class="account-form__hint" th:text="#{account.avatar_hint}">JPG, PNG hoặc WebP — tối đa 2MB</p>
+                <label class="account-form__label" th:text="#{account.username_label}">Tên đăng nhập</label>
+                <input class="form-control account-form__input" th:value="${profile.username}" readonly disabled/>
+                <label class="account-form__label" th:text="#{account.email_label}">Email</label>
+                <input class="form-control account-form__input" th:value="${profile.email}" readonly disabled/>
+                <label class="account-form__label" th:text="#{account.full_name}">Họ tên</label>
+                <input class="form-control account-form__input" th:field="*{fullName}" required/>
+                <label class="account-form__label" th:text="#{account.phone}">Số điện thoại</label>
+                <input class="form-control account-form__input" th:field="*{phoneNumber}"/>
+                <button type="submit" class="btn btn-danger account-form__submit" th:text="#{account.save_profile}">Lưu thay đổi</button>
+            </form>
+            <p class="account-form__footer-note">
+                <button type="button" class="btn btn-sm btn-outline-light" id="btnResetGuide" th:text="#{account.reset_guide}">Xem lại hướng dẫn đặt vé</button>
+            </p>
+        </div>
+    </main>
 </div>
 <div th:replace="~{fragments/customer/footer :: footer}"></div>
 <th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>

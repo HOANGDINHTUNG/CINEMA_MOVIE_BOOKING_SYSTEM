@@ -13,7 +13,7 @@
         <h3 class="tmdb-movie-card__title" th:text="${m.title}">Phim</h3>
         <p class="tmdb-movie-card__meta" th:if="${m.genresLabel != null or m.duration != null or m.releaseDateLabel != null}">
             <span th:if="${m.genresLabel != null}" th:text="${m.genresLabel}"></span>
-            <span th:if="${m.duration != null}" th:text="' · ' + ${m.duration} + ' ' + #{common.minutes}"></span>
+            <span th:if="${m.duration != null}" th:text="| · ${m.duration} #{common.minutes}|"></span>
             <span th:if="${m.releaseDateLabel != null}" th:text="' · ' + ${m.releaseDateLabel}"></span>
         </p>
         <p class="tmdb-movie-card__overview" th:if="${m.overview != null}" th:text="${m.overview}"></p>

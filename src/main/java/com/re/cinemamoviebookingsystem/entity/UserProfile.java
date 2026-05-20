@@ -29,6 +29,9 @@ public class UserProfile {
     @Column(name = "phone_number", length = 15)
     private String phoneNumber;
 
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 

@@ -37,3 +37,6 @@ out/
 
 ### Local secrets (TMDB keys) ###
 src/main/resources/application-local.properties
+
+### User uploads ###
+uploads/

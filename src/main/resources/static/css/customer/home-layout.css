@@ -172,10 +172,20 @@ a {
     margin-bottom: 12px;
 }
 
+.sidebar .top-bar.bar,
+.sidebar .top-bar:not(.home-section-head) {
+    display: none;
+}
+
 .trending-list {
     display: flex;
     flex-direction: column;
     gap: 14px;
+}
+
+.trending-list.is-loading {
+    opacity: 0.55;
+    pointer-events: none;
 }
 
 .trending-item-link {
@@ -246,16 +256,158 @@ a {
     margin: 0;
 }
 
-.main-content h1::before {
-    content: "\2022\00A0";
-    color: red;
-    font-size: 2em;
-}
-
 .top-bar p {
     font-size: 20px;
     line-height: 28px;
     font-weight: 700;
+}
+
+/* Tiêu đề section: chấm đỏ + cỡ chữ thống nhất (main + sidebar) */
+.home-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: nowrap;
+}
+
+.home-section-head__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.home-section-head--with-period .home-section-head__title-wrap {
+    flex: 1 1 100%;
+    width: 100%;
+    gap: 8px;
+}
+
+.home-section-head--with-period .home-section-head__title {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.home-section-head__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e63946;
+    flex-shrink: 0;
+}
+
+.home-section-head__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.home-section-head__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.home-section-head__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s;
+}
+
+.home-section-head__link:hover {
+    color: #fff;
+}
+
+.home-section-head__arrow {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.home-period-toggle {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 2px;
+    border-radius: 999px;
+    background: rgba(15, 20, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 1px;
+}
+
+.home-period-toggle__btn {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    background: transparent;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.home-period-toggle__btn:hover {
+    color: #fff;
+}
+
+.home-period-toggle__btn.is-active {
+    background: linear-gradient(90deg, #e63946 0%, #f5a623 100%);
+    color: #141414;
+}
+
+.sidebar-trending .home-section-head {
+    margin-bottom: 12px;
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+
+.sidebar-trending .home-section-head__dot {
+    width: 8px;
+    height: 8px;
+}
+
+.sidebar-trending .home-section-head__title {
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.sidebar-trending .home-section-head--with-period .home-section-head__title-wrap {
+    gap: 6px;
+}
+
+.sidebar-trending .home-period-toggle {
+    padding: 2px;
+    gap: 1px;
+}
+
+.sidebar-trending .home-period-toggle__btn {
+    padding: 3px 7px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.sidebar-block {
+    margin-top: 20px;
+}
+
+.sidebar-block .home-section-head {
+    margin-bottom: 10px;
 }
 
 .button {

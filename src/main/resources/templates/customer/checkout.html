@@ -81,8 +81,16 @@
                             <tr th:each="c : ${combos}" class="checkout-table__combo-row"
                                 th:data-combo-id="${c.comboId}" th:data-combo-price="${c.price}">
                                 <td>
-                                    <span class="checkout-combo-name" th:text="${c.name}">Combo</span>
-                                    <span class="checkout-combo-desc" th:if="${c.description != null}" th:text="${c.description}"></span>
+                                    <div class="checkout-combo-label"
+                                         th:with="icon=${T(com.re.cinemamoviebookingsystem.util.ComboIconSupport).iconClass(c.name, c.description)}">
+                                        <span class="checkout-combo-icon" aria-hidden="true">
+                                            <i th:class="'fas ' + ${icon}"></i>
+                                        </span>
+                                        <span>
+                                            <span class="checkout-combo-name" th:text="${c.name}">Combo</span>
+                                            <span class="checkout-combo-desc" th:if="${c.description != null}" th:text="${c.description}"></span>
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="checkout-table__qty">
                                     <div class="qty-stepper">

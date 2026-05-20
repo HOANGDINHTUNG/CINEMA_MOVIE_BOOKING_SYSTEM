@@ -36,13 +36,29 @@ body {
 .main-header {
     color: white;
     padding: 0;
-    height: 80px;
+    height: 64px;
     position: fixed;
     top: 0px;
     z-index: 1000;
     width: 100%;
-    background: linear-gradient(180deg, rgba(11, 13, 19, 0.97) 0%, rgba(11, 13, 19, 0.9) 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    background: rgba(11, 13, 19, 0.18);
+    backdrop-filter: blur(14px) saturate(1.08);
+    -webkit-backdrop-filter: blur(14px) saturate(1.08);
+    box-shadow: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transition:
+        background 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        backdrop-filter 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.customer-site.header-scrolled .main-header {
+    background: rgba(11, 13, 19, 0.52);
+    backdrop-filter: blur(18px) saturate(1.12);
+    -webkit-backdrop-filter: blur(18px) saturate(1.12);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .header-container {
@@ -50,11 +66,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 80px;
+    height: 64px;
     padding: 0px 40px;
-    backdrop-filter: blur(80px);
-
-
+    background: transparent;
 }
 
 .logo img {
@@ -95,7 +109,7 @@ body {
 }
 
 .nav-menu a.active {
-    color: #ffffff;
+    color: #e63946;
     font-weight: 600;
     border-bottom-color: #e63946;
 }
@@ -275,6 +289,139 @@ body {
     margin: 0;
 }
 
+.header-user-menu {
+    position: relative;
+}
+
+.header-user-menu__trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.header-user-menu__trigger:hover {
+    border-color: rgba(230, 57, 70, 0.5);
+    background: rgba(230, 57, 70, 0.1);
+}
+
+.header-user-menu__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e63946, #9d0208);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.header-user-menu__avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.header-user-menu__name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-user-menu__caret {
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+.header-user-menu__dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 220px;
+    background: rgba(22, 27, 38, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    padding: 8px 0;
+    z-index: 1100;
+}
+
+.header-user-menu__dropdown[hidden] {
+    display: none;
+}
+
+.header-user-menu__dropdown-head {
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header-user-menu__dropdown-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+.header-user-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    color: #e2e8f0;
+    text-decoration: none;
+    font-size: 0.9rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+}
+
+.header-user-menu__item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+
+.header-user-menu__item--accent {
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+.header-user-menu__item--accent:hover {
+    color: #fff;
+    background: rgba(230, 57, 70, 0.15);
+}
+
+.header-user-menu__item--danger {
+    color: #fca5a5;
+}
+
+.header-user-menu__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 6px 0;
+}
+
+.header-user-menu__logout-form {
+    margin: 0;
+}
+
+.nav-menu__user--mobile {
+    display: none;
+}
+
 .nav-menu__auth--mobile {
     display: none;
 }
@@ -360,7 +507,8 @@ body {
         display: none;
     }
 
-    .nav-menu__auth--mobile {
+    .nav-menu__auth--mobile,
+    .nav-menu__user--mobile {
         display: flex;
         flex-direction: column;
         gap: 8px;

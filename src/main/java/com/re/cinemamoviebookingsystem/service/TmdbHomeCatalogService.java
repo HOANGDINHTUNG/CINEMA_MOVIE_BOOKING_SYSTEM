@@ -40,7 +40,7 @@ public class TmdbHomeCatalogService {
         try {
             HomeMoviesResponseDto nowPage = loadNowShowingApi(lang, 1);
             HomeMoviesResponseDto soonPage = loadComingSoonApi(lang, 1);
-            List<CinemaMovieCardDto> trending = loadTrendingSidebar(lang);
+            List<CinemaMovieCardDto> trending = loadTrendingSidebar(lang, TRENDING_WINDOW);
 
             List<CinemaMovieCardDto> heroSource = nowPage.getMovies() != null ? nowPage.getMovies() : List.of();
             List<MovieCatalogSummaryDto> heroSummaries = heroSource.stream()
@@ -114,18 +114,19 @@ public class TmdbHomeCatalogService {
                 .build();
     }
 
-    private List<CinemaMovieCardDto> loadTrendingSidebar(AppLanguage lang) {
+    public List<CinemaMovieCardDto> loadTrendingSidebar(AppLanguage lang, String window) {
         Map<Long, LocalDateTime> nextByTmdb = showtimeService.mapNextShowtimeByTmdbId();
         Set<Long> cinemaTmdbIds = nextByTmdb.keySet();
         if (cinemaTmdbIds.isEmpty()) {
             return List.of();
         }
 
+        String trendingWindow = normalizeTrendingWindow(window);
         List<CinemaMovieCardDto> result = new ArrayList<>();
         Set<Long> seen = new LinkedHashSet<>();
 
         try {
-            MovieCatalogPageDto batch = tmdbCatalogService.trending(lang, 1, TRENDING_WINDOW);
+            MovieCatalogPageDto batch = tmdbCatalogService.trending(lang, 1, trendingWindow);
             if (batch.getResults() != null) {
                 Map<Integer, String> genreMap = safeGenreMap(lang);
                 List<MovieCatalogSummaryDto> summaries = batch.getResults().stream()
@@ -157,6 +158,10 @@ public class TmdbHomeCatalogService {
         return result.size() > TRENDING_SIDEBAR_SIZE
                 ? result.subList(0, TRENDING_SIDEBAR_SIZE)
                 : result;
+    }
+
+    private static String normalizeTrendingWindow(String window) {
+        return window != null && window.equalsIgnoreCase("day") ? "day" : "week";
     }
 
     private Map<Integer, String> safeGenreMap(AppLanguage lang) {

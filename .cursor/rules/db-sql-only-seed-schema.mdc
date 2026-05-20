@@ -1,0 +1,17 @@
+---
+description: Chỉ sửa schema.sql và seed.sql — không tạo file SQL riêng
+alwaysApply: true
+---
+
+# Database SQL — chỉ hai file
+
+Khi thêm / sửa / xóa **schema**, **dữ liệu mẫu**, **migration SQL**, **seed bổ sung**:
+
+- **Chỉ** chỉnh `src/main/resources/db/schema.sql` (cấu trúc bảng, constraint, index).
+- **Chỉ** chỉnh `src/main/resources/db/seed.sql` (INSERT/UPDATE dữ liệu mẫu).
+- **Không** tạo file `.sql` mới (ví dụ `migration-*.sql`, `seed-*-generated.sql`, fragment riêng).
+- Nếu cần migration cho DB cũ: ưu tiên `ApplicationRunner` / Java config (như `BookingStatusConstraintMigration`), hoặc ghi hướng dẫn `ALTER` ngắn trong comment đầu `schema.sql` — không tách file.
+
+Script Python sinh seed (nếu có) phải **ghi đè / append vào `seed.sql`**, không xuất file SQL phụ.
+
+`application.properties` chỉ trỏ `spring.sql.init.data-locations=classpath:db/seed.sql`.

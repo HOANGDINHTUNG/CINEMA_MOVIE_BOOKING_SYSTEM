@@ -255,10 +255,13 @@ public class CinemaCatalogService {
             } catch (Exception ignored) {
             }
         }
+        String originLabel = resolveOriginLabel(tmdb);
+        String originCountryCode = resolveOriginCountryCode(tmdb);
+        String displayTitle = MovieAgeUtil.appendAgeSuffixToTitle(title, ageLabel);
         return ScheduleMovieCardDto.builder()
                 .tmdbId(card.getTmdbId())
                 .movieId(card.getMovieId())
-                .title(title)
+                .title(displayTitle)
                 .posterUrl(poster)
                 .overview(overview)
                 .voteAverage(tmdb.getVoteAverage())
@@ -266,10 +269,29 @@ public class CinemaCatalogService {
                 .duration(duration)
                 .releaseDate(releaseDate)
                 .ageLabel(ageLabel)
-                .ageNote(MovieAgeUtil.buildAgeNote(title))
+                .ageNote(MovieAgeUtil.buildAgeNote(title, ageLabel))
                 .format(card.getFormat())
+                .originLabel(originLabel)
+                .originCountryCode(originCountryCode != null ? originCountryCode : card.getOriginCountryCode())
                 .slots(card.getSlots())
                 .build();
+    }
+
+    private static String resolveOriginLabel(MovieCatalogDetailDto tmdb) {
+        String code = resolveOriginCountryCode(tmdb);
+        return code != null ? com.re.cinemamoviebookingsystem.util.CountryNames.label(code) : null;
+    }
+
+    private static String resolveOriginCountryCode(MovieCatalogDetailDto tmdb) {
+        if (tmdb.getProductionCompanies() == null || tmdb.getProductionCompanies().isEmpty()) {
+            return null;
+        }
+        for (var company : tmdb.getProductionCompanies()) {
+            if (company.getOriginCountry() != null && !company.getOriginCountry().isBlank()) {
+                return company.getOriginCountry().trim().toUpperCase(java.util.Locale.ROOT);
+            }
+        }
+        return null;
     }
 
     @Transactional(readOnly = true)

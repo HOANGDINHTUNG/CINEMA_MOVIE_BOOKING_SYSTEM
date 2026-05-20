@@ -1,0 +1,359 @@
+body.customer-site.account-page {
+    padding-top: 80px;
+}
+
+.account-layout {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 28px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    min-height: calc(100vh - 160px);
+}
+
+.account-sidebar {
+    background: rgba(22, 27, 38, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px 16px;
+    height: fit-content;
+    position: sticky;
+    top: 96px;
+}
+
+.account-sidebar__user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.account-sidebar__avatar,
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e63946, #9d0208);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.account-sidebar__avatar-img,
+.profile-avatar--img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.profile-avatar {
+    width: 72px;
+    height: 72px;
+    font-size: 1.4rem;
+}
+
+.profile-avatar--img {
+    width: 72px;
+    height: 72px;
+}
+
+.account-sidebar__name {
+    margin: 0;
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.account-sidebar__hint {
+    margin: 4px 0 0;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.account-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.account-sidebar__nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s;
+}
+
+.account-sidebar__nav a:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+
+.account-sidebar__nav a.active {
+    background: rgba(230, 57, 70, 0.15);
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+.account-sidebar__footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.account-sidebar__link-muted {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+}
+
+.account-content__title {
+    margin: 0 0 20px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.account-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.account-stat-card {
+    background: rgba(22, 27, 38, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.account-stat-card__value {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.account-stat-card__label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.account-stat-card--paid .account-stat-card__value { color: #21d07a; }
+.account-stat-card--pending .account-stat-card__value { color: #fbbf24; }
+.account-stat-card--held .account-stat-card__value { color: #f97316; }
+
+.account-quick-actions h2 {
+    font-size: 1rem;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+}
+
+.account-quick-actions__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.account-action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 16px;
+    background: rgba(22, 27, 38, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: #e2e8f0;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.account-action-card:hover {
+    border-color: rgba(230, 57, 70, 0.5);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.account-action-card i {
+    font-size: 1.4rem;
+    color: #e63946;
+}
+
+.account-panel {
+    background: rgba(22, 27, 38, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.account-panel__lead {
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+.account-form__label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.account-form__input {
+    margin-bottom: 16px;
+}
+
+.account-form__hint {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: -8px 0 16px;
+}
+
+.account-form__submit {
+    margin-top: 8px;
+}
+
+.profile-panel__header {
+    margin-bottom: 24px;
+}
+
+.profile-avatar-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar-block__name {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.profile-avatar-block__meta {
+    margin: 4px 0 0;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.booking-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.booking-filter-tab {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.booking-filter-tab:hover,
+.booking-filter-tab.active {
+    background: rgba(230, 57, 70, 0.2);
+    border-color: #e63946;
+    color: #ff8a8a;
+}
+
+.booking-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.booking-card {
+    background: rgba(22, 27, 38, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 18px 20px;
+}
+
+.booking-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.booking-card__id {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.booking-card__title {
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.booking-card__meta {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.booking-card__meta li {
+    margin-bottom: 4px;
+}
+
+.booking-card__meta strong {
+    color: #e2e8f0;
+}
+
+.booking-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.account-empty {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.account-note {
+    margin-top: 20px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+    .account-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .account-sidebar {
+        position: static;
+    }
+
+    .account-sidebar__nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}

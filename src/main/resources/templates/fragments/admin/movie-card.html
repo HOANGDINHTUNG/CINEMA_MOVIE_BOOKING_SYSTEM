@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<article th:fragment="card (item, lang, csrfParam, csrfToken)"
+         class="movie-card bg-white rounded-lg shadow overflow-hidden"
+         th:if="${item != null}"
+         th:attr="data-movie-id=${item.movieId}">
+    <img th:if="${item.posterUrl != null}" th:src="${item.posterUrl}" th:alt="${item.displayTitle}"
+         class="movie-card__poster" loading="lazy"/>
+    <div th:unless="${item.posterUrl != null}" class="movie-card__poster-placeholder">
+        <i class="fas fa-film"></i>
+    </div>
+    <div class="p-3 flex-1 flex flex-col">
+        <span th:if="${item.phase != null}" th:classappend="${item.phase.cssClass}" class="phase-badge mb-2 self-start">
+            <i th:class="'fas ' + ${item.phase.iconClass}"></i>
+            <span th:text="${item.phase.labelVi}">Phase</span>
+        </span>
+        <h2 class="font-semibold text-sm leading-snug line-clamp-2" th:text="${item.displayTitle}">Title</h2>
+        <p class="text-xs text-gray-500 mt-1">
+            <span th:text="'#' + ${item.movieId}"></span>
+            <span th:if="${item.tmdbId != null}" th:text="' · TMDB ' + ${item.tmdbId}"></span>
+            <span th:if="${item.duration != null}" th:text="' · ' + ${item.duration} + 'p'"></span>
+        </p>
+        <p class="text-xs text-gray-600 mt-2" th:if="${item.upcomingShowtimes > 0}">
+            <i class="fas fa-clock text-green-600"></i>
+            <span th:text="${item.upcomingShowtimes} + ' suất sắp tới'"></span>
+        </p>
+        <p class="text-xs text-gray-600 mt-2" th:if="${item.phase != null and item.phase.name() == 'WAITING_SCHEDULE'}">
+            <i class="fas fa-hourglass-half text-amber-600"></i> Đang đợi xếp lịch chiếu
+        </p>
+        <p class="text-xs text-gray-600 mt-2" th:if="${item.phase != null and item.phase.name() == 'HAS_SCHEDULE'}">
+            <i class="fas fa-calendar-check text-green-600"></i> Đã có lịch, còn suất sắp tới
+        </p>
+        <p class="text-xs text-gray-600 mt-2" th:if="${item.phase != null and item.phase.name() == 'ENDED'}">
+            <i class="fas fa-history"></i>
+            <span th:text="${item.totalShowtimes} + ' suất đã từng chiếu'"></span>
+        </p>
+        <div class="mt-auto pt-3 flex flex-wrap gap-2 text-xs border-t border-gray-100 movie-card__actions">
+            <a th:href="@{/admin/movies/{id}/showtimes(id=${item.movieId})}"
+               class="text-blue-600 hover:underline">Suất</a>
+            <a th:href="@{/admin/movies/{id}/edit(id=${item.movieId}, lang=${lang})}"
+               class="text-primary hover:underline">Sửa</a>
+            <form th:if="${item.phase != null and item.phase.name() == 'WAITING_SCHEDULE'}"
+                  th:action="@{/admin/movies/{id}/regenerate-schedule(id=${item.movieId})}"
+                  method="post" class="inline">
+                <input type="hidden" th:name="${csrfParam}" th:value="${csrfToken}"/>
+                <button type="submit" class="text-amber-700 hover:underline"
+                        onclick="return confirm('Tạo lịch mẫu 10 ngày cho phim này?')">Tạo lịch mẫu</button>
+            </form>
+            <form th:if="${item.status != null and item.status.name() == 'ACTIVE'}"
+                  th:action="@{/admin/movies/{id}/delete(id=${item.movieId})}" method="post" class="inline">
+                <input type="hidden" th:name="${csrfParam}" th:value="${csrfToken}"/>
+                <button type="submit" class="text-red-600 hover:underline"
+                        onclick="return confirm('Ẩn phim khỏi rạp?')">Ẩn</button>
+            </form>
+            <form th:if="${item.status != null and item.status.name() == 'INACTIVE'}"
+                  th:action="@{/admin/movies/{id}/activate(id=${item.movieId})}" method="post" class="inline">
+                <input type="hidden" th:name="${csrfParam}" th:value="${csrfToken}"/>
+                <button type="submit" class="text-green-700 hover:underline">Kích hoạt</button>
+            </form>
+        </div>
+    </div>
+</article>
+</html>

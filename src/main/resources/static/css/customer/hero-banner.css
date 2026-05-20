@@ -1,7 +1,7 @@
 /* Hero banner */
 /* Banner full màn hình: full ngang + cao = viewport trừ header (80px) */
 body.customer-site {
-    --ncc-header-height: 80px;
+    --ncc-header-height: 64px;
 }
 
 .hero-carousel .carousel-inner,

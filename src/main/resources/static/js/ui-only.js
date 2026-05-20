@@ -683,7 +683,37 @@ function initResetGuideButton() {
     });
 }
 
+function initHeaderUserMenu() {
+    const btn = document.getElementById('headerUserMenuBtn');
+    const dropdown = document.getElementById('headerUserDropdown');
+    if (!btn || !dropdown) return;
+
+    btn.addEventListener('click', function (event) {
+        event.stopPropagation();
+        const willOpen = dropdown.hidden;
+        dropdown.hidden = !willOpen;
+        btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+
+    dropdown.addEventListener('click', function (event) {
+        event.stopPropagation();
+    });
+
+    document.addEventListener('click', function () {
+        dropdown.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            dropdown.hidden = true;
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    initHeaderUserMenu();
     initSeatSelection();
     initCheckoutForm();
     initCheckoutLockCountdown();

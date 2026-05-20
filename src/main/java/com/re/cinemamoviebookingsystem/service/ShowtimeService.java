@@ -91,14 +91,22 @@ public class ShowtimeService {
 
     @Transactional(readOnly = true)
     public ScheduleViewDto buildScheduleView(LocalDate selectedDate) {
+        LocalDateTime now = LocalDateTime.now();
         LocalDate today = LocalDate.now();
-        List<LocalDate> dayList = IntStream.range(0, 5).mapToObj(today::plusDays).toList();
-        LocalDate selected = (selectedDate != null && dayList.contains(selectedDate)) ? selectedDate : today;
+        List<ShowtimeBrowseDto> window = browseScheduleWindow();
 
-        LocalDate finalSelected = selected;
-        Map<Long, List<ShowtimeBrowseDto>> grouped = browseUpcoming().stream()
+        TreeSet<LocalDate> datesWithShowtimes = window.stream()
+                .map(s -> s.getStartTime().toLocalDate())
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        List<LocalDate> dayList = buildScheduleDayTabs(datesWithShowtimes, today);
+
+        LocalDate selected = resolveSelectedScheduleDate(selectedDate, dayList, datesWithShowtimes, today, window, now);
+
+        Map<Long, List<ShowtimeBrowseDto>> grouped = window.stream()
                 .filter(s -> s.getTmdbId() != null)
-                .filter(s -> s.getStartTime().toLocalDate().equals(finalSelected))
+                .filter(s -> s.getStartTime().toLocalDate().equals(selected))
+                .filter(s -> s.getStartTime().isAfter(now))
                 .collect(Collectors.groupingBy(ShowtimeBrowseDto::getTmdbId));
 
         List<ScheduleDayTabDto> tabs = dayList.stream()
@@ -121,16 +129,18 @@ public class ShowtimeService {
                             .soldOut(s.isSoldOut())
                             .build())
                     .toList();
+            String ageLabel = resolveAgeLabel(first);
+            String displayTitle = MovieAgeUtil.appendAgeSuffixToTitle(first.getMovieTitle(), ageLabel);
             cards.add(ScheduleMovieCardDto.builder()
                     .tmdbId(tmdbId)
                     .movieId(first.getMovieId())
-                    .title(first.getMovieTitle())
+                    .title(displayTitle)
                     .posterUrl(null)
                     .genresLabel("—")
                     .duration(null)
                     .releaseDate(null)
-                    .ageLabel(resolveAgeLabel(first))
-                    .ageNote(MovieAgeUtil.buildAgeNote(first.getMovieTitle()))
+                    .ageLabel(ageLabel)
+                    .ageNote(MovieAgeUtil.buildAgeNote(first.getMovieTitle(), first.getAgeLabel()))
                     .format("2D")
                     .slots(slotDtos)
                     .build());
@@ -143,6 +153,62 @@ public class ShowtimeService {
                 .movies(cards)
                 .filtering(false)
                 .build();
+    }
+
+    private List<LocalDate> buildScheduleDayTabs(TreeSet<LocalDate> datesWithShowtimes, LocalDate today) {
+        if (datesWithShowtimes.isEmpty()) {
+            return IntStream.range(0, 5).mapToObj(today::plusDays).toList();
+        }
+        List<LocalDate> tabs = new ArrayList<>(datesWithShowtimes.stream().limit(7).toList());
+        if (tabs.size() < 5) {
+            LocalDate cursor = tabs.get(tabs.size() - 1);
+            while (tabs.size() < 5) {
+                cursor = cursor.plusDays(1);
+                tabs.add(cursor);
+            }
+        }
+        return tabs;
+    }
+
+    private static LocalDate resolveSelectedScheduleDate(LocalDate selectedDate,
+                                                         List<LocalDate> dayList,
+                                                         TreeSet<LocalDate> datesWithShowtimes,
+                                                         LocalDate today,
+                                                         List<ShowtimeBrowseDto> window,
+                                                         LocalDateTime now) {
+        if (selectedDate != null && dayList.contains(selectedDate)
+                && hasBookableShowtimesOnDay(window, selectedDate, now)) {
+            return selectedDate;
+        }
+        for (LocalDate day : dayList) {
+            if (hasBookableShowtimesOnDay(window, day, now)) {
+                return day;
+            }
+        }
+        if (selectedDate != null && dayList.contains(selectedDate)) {
+            return selectedDate;
+        }
+        if (!datesWithShowtimes.isEmpty()) {
+            return datesWithShowtimes.first();
+        }
+        return dayList.isEmpty() ? today : dayList.get(0);
+    }
+
+    private static boolean hasBookableShowtimesOnDay(List<ShowtimeBrowseDto> window,
+                                                       LocalDate day,
+                                                       LocalDateTime now) {
+        return window.stream()
+                .anyMatch(s -> s.getStartTime().toLocalDate().equals(day) && s.getStartTime().isAfter(now));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ShowtimeBrowseDto> browseScheduleWindow() {
+        LocalDateTime from = LocalDate.now().atStartOfDay();
+        LocalDateTime to = LocalDate.now().plusDays(60).atTime(23, 59, 59);
+        List<ShowtimeStatus> statuses = List.of(ShowtimeStatus.ACTIVE, ShowtimeStatus.SOLD_OUT);
+        return showtimeRepository.findScheduleWindow(from, to, statuses).stream()
+                .map(this::toBrowseDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

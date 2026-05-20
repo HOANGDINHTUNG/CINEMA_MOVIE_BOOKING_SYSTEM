@@ -67,6 +67,12 @@ public class CustomerMovieController {
     public String calendar(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                            @RequestParam(required = false) String q,
                            @RequestParam(required = false) String genre,
+                           @RequestParam(required = false, defaultValue = "name") String sort,
+                           @RequestParam(required = false) List<String> age,
+                           @RequestParam(required = false) List<String> format,
+                           @RequestParam(required = false) List<String> origin,
+                           @RequestParam(required = false) Boolean available,
+                           @RequestParam(required = false, defaultValue = "grid") String view,
                            AppLanguage appLanguage,
                            Model model) {
         List<TmdbGenreItemDto> tmdbGenres = List.of();
@@ -74,16 +80,41 @@ public class CustomerMovieController {
             tmdbGenres = tmdbCatalogService.listGenres(appLanguage);
         } catch (Exception ignored) {
         }
+        String sortKey = SchedulePageSupport.normalizeSort(sort);
+        List<String> selectedAges = SchedulePageSupport.normalizeAgeFilters(age);
+        List<String> selectedFormats = SchedulePageSupport.normalizeFormatFilters(format);
+        List<String> selectedOrigins = SchedulePageSupport.normalizeOriginFilters(origin);
+        boolean availableOnly = Boolean.TRUE.equals(available);
+        String viewMode = SchedulePageSupport.normalizeView(view);
+
         var schedule = showtimeService.buildScheduleView(date);
         var enrichedMovies = cinemaCatalogService.enrichScheduleMovies(schedule.getMovies(), appLanguage);
         enrichedMovies = TmdbGenreFilterSupport.filterSchedule(enrichedMovies, q, genre, tmdbGenres);
-        boolean filtering = (q != null && !q.isBlank()) || (genre != null && !genre.isBlank());
+        enrichedMovies = SchedulePageSupport.applyExtraFilters(
+                enrichedMovies, selectedAges, selectedFormats, selectedOrigins, availableOnly);
+        enrichedMovies = SchedulePageSupport.sortMovies(enrichedMovies, sortKey);
+
+        String genreParam = genre != null ? genre.trim() : "";
+        boolean filtering = SchedulePageSupport.isFiltering(
+                q, genreParam, selectedAges, selectedFormats, selectedOrigins, availableOnly);
+
         model.addAttribute("scheduleDays", schedule.getDays());
         model.addAttribute("scheduleMovies", enrichedMovies);
         model.addAttribute("selectedDate", schedule.getSelectedDate());
         model.addAttribute("tmdbGenres", tmdbGenres);
         model.addAttribute("searchQuery", q != null ? q.trim() : "");
-        model.addAttribute("selectedGenre", genre != null ? genre.trim() : "");
+        model.addAttribute("selectedGenre", genreParam);
+        model.addAttribute("selectedGenreName", TmdbGenreFilterSupport.resolveGenreName(tmdbGenres, genreParam));
+        model.addAttribute("selectedSort", sortKey);
+        model.addAttribute("selectedAges", selectedAges);
+        model.addAttribute("selectedFormats", selectedFormats);
+        model.addAttribute("availableOnly", availableOnly);
+        model.addAttribute("ageFilterOptions", SchedulePageSupport.AGE_FILTER_OPTIONS);
+        model.addAttribute("formatFilterOptions", SchedulePageSupport.FORMAT_FILTER_OPTIONS);
+        model.addAttribute("originFilterOptions", SchedulePageSupport.ORIGIN_FILTER_OPTIONS);
+        model.addAttribute("selectedOrigins", selectedOrigins);
+        model.addAttribute("viewMode", viewMode);
+        model.addAttribute("resultCount", enrichedMovies.size());
         model.addAttribute("filtering", filtering);
         return "customer/calendar";
     }

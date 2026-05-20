@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{account.security_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/account.css}"/>
+</head>
+<body class="customer-site account-page">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<div class="account-layout">
+    <div th:replace="~{fragments/customer/account-sidebar :: sidebar}"></div>
+    <main class="account-content">
+        <h1 class="account-content__title" th:text="#{account.security_title}">Bảo mật</h1>
+        <div th:replace="~{fragments/customer/alerts :: alerts}"></div>
+        <div class="account-panel">
+            <p class="account-panel__lead" th:text="#{account.security_lead}">Đổi mật khẩu đăng nhập của bạn.</p>
+            <form th:action="@{/customer/account/security}" th:object="${changePassword}" method="post" class="account-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <label class="account-form__label" th:text="#{account.current_password}">Mật khẩu hiện tại</label>
+                <input type="password" class="form-control account-form__input" th:field="*{currentPassword}" required autocomplete="current-password"/>
+                <label class="account-form__label" th:text="#{account.new_password}">Mật khẩu mới</label>
+                <input type="password" class="form-control account-form__input" th:field="*{newPassword}" required autocomplete="new-password" minlength="6"/>
+                <label class="account-form__label" th:text="#{account.confirm_password}">Xác nhận mật khẩu</label>
+                <input type="password" class="form-control account-form__input" th:field="*{confirmPassword}" required autocomplete="new-password" minlength="6"/>
+                <button type="submit" class="btn btn-danger account-form__submit" th:text="#{account.change_password_btn}">Đổi mật khẩu</button>
+            </form>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>
