@@ -16,10 +16,15 @@
                   class="bg-white rounded-lg shadow p-6 space-y-4">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">TMDB ID phim</label>
-                    <input th:field="*{tmdbId}" type="number" required min="1" step="1"
-                           class="w-full border rounded px-3 py-2" placeholder="VD: 299534"/>
-                    <p class="text-xs text-gray-500 mt-1">Phim phải đã được import / liên kết TMDB trong quản trị.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phim</label>
+                    <select id="movieSelect" class="w-full border rounded px-3 py-2 mb-2">
+                        <option value="">-- Chọn phim --</option>
+                        <option th:each="m : ${movies}" th:value="${m.movieId}"
+                                th:attr="data-tmdb=${m.tmdbId},data-price=${m.defaultBasePrice}"
+                                th:text="${m.displayTitle}"></option>
+                    </select>
+                    <input th:field="*{tmdbId}" type="number" id="tmdbIdField" required min="1"
+                           class="w-full border rounded px-3 py-2" placeholder="TMDB ID"/>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Phòng</label>
@@ -43,5 +48,14 @@
         </div>
     </div>
 </div>
+<script>
+    document.getElementById('movieSelect')?.addEventListener('change', function () {
+        var opt = this.options[this.selectedIndex];
+        var tmdb = opt.getAttribute('data-tmdb');
+        var price = opt.getAttribute('data-price');
+        if (tmdb) document.getElementById('tmdbIdField').value = tmdb;
+        if (price) document.querySelector('[name=basePrice]').value = price;
+    });
+</script>
 </body>
 </html>

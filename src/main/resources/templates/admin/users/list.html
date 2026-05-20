@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Quản lý người dùng')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('users')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
+            <h1 class="text-xl font-semibold text-gray-800">Người dùng</h1>
+            <a th:href="@{/admin/users/new}"
+               class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-user-plus mr-1"></i> Tạo tài khoản
+            </a>
+        </div>
+        <div class="p-6">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+            <form method="get" class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-end">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Vai trò</label>
+                    <select name="role" class="border rounded px-3 py-2 text-sm">
+                        <option value="">Tất cả</option>
+                        <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"
+                                th:selected="${roleFilter == r}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Tìm kiếm</label>
+                    <input type="text" name="q" th:value="${keyword}" placeholder="username, email"
+                           class="border rounded px-3 py-2 text-sm w-56"/>
+                </div>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Lọc</button>
+            </form>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-gray-600">ID</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Username</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Họ tên</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Email</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Vai trò</th>
+                        <th class="px-4 py-3"></th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                    <tr th:each="u : ${users.content}" class="hover:bg-gray-50">
+                        <td class="px-4 py-3" th:text="${u.userId}"></td>
+                        <td class="px-4 py-3 font-medium" th:text="${u.username}"></td>
+                        <td class="px-4 py-3" th:text="${u.fullName}"></td>
+                        <td class="px-4 py-3" th:text="${u.email}"></td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100"
+                                  th:text="${u.roleName}"></span>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <a th:href="@{/admin/users/{id}/edit(id=${u.userId})}"
+                               class="text-primary hover:underline">Sửa</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 flex gap-2 text-sm" th:if="${users.totalPages > 1}">
+                <a th:if="${users.hasPrevious()}"
+                   th:href="@{/admin/users(page=${users.number - 1}, role=${roleFilter}, q=${keyword})}"
+                   class="px-3 py-1 border rounded">Trước</a>
+                <span th:text="'Trang ' + (${users.number} + 1) + ' / ' + ${users.totalPages}"></span>
+                <a th:if="${users.hasNext()}"
+                   th:href="@{/admin/users(page=${users.number + 1}, role=${roleFilter}, q=${keyword})}"
+                   class="px-3 py-1 border rounded">Sau</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

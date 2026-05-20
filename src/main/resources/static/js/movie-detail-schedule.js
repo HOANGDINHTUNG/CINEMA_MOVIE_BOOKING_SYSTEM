@@ -21,4 +21,13 @@
             activateDay(tab.getAttribute('data-day-index'));
         });
     });
+
+    if (window.location.hash === '#schedule') {
+        const schedule = document.getElementById('schedule');
+        if (schedule) {
+            requestAnimationFrame(function () {
+                schedule.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    }
 })();

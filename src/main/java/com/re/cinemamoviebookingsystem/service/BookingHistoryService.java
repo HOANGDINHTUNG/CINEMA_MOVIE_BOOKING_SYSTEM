@@ -3,11 +3,13 @@ package com.re.cinemamoviebookingsystem.service;
 import com.re.cinemamoviebookingsystem.config.CinemaProperties;
 import com.re.cinemamoviebookingsystem.dto.response.BookingHistoryDto;
 import com.re.cinemamoviebookingsystem.entity.Booking;
+import com.re.cinemamoviebookingsystem.entity.ShowtimeSeat;
 import com.re.cinemamoviebookingsystem.entity.Ticket;
 import com.re.cinemamoviebookingsystem.enums.BookingStatus;
 import com.re.cinemamoviebookingsystem.exception.BusinessException;
 import com.re.cinemamoviebookingsystem.exception.ErrorCode;
 import com.re.cinemamoviebookingsystem.repository.BookingRepository;
+import com.re.cinemamoviebookingsystem.repository.ShowtimeSeatRepository;
 import com.re.cinemamoviebookingsystem.tmdb.enums.AppLanguage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 public class BookingHistoryService {
 
     private final BookingRepository bookingRepository;
+    private final ShowtimeSeatRepository showtimeSeatRepository;
     private final CinemaProperties cinemaProperties;
     private final MovieDisplayService movieDisplayService;
 
@@ -45,10 +48,39 @@ public class BookingHistoryService {
     }
 
     private BookingHistoryDto toDto(Booking booking) {
-        List<String> seatLabels = booking.getTickets().stream()
-                .map(t -> t.getSeat().getLabel())
-                .sorted()
-                .collect(Collectors.toList());
+        Long userId = booking.getUser().getUserId();
+        Long showtimeId = booking.getShowtime().getShowtimeId();
+        LocalDateTime now = LocalDateTime.now();
+
+        List<String> seatLabels;
+        List<String> ticketCodes;
+        LocalDateTime lockExpiresAt = null;
+        boolean heldActive = false;
+
+        if (booking.getStatus() == BookingStatus.HELD) {
+            List<ShowtimeSeat> activeLocks = showtimeSeatRepository.findActiveLocksByUserAndShowtime(
+                    userId, showtimeId, now);
+            seatLabels = activeLocks.stream()
+                    .map(ss -> ss.getSeat().getLabel())
+                    .sorted()
+                    .collect(Collectors.toList());
+            lockExpiresAt = activeLocks.stream()
+                    .map(ShowtimeSeat::getLockedUntil)
+                    .filter(java.util.Objects::nonNull)
+                    .min(Comparator.naturalOrder())
+                    .orElse(null);
+            heldActive = !activeLocks.isEmpty();
+            ticketCodes = List.of();
+        } else {
+            seatLabels = booking.getTickets().stream()
+                    .map(t -> t.getSeat().getLabel())
+                    .sorted()
+                    .collect(Collectors.toList());
+            ticketCodes = booking.getTickets().stream()
+                    .map(Ticket::getTicketCode)
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
 
         boolean cancellable = booking.getStatus() == BookingStatus.PAID
                 && Duration.between(LocalDateTime.now(), booking.getShowtime().getStartTime()).toHours()
@@ -63,7 +95,11 @@ public class BookingHistoryService {
                 .showtimeStart(booking.getShowtime().getStartTime())
                 .roomName(booking.getShowtime().getRoom().getRoomName())
                 .seatLabels(seatLabels)
+                .ticketCodes(ticketCodes)
                 .cancellable(cancellable)
+                .showtimeId(showtimeId)
+                .lockExpiresAt(lockExpiresAt)
+                .heldActive(heldActive)
                 .build();
     }
 }

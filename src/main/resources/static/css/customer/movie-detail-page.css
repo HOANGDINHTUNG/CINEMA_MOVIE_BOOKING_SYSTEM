@@ -262,9 +262,44 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.movie-detail-cinema-brand {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #e50914;
+}
+
+.movie-detail-schedule-hint {
+    font-size: 0.9rem;
+    color: #9aa5b8;
+    margin: 0 0 20px;
+}
+
 .movie-detail-schedule h2 {
     font-size: 1.35rem;
     margin-bottom: 8px;
+}
+
+.btn-book-tickets {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: #e50914;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.btn-book-tickets:hover {
+    background: #f40612;
+    color: #fff;
+    transform: translateY(-1px);
 }
 
 .movie-detail-age-note {
@@ -347,11 +382,13 @@
 
 .schedule-time-pill {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 88px;
-    padding: 10px 20px;
-    border-radius: 999px;
+    gap: 2px;
+    min-width: 100px;
+    padding: 10px 16px;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.35);
     background: transparent;
     color: #fff;
@@ -359,6 +396,28 @@
     font-size: 0.95rem;
     text-decoration: none;
     transition: all 0.2s;
+}
+
+.schedule-time-pill__time {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.schedule-time-pill__room {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #9aa5b8;
+}
+
+.schedule-time-pill__price {
+    font-size: 0.75rem;
+    color: #c8ced9;
+}
+
+.schedule-time-pill__badge {
+    font-size: 0.7rem;
+    color: #ff6b6b;
+    text-transform: uppercase;
 }
 
 .schedule-time-pill:hover:not(.sold-out) {

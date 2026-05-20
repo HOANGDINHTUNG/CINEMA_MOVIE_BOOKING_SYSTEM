@@ -2,12 +2,14 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:replace="~{fragments/admin/head :: head('Trang chủ nhân viên')}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/staff/staff-ui.css}"/>
 </head>
 <body class="bg-gray-100">
 <div class="flex min-h-screen">
     <div th:replace="~{fragments/staff/sidebar :: sidebar('dashboard')}"></div>
-    <div class="ml-64 flex-1 p-6">
+    <div class="ml-64 flex-1 p-6 staff-main">
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Quầy vé — Trang chủ</h1>
+        <div th:replace="~{fragments/staff/alerts :: alerts}"></div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
             <a th:href="@{/staff/lookup}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition block">
                 <i class="fas fa-search text-3xl text-primary mb-3"></i>

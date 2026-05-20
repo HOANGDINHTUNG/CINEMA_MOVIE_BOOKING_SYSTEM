@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Danh sách nội dung')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('content')}"></div>
+    <div class="ml-64 flex-1 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-xl font-bold" th:text="${category.name()}"></h1>
+            <a th:href="@{/admin/content/{c}/new(c=${#strings.toLowerCase(category.name())})}"
+               class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Thêm bài</a>
+        </div>
+        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+        <div class="bg-white rounded-lg shadow overflow-hidden text-sm">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left">ID</th>
+                    <th class="px-4 py-3 text-left">Tiêu đề</th>
+                    <th class="px-4 py-3 text-left">Ngày</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a : ${articles}" class="border-t hover:bg-gray-50">
+                    <td class="px-4 py-3 font-mono text-xs" th:text="${a.id}"></td>
+                    <td class="px-4 py-3" th:text="${a.title}"></td>
+                    <td class="px-4 py-3" th:text="${a.date}"></td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                        <a th:href="@{/admin/content/{c}/{id}/edit(c=${#strings.toLowerCase(category.name())}, id=${a.id})}"
+                           class="text-primary hover:underline mr-3">Sửa</a>
+                        <form th:action="@{/admin/content/{c}/{id}/delete(c=${#strings.toLowerCase(category.name())}, id=${a.id})}"
+                              method="post" class="inline">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="text-red-600 hover:underline"
+                                    onclick="return confirm('Xóa bài này?')">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <a th:href="@{/admin/content}" class="inline-block mt-4 text-sm text-primary">← Nội dung</a>
+    </div>
+</div>
+</body>
+</html>

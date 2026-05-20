@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Lịch tuần suất chiếu')}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/admin/admin-showtimes-calendar.css}"/>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('showtimes')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-10">
+            <div>
+                <h1 class="text-xl font-semibold text-gray-800">Lịch suất chiếu theo tuần</h1>
+                <p class="text-sm text-gray-500 mt-1"
+                   th:text="${#temporals.format(calendar.weekStart, 'dd/MM/yyyy')} + ' – ' + ${#temporals.format(calendar.weekEnd, 'dd/MM/yyyy')}">
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2 items-center">
+                <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+                    <span class="px-3 py-2 bg-primary text-white font-medium">Lịch tuần</span>
+                    <a th:href="@{/admin/showtimes(roomId=${roomFilter})}"
+                       class="px-3 py-2 bg-white hover:bg-gray-50 text-gray-700">Danh sách</a>
+                </div>
+                <a th:href="@{/admin/showtimes/bulk}" class="border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Tạo hàng loạt</a>
+                <a th:href="@{/admin/showtimes/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">
+                    <i class="fas fa-plus mr-1"></i> Tạo suất
+                </a>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+
+            <div class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-end justify-between text-sm">
+                <form method="get" class="flex flex-wrap gap-3 items-end">
+                    <input type="hidden" name="week" th:value="${calendar.weekStart}"/>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Phòng</label>
+                        <select name="roomId" class="border rounded px-2 py-2 min-w-[140px]">
+                            <option value="">Tất cả phòng</option>
+                            <option th:each="r : ${rooms}" th:value="${r.roomId}" th:text="${r.roomName}"
+                                    th:selected="${roomFilter != null and roomFilter == r.roomId}"></option>
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg">Áp dụng</button>
+                </form>
+                <div class="flex gap-2 items-center">
+                    <a th:href="@{/admin/showtimes/calendar(week=${calendar.previousWeek}, roomId=${roomFilter})}"
+                       class="px-3 py-2 border rounded-lg bg-white hover:bg-gray-50" title="Tuần trước">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a th:href="@{/admin/showtimes/calendar(roomId=${roomFilter})}"
+                       class="px-3 py-2 border rounded-lg bg-white hover:bg-gray-50 text-xs">Tuần này</a>
+                    <a th:href="@{/admin/showtimes/calendar(week=${calendar.nextWeek}, roomId=${roomFilter})}"
+                       class="px-3 py-2 border rounded-lg bg-white hover:bg-gray-50" title="Tuần sau">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="admin-cal-legend mb-3 flex flex-wrap gap-2">
+                <span><i class="bg-green-500"></i> ACTIVE</span>
+                <span><i class="bg-orange-500"></i> SOLD_OUT</span>
+                <span><i class="bg-gray-400"></i> CANCELLED</span>
+                <span><i class="bg-purple-500"></i> HIDDEN</span>
+            </div>
+
+            <div class="bg-white rounded-lg shadow admin-calendar-wrap" th:if="${!calendar.rooms.isEmpty()}">
+                <table class="admin-calendar-table w-full text-sm">
+                    <thead>
+                    <tr>
+                        <th class="admin-calendar-room-col text-left">Phòng</th>
+                        <th th:each="day : ${calendar.days}">
+                            <span th:text="${#temporals.format(day, 'EEE')}">T2</span><br/>
+                            <span class="text-gray-500 font-normal" th:text="${#temporals.format(day, 'dd/MM')}"></span>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="room : ${calendar.rooms}">
+                        <td class="admin-calendar-room-col" th:text="${room.roomName}">Phòng</td>
+                        <td th:each="day : ${calendar.days}" class="admin-calendar-cell">
+                            <th:block th:with="dayKey=${day.toString()}, cellEvents=${calendar.grid[room.roomId][dayKey]}">
+                                <a th:each="ev : ${cellEvents}"
+                                   th:href="@{/admin/showtimes/{id}(id=${ev.showtimeId})}"
+                                   th:class="'admin-cal-event status-' + ${ev.status}"
+                                   th:title="${ev.movieTitle}">
+                                    <span class="font-semibold" th:text="${#temporals.format(ev.startTime, 'HH:mm')}">10:00</span>
+                                    <span class="block truncate" th:text="${ev.movieTitle}">Phim</span>
+                                    <span class="text-gray-500" th:text="${ev.fillPercent} + '%'"></span>
+                                </a>
+                                <a th:href="@{/admin/showtimes/new(roomId=${room.roomId}, startTime=${#temporals.format(day, 'yyyy-MM-dd') + 'T10:00:00'})}"
+                                   class="admin-cal-add" title="Thêm suất chiếu">
+                                    <i class="fas fa-plus"></i> Thêm
+                                </a>
+                            </th:block>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p th:if="${calendar.rooms.isEmpty()}" class="text-gray-500 bg-white rounded-lg shadow p-8 text-center">
+                Chưa có phòng chiếu. <a th:href="@{/admin/rooms}" class="text-primary hover:underline">Tạo phòng</a> trước khi lên lịch.
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

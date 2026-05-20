@@ -65,8 +65,9 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 const movies = data.movies || [];
+                const showSchedule = section === 'now-showing';
                 movies.forEach(function (m) {
-                    grid.insertAdjacentHTML('beforeend', buildCardHtml(m, section === 'now-showing'));
+                    grid.insertAdjacentHTML('beforeend', buildCardHtml(m, showSchedule));
                 });
                 pager.page = (data.page || pager.page) + 1;
                 if (!data.hasMore || movies.length === 0) wrap.classList.add('d-none');

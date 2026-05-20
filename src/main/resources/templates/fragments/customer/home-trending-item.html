@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="item(m)" class="trending-item" th:if="${m != null and m.tmdbId != null}">
+    <a th:href="@{/customer/movies/{tid}(tid=${m.tmdbId})}" class="trending-item-link">
+        <div class="trending-item-poster">
+            <img th:src="${m.posterUrl != null and #strings.startsWith(m.posterUrl, 'http')} ? ${m.posterUrl} : @{/assets/img/poster.jpg}"
+                 th:alt="${m.title}" loading="lazy"/>
+        </div>
+        <div class="trending-item-meta">
+            <span class="trending-item-title" th:text="${m.title}"></span>
+            <span class="trending-item-rating" th:if="${m.voteAverage != null}"
+                  th:text="'★ ' + ${#numbers.formatDecimal(m.voteAverage, 1, 1)}"></span>
+        </div>
+    </a>
+</div>
+</body>
+</html>

@@ -10,6 +10,57 @@
     padding: 100px 20px 120px;
 }
 
+.seats-cinema-header {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.seats-cinema-brand {
+    margin: 0 0 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #e50914;
+}
+
+.seats-movie-title {
+    margin: 0 0 16px;
+    font-size: clamp(1.35rem, 3vw, 1.75rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.25;
+}
+
+.seats-meta-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.seats-meta-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.seats-meta-label {
+    font-size: 0.75rem;
+    color: #8b93a7;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.seats-meta-list strong {
+    font-size: 0.95rem;
+    color: #f0f2f6;
+    font-weight: 600;
+}
+
 .seats-booking-top {
     display: flex;
     flex-wrap: wrap;
@@ -147,6 +198,88 @@
     vertical-align: middle;
 }
 
+.legend-color-box {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.legend-color-box--normal {
+    background: #3d4450;
+}
+
+.legend-color-box--vip {
+    background: #e67e22;
+    border-color: rgba(230, 126, 34, 0.8);
+}
+
+.seats-legend-note {
+    text-align: center;
+    margin: -12px 0 22px;
+    color: #8b93a7;
+    font-size: 0.78rem;
+}
+
+/* Trang ghế: chỉ ngày đang chọn sáng; đổi ngày phải quay lại trang phim */
+.seats-booking-page .schedule-date-tabs--seats-locked {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.seats-booking-page .schedule-date-tabs__hint {
+    flex: 0 0 100%;
+    width: 100%;
+    margin: 0 0 4px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: #8b93a7;
+}
+
+.seats-booking-page .schedule-date-tab {
+    text-decoration: none;
+}
+
+.seats-booking-page .schedule-date-tab--disabled {
+    opacity: 0.32;
+    filter: grayscale(0.55) brightness(0.75);
+    cursor: not-allowed !important;
+    pointer-events: auto;
+    background: #12151a !important;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.seats-booking-page .schedule-date-tab--disabled .tab-month,
+.seats-booking-page .schedule-date-tab--disabled .tab-day,
+.seats-booking-page .schedule-date-tab--disabled .tab-weekday {
+    color: #6b7280 !important;
+}
+
+.seats-booking-page .schedule-date-tab--disabled:hover,
+.seats-booking-page .schedule-date-tab--disabled:focus {
+    opacity: 0.32;
+    background: #12151a !important;
+    transform: none;
+    text-decoration: none;
+    cursor: not-allowed !important;
+}
+
+.seats-booking-page .schedule-date-tab.active {
+    opacity: 1;
+    filter: none;
+    cursor: default;
+    border: none;
+}
+
+.seats-booking-page .schedule-date-tab.active:hover {
+    background: #e50914;
+}
+
 .seat-checkout-bar {
     position: fixed;
     left: 0;
@@ -197,6 +330,24 @@
     font-weight: 600;
 }
 
+.btn-seat-clear {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(229, 9, 20, 0.55);
+    background: transparent;
+    color: #ff6b6b;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-seat-clear:hover {
+    background: rgba(229, 9, 20, 0.12);
+}
+
+.btn-seat-clear[hidden] {
+    display: none;
+}
+
 .btn-seat-pay {
     padding: 10px 28px;
     border-radius: 999px;
@@ -210,4 +361,67 @@
 .btn-seat-pay:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+.seat-grid-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+    .seats-booking-main {
+        padding: 88px 12px 140px;
+    }
+
+    .seats-meta-list {
+        gap: 10px 16px;
+    }
+
+    .seats-movie-title {
+        font-size: 1.2rem;
+    }
+
+    .schedule-date-tabs {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .schedule-date-tab {
+        flex: 0 0 auto;
+        min-width: 64px;
+        min-height: 76px;
+    }
+
+    .schedule-time-pills {
+        justify-content: flex-start;
+    }
+
+    .seat-grid .seat {
+        width: 32px;
+        height: 32px;
+        font-size: 0.62rem;
+    }
+
+    .seat-checkout-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 16px;
+    }
+
+    .seat-checkout-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .seat-checkout-actions .btn-seat-back,
+    .seat-checkout-actions .btn-seat-pay {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+    }
 }

@@ -1,6 +1,6 @@
 package com.re.cinemamoviebookingsystem.config;
 
-import com.re.cinemamoviebookingsystem.security.RoleBasedAuthenticationSuccessHandler;
+import com.re.cinemamoviebookingsystem.security.LoginAuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -18,7 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final RoleBasedAuthenticationSuccessHandler successHandler;
+    private final LoginAuthenticationSuccessHandler loginSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -28,6 +30,7 @@ public class SecurityConfig {
                                 "/css/**", "/js/**", "/images/**", "/assets/**", "/webjars/**",
                                 "/payment/vnpay-return",
                                 "/api/public/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/customer/booking/start").permitAll()
                         .requestMatchers(
                                 "/customer",
                                 "/customer/home",
@@ -46,10 +49,14 @@ public class SecurityConfig {
                         .requestMatchers("/customer/**").hasRole("CUSTOMER")
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(loginEntryPoint())
+                        .accessDeniedPage("/error/forbidden")
+                )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .successHandler(successHandler)
+                        .successHandler(loginSuccessHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -58,10 +65,14 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .permitAll()
                 )
-                .exceptionHandling(ex -> ex
-                        .accessDeniedPage("/error/forbidden")
-                );
+                .requestCache(cache -> cache
+                        .requestCache(new org.springframework.security.web.savedrequest.HttpSessionRequestCache()));
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationEntryPoint loginEntryPoint() {
+        return new LoginUrlAuthenticationEntryPoint("/login");
     }
 
     @Bean

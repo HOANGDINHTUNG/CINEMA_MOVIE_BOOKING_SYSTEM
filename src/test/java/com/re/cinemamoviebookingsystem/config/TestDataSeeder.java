@@ -40,7 +40,7 @@ public class TestDataSeeder implements CommandLineRunner {
             seatRepository.save(Seat.builder().room(r).rowName("A").seatNumber(i)
                     .seatType(PhysicalSeatType.STANDARD).build());
         }
-        movieRepository.save(Movie.builder().title("T").duration(90).releaseDate(LocalDate.now())
+        movieRepository.save(Movie.builder().tmdbId(550L).duration(90)
                 .status(MovieStatus.ACTIVE).build());
     }
 }

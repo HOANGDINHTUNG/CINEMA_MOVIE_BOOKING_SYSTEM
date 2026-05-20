@@ -23,11 +23,53 @@
             <i class="fas fa-calendar-alt w-5"></i>
             <span class="mx-3">Lịch chiếu</span>
         </a>
+        <a th:href="@{/admin/rooms}"
+           th:classappend="${active == 'rooms'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-door-open w-5"></i>
+            <span class="mx-3">Phòng chiếu</span>
+        </a>
+        <a th:href="@{/admin/combos}"
+           th:classappend="${active == 'combos'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-popcorn w-5"></i>
+            <span class="mx-3">Combo</span>
+        </a>
+        <a th:href="@{/admin/bookings}"
+           th:classappend="${active == 'bookings'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-ticket-alt w-5"></i>
+            <span class="mx-3">Đơn đặt vé</span>
+        </a>
+        <a th:href="@{/admin/users}"
+           th:classappend="${active == 'users'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-users w-5"></i>
+            <span class="mx-3">Người dùng</span>
+        </a>
         <a th:href="@{/admin/reports}"
            th:classappend="${active == 'reports'} ? ' active' : ''"
            class="sidebar-link flex items-center px-6 py-3 text-gray-700">
             <i class="fas fa-chart-line w-5"></i>
             <span class="mx-3">Báo cáo</span>
+        </a>
+        <a th:href="@{/admin/content}"
+           th:classappend="${active == 'content'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-newspaper w-5"></i>
+            <span class="mx-3">Nội dung web</span>
+        </a>
+        <a th:href="@{/admin/settings}"
+           th:classappend="${active == 'settings'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-cog w-5"></i>
+            <span class="mx-3">Cấu hình</span>
+        </a>
+        <a th:href="@{/admin/audit}"
+           th:classappend="${active == 'audit'} ? ' active' : ''"
+           class="sidebar-link flex items-center px-6 py-3 text-gray-700">
+            <i class="fas fa-history w-5"></i>
+            <span class="mx-3">Nhật ký</span>
         </a>
         <a th:href="@{/admin/profile}"
            th:classappend="${active == 'profile'} ? ' active' : ''"

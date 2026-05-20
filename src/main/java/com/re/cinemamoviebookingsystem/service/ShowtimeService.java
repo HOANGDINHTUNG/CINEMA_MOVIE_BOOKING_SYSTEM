@@ -1,7 +1,9 @@
 package com.re.cinemamoviebookingsystem.service;
 
 import com.re.cinemamoviebookingsystem.config.CinemaProperties;
+import com.re.cinemamoviebookingsystem.dto.request.ShowtimeBulkCreateRequest;
 import com.re.cinemamoviebookingsystem.dto.request.ShowtimeCreateRequest;
+import com.re.cinemamoviebookingsystem.dto.request.ShowtimeUpdateRequest;
 import com.re.cinemamoviebookingsystem.dto.response.*;
 import com.re.cinemamoviebookingsystem.tmdb.enums.AppLanguage;
 import com.re.cinemamoviebookingsystem.util.MovieAgeUtil;
@@ -12,14 +14,18 @@ import com.re.cinemamoviebookingsystem.exception.BusinessException;
 import com.re.cinemamoviebookingsystem.exception.ErrorCode;
 import com.re.cinemamoviebookingsystem.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,6 +43,10 @@ public class ShowtimeService {
     private final ShowtimeStatusService showtimeStatusService;
     private final CinemaProperties cinemaProperties;
     private final MovieDisplayService movieDisplayService;
+    private final BookingRepository bookingRepository;
+    private final AuditLogService auditLogService;
+    private final ShowtimeSeatRepairService showtimeSeatRepairService;
+    private final SeatMapService seatMapService;
 
     private static final DateTimeFormatter TAB_DATE = DateTimeFormatter.ofPattern("dd-MM-yyyy");
     private static final DateTimeFormatter SLOT_TIME = DateTimeFormatter.ofPattern("HH:mm");
@@ -166,6 +176,271 @@ public class ShowtimeService {
     }
 
     @Transactional(readOnly = true)
+    public Page<AdminShowtimeListItemDto> listForAdmin(Long movieId, Integer roomId, ShowtimeStatus status,
+                                                       LocalDateTime from, LocalDateTime to, Pageable pageable) {
+        return showtimeRepository.findForAdmin(movieId, roomId, status, from, to, pageable)
+                .map(this::toAdminListItem);
+    }
+
+    @Transactional(readOnly = true)
+    public AdminShowtimeDetailDto getAdminDetail(Long showtimeId) {
+        Showtime showtime = showtimeRepository.findByIdWithDetails(showtimeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHOWTIME_NOT_FOUND, "Suất chiếu không tồn tại"));
+        showtimeStatusService.refreshShowtimeStatus(showtimeId);
+        showtime = showtimeRepository.findByIdWithDetails(showtimeId).orElseThrow();
+
+        long booked = showtimeSeatRepository.countByShowtimeShowtimeIdAndStatus(
+                showtimeId, SeatStatus.BOOKED);
+        long locked = showtimeSeatRepository.countByShowtimeShowtimeIdAndStatus(
+                showtimeId, SeatStatus.LOCKED);
+        int total = showtime.getRoom().getTotalSeats();
+        long available = Math.max(0, total - booked - locked);
+        long paidBookings = bookingRepository.countByShowtimeShowtimeIdAndStatus(
+                showtimeId, com.re.cinemamoviebookingsystem.enums.BookingStatus.PAID);
+        long seatRows = showtimeSeatRepository.countByShowtimeShowtimeId(showtimeId);
+
+        boolean canEdit = showtime.getStatus() != ShowtimeStatus.CANCELLED && booked == 0;
+        boolean canCancel = showtime.getStatus() != ShowtimeStatus.CANCELLED && paidBookings == 0;
+
+        return AdminShowtimeDetailDto.builder()
+                .showtimeId(showtime.getShowtimeId())
+                .movieId(showtime.getMovie().getMovieId())
+                .tmdbId(showtime.getMovie().getTmdbId())
+                .movieTitle(movieDisplayService.resolveTitle(showtime.getMovie(), AppLanguage.VI_VN))
+                .roomId(showtime.getRoom().getRoomId())
+                .roomName(showtime.getRoom().getRoomName())
+                .startTime(showtime.getStartTime())
+                .endTime(showtime.getEndTime())
+                .basePrice(showtime.getBasePrice())
+                .status(showtime.getStatus())
+                .availableSeats(available)
+                .lockedSeats(locked)
+                .bookedSeats(booked)
+                .totalSeats(total)
+                .paidBookings(paidBookings)
+                .canEdit(canEdit)
+                .canCancel(canCancel)
+                .showtimeSeatRows(seatRows)
+                .seatsConfigured(seatRows > 0)
+                .build();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateShowtime(Long showtimeId, ShowtimeUpdateRequest request) {
+        Showtime showtime = showtimeRepository.findByIdWithDetails(showtimeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHOWTIME_NOT_FOUND, "Suất chiếu không tồn tại"));
+        if (showtime.getStatus() == ShowtimeStatus.CANCELLED) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Suất đã hủy");
+        }
+        long booked = showtimeSeatRepository.countByShowtimeShowtimeIdAndStatus(
+                showtimeId, SeatStatus.BOOKED);
+        if (booked > 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Không sửa được suất đã có ghế đặt. Chỉ có thể hủy suất.");
+        }
+
+        Room room = roomRepository.findById(request.getRoomId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "Phòng không tồn tại"));
+        LocalDateTime start = request.getStartTime();
+        LocalDateTime end = start.plusMinutes(showtime.getMovie().getDuration())
+                .plusMinutes(cinemaProperties.getCleaningBufferMinutes());
+
+        if (showtimeRepository.existsRoomConflict(room.getRoomId(), start, end, showtimeId)) {
+            throw new BusinessException(ErrorCode.ROOM_CONFLICT, "Phòng trùng lịch với suất khác");
+        }
+
+        if (!room.getRoomId().equals(showtime.getRoom().getRoomId())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Không đổi phòng khi suất đã tạo ghế. Tạo suất mới thay thế.");
+        }
+
+        showtime.setStartTime(start);
+        showtime.setEndTime(end);
+        showtime.setBasePrice(request.getBasePrice());
+        showtime.setRoom(room);
+        showtimeRepository.save(showtime);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelShowtime(Long showtimeId) {
+        Showtime showtime = showtimeRepository.findByIdWithDetails(showtimeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHOWTIME_NOT_FOUND, "Suất chiếu không tồn tại"));
+        long paid = bookingRepository.countByShowtimeShowtimeIdAndStatus(
+                showtimeId, com.re.cinemamoviebookingsystem.enums.BookingStatus.PAID);
+        if (paid > 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Không hủy suất đã có đơn thanh toán");
+        }
+        showtime.setStatus(ShowtimeStatus.CANCELLED);
+        showtimeRepository.save(showtime);
+        auditLogService.log("SHOWTIME_CANCEL", "SHOWTIME", String.valueOf(showtimeId), null);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkRoomConflict(Integer roomId, LocalDateTime start, Long excludeShowtimeId, int durationMinutes) {
+        LocalDateTime end = start.plusMinutes(durationMinutes)
+                .plusMinutes(cinemaProperties.getCleaningBufferMinutes());
+        return showtimeRepository.existsRoomConflict(roomId, start, end, excludeShowtimeId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int bulkCreate(ShowtimeBulkCreateRequest request) {
+        Movie movie = resolveMovieForBulk(request);
+        List<java.time.LocalTime> slots = parseTimeSlots(request.getTimeSlots());
+        if (slots.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Cần ít nhất một khung giờ");
+        }
+        int created = 0;
+        for (LocalDate day = request.getStartDate(); !day.isAfter(request.getEndDate()); day = day.plusDays(1)) {
+            for (java.time.LocalTime slot : slots) {
+                ShowtimeCreateRequest single = new ShowtimeCreateRequest();
+                single.setTmdbId(movie.getTmdbId());
+                single.setMovieId(movie.getMovieId());
+                single.setRoomId(request.getRoomId());
+                single.setStartTime(day.atTime(slot));
+                single.setBasePrice(request.getBasePrice());
+                try {
+                    createShowtime(single);
+                    created++;
+                } catch (BusinessException ex) {
+                    if (ex.getErrorCode() != ErrorCode.ROOM_CONFLICT) {
+                        throw ex;
+                    }
+                }
+            }
+        }
+        return created;
+    }
+
+    private Movie resolveMovieForBulk(ShowtimeBulkCreateRequest request) {
+        ShowtimeCreateRequest tmp = new ShowtimeCreateRequest();
+        tmp.setMovieId(request.getMovieId());
+        tmp.setTmdbId(request.getTmdbId());
+        return resolveMovie(tmp);
+    }
+
+    private List<java.time.LocalTime> parseTimeSlots(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of(
+                    java.time.LocalTime.of(10, 0),
+                    java.time.LocalTime.of(14, 0),
+                    java.time.LocalTime.of(18, 0),
+                    java.time.LocalTime.of(21, 30));
+        }
+        List<java.time.LocalTime> result = new ArrayList<>();
+        for (String part : raw.split("[,;\\s]+")) {
+            if (part.isBlank()) continue;
+            result.add(java.time.LocalTime.parse(part.trim()));
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public ShowtimeCalendarViewDto buildCalendarView(LocalDate weekAnchor, Integer roomId) {
+        LocalDate anchor = weekAnchor != null ? weekAnchor : LocalDate.now();
+        LocalDate weekStart = anchor.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate weekEnd = weekStart.plusDays(6);
+        LocalDateTime from = weekStart.atStartOfDay();
+        LocalDateTime to = weekEnd.plusDays(1).atStartOfDay();
+
+        List<Room> rooms = roomId != null
+                ? roomRepository.findById(roomId).map(List::of).orElse(List.of())
+                : roomRepository.findAll();
+
+        List<LocalDate> days = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            days.add(weekStart.plusDays(i));
+        }
+
+        Map<Integer, Map<String, List<ShowtimeCalendarEventDto>>> grid = new LinkedHashMap<>();
+        for (Room room : rooms) {
+            Map<String, List<ShowtimeCalendarEventDto>> byDay = new LinkedHashMap<>();
+            for (LocalDate d : days) {
+                byDay.put(d.toString(), new ArrayList<>());
+            }
+            grid.put(room.getRoomId(), byDay);
+        }
+
+        for (Showtime s : showtimeRepository.findForCalendar(from, to, roomId)) {
+            String dayKey = s.getStartTime().toLocalDate().toString();
+            Map<String, List<ShowtimeCalendarEventDto>> byDay = grid.get(s.getRoom().getRoomId());
+            if (byDay != null && byDay.containsKey(dayKey)) {
+                byDay.get(dayKey).add(toCalendarEvent(s));
+            }
+        }
+        for (Map<String, List<ShowtimeCalendarEventDto>> byDay : grid.values()) {
+            for (List<ShowtimeCalendarEventDto> events : byDay.values()) {
+                events.sort(Comparator.comparing(ShowtimeCalendarEventDto::getStartTime));
+            }
+        }
+
+        List<ShowtimeCalendarViewDto.RoomColumnDto> roomColumns = rooms.stream()
+                .map(r -> ShowtimeCalendarViewDto.RoomColumnDto.builder()
+                        .roomId(r.getRoomId())
+                        .roomName(r.getRoomName())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ShowtimeCalendarViewDto.builder()
+                .weekStart(weekStart)
+                .weekEnd(weekEnd)
+                .previousWeek(weekStart.minusWeeks(1))
+                .nextWeek(weekStart.plusWeeks(1))
+                .roomFilter(roomId)
+                .rooms(roomColumns)
+                .days(days)
+                .grid(grid)
+                .build();
+    }
+
+    private ShowtimeCalendarEventDto toCalendarEvent(Showtime s) {
+        long booked = showtimeSeatRepository.countByShowtimeShowtimeIdAndStatus(
+                s.getShowtimeId(), SeatStatus.BOOKED);
+        int total = s.getRoom().getTotalSeats();
+        int fill = total > 0 ? (int) (booked * 100 / total) : 0;
+        return ShowtimeCalendarEventDto.builder()
+                .showtimeId(s.getShowtimeId())
+                .roomId(s.getRoom().getRoomId())
+                .roomName(s.getRoom().getRoomName())
+                .movieTitle(movieDisplayService.resolveTitle(s.getMovie(), AppLanguage.VI_VN))
+                .startTime(s.getStartTime())
+                .endTime(s.getEndTime())
+                .status(s.getStatus())
+                .fillPercent(fill)
+                .build();
+    }
+
+    private AdminShowtimeListItemDto toAdminListItem(Showtime s) {
+        long booked = showtimeSeatRepository.countByShowtimeShowtimeIdAndStatus(
+                s.getShowtimeId(), SeatStatus.BOOKED);
+        int total = s.getRoom().getTotalSeats();
+        int fill = total > 0 ? (int) (booked * 100 / total) : 0;
+        Movie movie = s.getMovie();
+        return AdminShowtimeListItemDto.builder()
+                .showtimeId(s.getShowtimeId())
+                .movieId(movie.getMovieId())
+                .tmdbId(movie.getTmdbId())
+                .movieTitle(movieDisplayService.resolveTitle(movie, AppLanguage.VI_VN))
+                .roomName(s.getRoom().getRoomName())
+                .roomId(s.getRoom().getRoomId())
+                .startTime(s.getStartTime())
+                .endTime(s.getEndTime())
+                .basePrice(s.getBasePrice())
+                .status(s.getStatus())
+                .bookedSeats(booked)
+                .totalSeats(total)
+                .fillPercent(fill)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminShowtimeListItemDto> listByMovieForAdmin(Long movieId) {
+        return showtimeRepository.findByMovieIdWithDetails(movieId).stream()
+                .map(this::toAdminListItem)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<ShowtimeBrowseDto> listByMovie(Long movieId) {
         LocalDateTime now = LocalDateTime.now();
         return showtimeRepository.findUpcoming(now, List.of(ShowtimeStatus.ACTIVE, ShowtimeStatus.SOLD_OUT))
@@ -177,9 +452,17 @@ public class ShowtimeService {
 
     @Transactional(readOnly = true)
     public List<ShowtimeBrowseDto> listByTmdbId(long tmdbId) {
-        return browseUpcoming().stream()
-                .filter(s -> s.getTmdbId() != null && s.getTmdbId() == tmdbId)
-                .sorted(Comparator.comparing(ShowtimeBrowseDto::getStartTime))
+        LocalDateTime now = LocalDateTime.now();
+        List<ShowtimeStatus> statuses = List.of(ShowtimeStatus.ACTIVE, ShowtimeStatus.SOLD_OUT);
+        List<Showtime> showtimes = showtimeRepository.findUpcomingByTmdbId(tmdbId, now, statuses);
+        if (showtimes.isEmpty()) {
+            return List.of();
+        }
+
+        // Resolve movie title once per movie instead of once per showtime.
+        String movieTitle = movieDisplayService.resolveTitleLocal(showtimes.get(0).getMovie());
+        return showtimes.stream()
+                .map(s -> toBrowseDto(s, movieTitle))
                 .collect(Collectors.toList());
     }
 
@@ -223,63 +506,16 @@ public class ShowtimeService {
 
     @Transactional(readOnly = true)
     public SeatMapDto getSeatMap(Long showtimeId) {
-        Showtime showtime = showtimeRepository.findById(showtimeId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SHOWTIME_NOT_FOUND, "Suất chiếu không tồn tại"));
+        return seatMapService.getSeatMap(showtimeId);
+    }
 
-        showtimeStatusService.refreshShowtimeStatus(showtimeId);
-        showtime = showtimeRepository.findById(showtimeId).orElseThrow();
-
-        List<ShowtimeSeat> seats = showtimeSeatRepository.findByShowtimeShowtimeId(showtimeId);
-        long available = seats.stream()
-                .filter(s -> s.getStatus() == SeatStatus.AVAILABLE
-                        || (s.getStatus() == SeatStatus.LOCKED && isLockExpired(s)))
-                .count();
-
-        return SeatMapDto.builder()
-                .showtimeId(showtimeId)
-                .movieId(showtime.getMovie().getMovieId())
-                .tmdbId(showtime.getMovie().getTmdbId())
-                .movieTitle(movieDisplayService.resolveTitle(showtime.getMovie(), AppLanguage.VI_VN))
-                .roomName(showtime.getRoom().getRoomName())
-                .startTime(showtime.getStartTime())
-                .basePrice(showtime.getBasePrice())
-                .showtimeStatus(showtime.getStatus())
-                .soldOut(showtime.getStatus() == ShowtimeStatus.SOLD_OUT)
-                .seats(seats.stream().map(ss -> SeatMapDto.SeatCellDto.builder()
-                        .seatId(ss.getSeat().getSeatId())
-                        .label(ss.getSeat().getLabel())
-                        .seatType(ss.getSeat().getSeatType().name())
-                        .status(displayStatus(ss))
-                        .build()).collect(Collectors.toList()))
-                .build();
+    @Transactional(readOnly = true)
+    public SeatMapDto getSeatMap(Long showtimeId, Long currentUserId) {
+        return seatMapService.getSeatMap(showtimeId, currentUserId);
     }
 
     public BigDecimal estimateSeatTotal(SeatMapDto seatMap, List<Long> seatIds) {
-        if (seatMap == null || seatIds == null || seatIds.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-        return seatMap.getSeats().stream()
-                .filter(s -> seatIds.contains(s.getSeatId()))
-                .map(s -> {
-                    if ("VIP".equalsIgnoreCase(s.getSeatType())) {
-                        return seatMap.getBasePrice()
-                                .multiply(BigDecimal.valueOf(cinemaProperties.getVipPriceMultiplier()))
-                                .setScale(0, RoundingMode.HALF_UP);
-                    }
-                    return seatMap.getBasePrice();
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private SeatStatus displayStatus(ShowtimeSeat ss) {
-        if (ss.getStatus() == SeatStatus.LOCKED && isLockExpired(ss)) {
-            return SeatStatus.AVAILABLE;
-        }
-        return ss.getStatus();
-    }
-
-    private boolean isLockExpired(ShowtimeSeat ss) {
-        return ss.getLockedUntil() != null && ss.getLockedUntil().isBefore(LocalDateTime.now());
+        return seatMapService.estimateSeatTotal(seatMap, seatIds);
     }
 
     private Movie resolveMovie(ShowtimeCreateRequest request) {
@@ -304,6 +540,10 @@ public class ShowtimeService {
     }
 
     private ShowtimeBrowseDto toBrowseDto(Showtime s) {
+        return toBrowseDto(s, movieDisplayService.resolveTitle(s.getMovie(), AppLanguage.VI_VN));
+    }
+
+    private ShowtimeBrowseDto toBrowseDto(Showtime s, String movieTitle) {
         long booked = showtimeSeatRepository.countByShowtimeShowtimeIdAndStatus(
                 s.getShowtimeId(), SeatStatus.BOOKED);
         int total = s.getRoom().getTotalSeats();
@@ -314,7 +554,7 @@ public class ShowtimeService {
                 .movieId(movie.getMovieId())
                 .tmdbId(movie.getTmdbId())
                 .ageLabel(movie.getAgeLabel())
-                .movieTitle(movieDisplayService.resolveTitle(movie, AppLanguage.VI_VN))
+                .movieTitle(movieTitle)
                 .roomName(s.getRoom().getRoomName())
                 .startTime(s.getStartTime())
                 .basePrice(s.getBasePrice())

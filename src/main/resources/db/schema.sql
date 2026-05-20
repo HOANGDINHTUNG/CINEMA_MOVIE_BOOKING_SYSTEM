@@ -123,7 +123,7 @@ CREATE TABLE bookings (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE RESTRICT,
     FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id) ON DELETE RESTRICT,
     CONSTRAINT chk_booking_amount CHECK (total_amount >= 0),
-    CONSTRAINT chk_booking_status CHECK (status IN ('PENDING', 'PAID', 'CANCELLED'))
+    CONSTRAINT chk_booking_status CHECK (status IN ('HELD', 'PENDING', 'PAID', 'CANCELLED'))
 );
 
 CREATE TABLE tickets (
@@ -162,8 +162,35 @@ CREATE TABLE payments (
     CONSTRAINT chk_payment_status CHECK (payment_status IN ('PENDING', 'SUCCESS', 'FAILED'))
 );
 
+CREATE TABLE content_articles (
+    id VARCHAR(64) PRIMARY KEY,
+    category VARCHAR(20) NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    published_date DATE NULL,
+    thumbnail VARCHAR(255) NULL,
+    images TEXT NULL,
+    content_html MEDIUMTEXT NULL,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL,
+    CONSTRAINT chk_content_category CHECK (category IN ('PROMOTION', 'NEWS', 'FESTIVAL'))
+);
+
+CREATE TABLE audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NULL,
+    username VARCHAR(50) NULL,
+    action VARCHAR(80) NOT NULL,
+    entity_type VARCHAR(50) NULL,
+    entity_id VARCHAR(50) NULL,
+    detail TEXT NULL,
+    created_at DATETIME NULL
+);
+
+
+CREATE INDEX idx_content_articles_category ON content_articles (category);
 CREATE INDEX idx_showtimes_conflict ON showtimes (room_id, start_time, end_time);
 CREATE INDEX idx_showtimes_movie_start ON showtimes (movie_id, start_time);
 CREATE INDEX idx_showtime_seats_ttl ON showtime_seats (status, locked_until);
 CREATE INDEX idx_bookings_dashboard ON bookings (status, booking_date);
 CREATE INDEX idx_tickets_booking ON tickets (booking_id);
+CREATE INDEX idx_audit_logs_created ON audit_logs (created_at);

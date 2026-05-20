@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Tạo người dùng')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('users')}"></div>
+    <div class="ml-64 flex-1 p-6 max-w-lg">
+        <h1 class="text-xl font-bold text-gray-800 mb-4">Tạo tài khoản</h1>
+        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+        <p th:if="${errorMessage}" class="mb-4 p-3 rounded bg-red-100 text-red-800" th:text="${errorMessage}"></p>
+        <form th:action="@{/admin/users}" th:object="${userRequest}" method="post"
+              class="bg-white rounded-lg shadow p-6 space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Username</label>
+                <input th:field="*{username}" class="w-full border rounded px-3 py-2 form-input"/>
+                <p th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="text-red-600 text-xs mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Email</label>
+                <input th:field="*{email}" type="email" class="w-full border rounded px-3 py-2 form-input"/>
+                <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-red-600 text-xs mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Mật khẩu</label>
+                <input th:field="*{password}" type="password" class="w-full border rounded px-3 py-2 form-input"/>
+                <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="text-red-600 text-xs mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Họ tên</label>
+                <input th:field="*{fullName}" class="w-full border rounded px-3 py-2 form-input"/>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Số điện thoại</label>
+                <input th:field="*{phoneNumber}" class="w-full border rounded px-3 py-2 form-input"/>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Vai trò</label>
+                <select th:field="*{roleName}" class="w-full border rounded px-3 py-2">
+                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+                </select>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg">Tạo</button>
+                <a th:href="@{/admin/users}" class="px-5 py-2 border rounded-lg text-gray-600">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

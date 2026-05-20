@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Trang chủ: TMDB trang 1 (~20 phim/mục) render server-side; "Tải thêm" qua API + home.js.
+ * Trang chủ: phim từ DB (có suất); metadata TMDB; sidebar xu hướng lọc theo rạp.
  */
 @Controller
 @RequestMapping("/customer")
@@ -37,6 +37,8 @@ public class CustomerHomeController {
                 now != null && now.getMovies() != null ? now.getMovies() : Collections.emptyList());
         List<CinemaMovieCardDto> soonMovies = filterRenderableCards(
                 soon != null && soon.getMovies() != null ? soon.getMovies() : Collections.emptyList());
+        List<CinemaMovieCardDto> trending = filterRenderableCards(
+                bundle.getTrending() != null ? bundle.getTrending() : Collections.emptyList());
         List<HeroSlideDto> heroSlides = bundle.getHeroSlides() != null
                 ? bundle.getHeroSlides() : Collections.emptyList();
 
@@ -44,11 +46,10 @@ public class CustomerHomeController {
         model.addAttribute("heroSlides", heroSlides);
         model.addAttribute("nowShowing", nowMovies);
         model.addAttribute("comingSoon", soonMovies);
+        model.addAttribute("trending", trending);
         model.addAttribute("nowHasMore", now != null && now.isHasMore());
         model.addAttribute("soonHasMore", soon != null && soon.isHasMore());
         model.addAttribute("homeError", bundle.getError());
-        model.addAttribute("homeInfoMessage", bundle.getInfoMessage());
-        model.addAttribute("noPublishedAtCinema", bundle.isNoPublishedAtCinema());
         model.addAttribute("homePageSize", TmdbHomeCatalogService.PAGE_SIZE);
         model.addAttribute("maxSeatsPerBooking", cinemaProperties.getMaxSeatsPerBooking());
         return "customer/home";

@@ -16,6 +16,19 @@ public interface ShowtimeSeatRepository extends JpaRepository<ShowtimeSeat, Long
 
     List<ShowtimeSeat> findByShowtimeShowtimeId(Long showtimeId);
 
+    void deleteByShowtimeShowtimeId(Long showtimeId);
+
+    long countByShowtimeShowtimeId(Long showtimeId);
+
+    @Query("""
+            SELECT ss FROM ShowtimeSeat ss
+            JOIN FETCH ss.seat seat
+            JOIN FETCH ss.showtime st
+            WHERE st.showtimeId = :showtimeId
+            ORDER BY seat.rowName ASC, seat.seatNumber ASC
+            """)
+    List<ShowtimeSeat> findByShowtimeIdWithSeats(@Param("showtimeId") Long showtimeId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT ss FROM ShowtimeSeat ss
@@ -36,4 +49,28 @@ public interface ShowtimeSeatRepository extends JpaRepository<ShowtimeSeat, Long
             AND ss.lockedUntil IS NOT NULL AND ss.lockedUntil < :now
             """)
     List<ShowtimeSeat> findExpiredLocks(@Param("now") LocalDateTime now);
+
+    @Query("""
+            SELECT ss FROM ShowtimeSeat ss
+            JOIN FETCH ss.seat
+            WHERE ss.showtime.showtimeId = :showtimeId
+            AND ss.status = com.re.cinemamoviebookingsystem.enums.SeatStatus.LOCKED
+            AND ss.lockedByUser.userId = :userId
+            AND ss.lockedUntil IS NOT NULL AND ss.lockedUntil > :now
+            ORDER BY seat.rowName ASC, seat.seatNumber ASC
+            """)
+    List<ShowtimeSeat> findActiveLocksByUserAndShowtime(@Param("userId") Long userId,
+                                                        @Param("showtimeId") Long showtimeId,
+                                                        @Param("now") LocalDateTime now);
+
+    @Query("""
+            SELECT COUNT(ss) > 0 FROM ShowtimeSeat ss
+            WHERE ss.showtime.showtimeId = :showtimeId
+            AND ss.status = com.re.cinemamoviebookingsystem.enums.SeatStatus.LOCKED
+            AND ss.lockedByUser.userId = :userId
+            AND ss.lockedUntil IS NOT NULL AND ss.lockedUntil > :now
+            """)
+    boolean existsActiveLockByUserAndShowtime(@Param("userId") Long userId,
+                                              @Param("showtimeId") Long showtimeId,
+                                              @Param("now") LocalDateTime now);
 }

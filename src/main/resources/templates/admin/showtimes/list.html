@@ -8,34 +8,97 @@
     <div th:replace="~{fragments/admin/sidebar :: sidebar('showtimes')}"></div>
     <div class="ml-64 flex-1">
         <div class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
-            <h1 class="text-xl font-semibold">Quản lý lịch chiếu</h1>
-            <a th:href="@{/admin/showtimes/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">
-                <i class="fas fa-plus mr-1"></i> Tạo suất chiếu
-            </a>
+            <h1 class="text-xl font-semibold">Lịch chiếu</h1>
+            <div class="flex gap-2 items-center">
+                <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm mr-1">
+                    <span class="px-3 py-2 bg-primary text-white font-medium">Danh sách</span>
+                    <a th:href="@{/admin/showtimes/calendar(roomId=${roomIdFilter})}"
+                       class="px-3 py-2 bg-white hover:bg-gray-50 text-gray-700">Lịch tuần</a>
+                </div>
+                <a th:href="@{/admin/showtimes/bulk}" class="border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Tạo hàng loạt</a>
+                <a th:href="@{/admin/showtimes/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">
+                    <i class="fas fa-plus mr-1"></i> Tạo suất
+                </a>
+            </div>
         </div>
         <div class="p-6">
-            <p th:if="${successMessage}" class="mb-4 p-3 rounded bg-green-100 text-green-800" th:text="${successMessage}"></p>
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+            <form method="get" class="bg-white rounded-lg shadow p-4 mb-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-end text-sm">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Phim</label>
+                    <select name="movieId" class="w-full border rounded px-2 py-2">
+                        <option value="">Tất cả</option>
+                        <option th:each="m : ${movies}" th:value="${m.movieId}" th:text="${m.displayTitle}"
+                                th:selected="${movieIdFilter != null and movieIdFilter == m.movieId}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Phòng</label>
+                    <select name="roomId" class="w-full border rounded px-2 py-2">
+                        <option value="">Tất cả</option>
+                        <option th:each="r : ${rooms}" th:value="${r.roomId}" th:text="${r.roomName}"
+                                th:selected="${roomIdFilter != null and roomIdFilter == r.roomId}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Trạng thái</label>
+                    <select name="status" class="w-full border rounded px-2 py-2">
+                        <option value="">Tất cả</option>
+                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}"
+                                th:selected="${statusFilter == st}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Từ ngày</label>
+                    <input type="date" name="fromDate" th:value="${fromDate}" class="w-full border rounded px-2 py-2"/>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Đến ngày</label>
+                    <input type="date" name="toDate" th:value="${toDate}" class="w-full border rounded px-2 py-2"/>
+                </div>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg md:col-span-5 w-fit">Lọc</button>
+            </form>
             <div class="bg-white rounded-lg shadow overflow-x-auto">
                 <table class="min-w-full text-sm divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-4 py-3 text-left">ID</th>
                         <th class="px-4 py-3 text-left">Phim</th>
                         <th class="px-4 py-3 text-left">Phòng</th>
                         <th class="px-4 py-3 text-left">Bắt đầu</th>
                         <th class="px-4 py-3 text-left">Giá</th>
-                        <th class="px-4 py-3 text-left">Trạng thái</th>
+                        <th class="px-4 py-3 text-left">Lấp đầy</th>
+                        <th class="px-4 py-3 text-left">TT</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                    <tr th:each="s : ${showtimes}" class="hover:bg-gray-50">
-                        <td class="px-4 py-3" th:text="${s.movie.title}"></td>
-                        <td class="px-4 py-3" th:text="${s.room.roomName}"></td>
-                        <td class="px-4 py-3" th:text="${#temporals.format(s.startTime, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td class="px-4 py-3" th:text="${s.basePrice} + 'đ'"></td>
+                    <tr th:each="s : ${showtimes.content}" class="hover:bg-gray-50">
+                        <td class="px-4 py-3" th:text="${s.showtimeId}"></td>
+                        <td class="px-4 py-3" th:text="${s.movieTitle}"></td>
+                        <td class="px-4 py-3" th:text="${s.roomName}"></td>
+                        <td class="px-4 py-3" th:text="${#temporals.format(s.startTime, 'dd/MM HH:mm')}"></td>
+                        <td class="px-4 py-3" th:text="${#numbers.formatDecimal(s.basePrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                        <td class="px-4 py-3">
+                            <span th:text="${s.fillPercent} + '%'"></span>
+                            <span class="text-gray-400 text-xs" th:text="'(' + ${s.bookedSeats} + '/' + ${s.totalSeats} + ')'"></span>
+                        </td>
                         <td class="px-4 py-3" th:text="${s.status}"></td>
+                        <td class="px-4 py-3 text-right">
+                            <a th:href="@{/admin/showtimes/{id}(id=${s.showtimeId})}" class="text-primary hover:underline">Chi tiết</a>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="mt-4 flex gap-2 text-sm" th:if="${showtimes.totalPages > 1}">
+                <a th:if="${showtimes.hasPrevious()}"
+                   th:href="@{/admin/showtimes(page=${showtimes.number - 1}, movieId=${movieIdFilter}, roomId=${roomIdFilter}, status=${statusFilter}, fromDate=${fromDate}, toDate=${toDate})}"
+                   class="px-3 py-1 border rounded bg-white">Trước</a>
+                <span th:text="'Trang ' + (${showtimes.number} + 1) + ' / ' + ${showtimes.totalPages}"></span>
+                <a th:if="${showtimes.hasNext()}"
+                   th:href="@{/admin/showtimes(page=${showtimes.number + 1}, movieId=${movieIdFilter}, roomId=${roomIdFilter}, status=${statusFilter}, fromDate=${fromDate}, toDate=${toDate})}"
+                   class="px-3 py-1 border rounded bg-white">Sau</a>
             </div>
         </div>
     </div>

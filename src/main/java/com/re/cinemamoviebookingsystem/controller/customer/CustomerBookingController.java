@@ -1,7 +1,10 @@
 package com.re.cinemamoviebookingsystem.controller.customer;
 
 import com.re.cinemamoviebookingsystem.config.CinemaProperties;
+import com.re.cinemamoviebookingsystem.security.BookingResumeSession;
+import com.re.cinemamoviebookingsystem.security.LoginAuthenticationSuccessHandler;
 import com.re.cinemamoviebookingsystem.dto.request.CheckoutRequest;
+import com.re.cinemamoviebookingsystem.enums.BookingStatus;
 import com.re.cinemamoviebookingsystem.enums.PaymentMode;
 import com.re.cinemamoviebookingsystem.repository.ComboRepository;
 import com.re.cinemamoviebookingsystem.service.BookingHistoryService;
@@ -11,16 +14,25 @@ import com.re.cinemamoviebookingsystem.service.VnPaySandboxService;
 import com.re.cinemamoviebookingsystem.tmdb.enums.AppLanguage;
 import com.re.cinemamoviebookingsystem.util.SeatLayoutHelper;
 import com.re.cinemamoviebookingsystem.util.SecurityUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -34,15 +46,23 @@ public class CustomerBookingController {
     private final ComboRepository comboRepository;
     private final VnPaySandboxService vnPaySandboxService;
     private final CinemaProperties cinemaProperties;
+    private final MessageSource messageSource;
 
     @GetMapping("/showtimes/{id}/seats")
-    public String seatMap(@PathVariable Long id, AppLanguage appLanguage, Model model) {
-        var seatMap = showtimeService.getSeatMap(id);
+    public String seatMap(@PathVariable Long id, AppLanguage appLanguage, Model model, HttpServletRequest request) {
+        ensureCsrfInitialized(request);
+        var seatMap = showtimeService.getSeatMap(id, SecurityUtils.optionalCurrentUserId());
         model.addAttribute("seatMap", seatMap);
         model.addAttribute("seatsByRow", SeatLayoutHelper.groupByRow(seatMap.getSeats()));
         model.addAttribute("vipMultiplier", cinemaProperties.getVipPriceMultiplier());
         model.addAttribute("maxSeatsPerBooking", cinemaProperties.getMaxSeatsPerBooking());
         model.addAttribute("seatLockMinutes", cinemaProperties.getSeatLockMinutes());
+        model.addAttribute("cinemaBrandName", cinemaProperties.getBrandName());
+        model.addAttribute("seatsConfigured", seatMap.getSeats() != null && !seatMap.getSeats().isEmpty());
+        Long userId = SecurityUtils.optionalCurrentUserId();
+        boolean seatsLockedOnServer = bookingService.hasActiveSeatLock(id, userId);
+        model.addAttribute("seatSyncEnabled", userId != null);
+        model.addAttribute("seatsLockedOnServer", seatsLockedOnServer);
         var selectedDate = seatMap.getStartTime().toLocalDate();
         model.addAttribute("selectedShowtimeDate", selectedDate);
         if (seatMap.getTmdbId() != null) {
@@ -59,27 +79,103 @@ public class CustomerBookingController {
         return "customer/seats";
     }
 
-    @PostMapping("/showtimes/{id}/lock")
-    public String lockSeats(@PathVariable Long id,
-                            @RequestParam(required = false) List<Long> seatIds,
-                            RedirectAttributes redirectAttributes) {
+    private void ensureCsrfInitialized(HttpServletRequest request) {
+        Object attr = request.getAttribute("_csrf");
+        if (attr instanceof CsrfToken token) {
+            token.getToken();
+        }
+        request.getSession(true);
+    }
+
+    /**
+     * Bắt đầu đặt vé khi chưa đăng nhập: lưu ghế vào session và chuyển login,
+     * sau đăng nhập quay lại {@link #resumeBooking(HttpServletRequest)}.
+     */
+    @PostMapping("/booking/start")
+    public String startBooking(@RequestParam("showtimeId") Long showtimeId,
+                               @RequestParam(value = "seatIds", required = false) List<Long> seatIds,
+                               HttpServletRequest request,
+                               RedirectAttributes redirectAttributes) {
+        var locale = LocaleContextHolder.getLocale();
         if (seatIds == null || seatIds.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất một ghế.");
-            return "redirect:/customer/showtimes/" + id + "/seats";
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageSource.getMessage("seat.pick_at_least", null, locale));
+            return "redirect:/customer/showtimes/" + showtimeId + "/seats";
         }
         if (seatIds.size() > cinemaProperties.getMaxSeatsPerBooking()) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "Mỗi đơn chỉ được đặt tối đa " + cinemaProperties.getMaxSeatsPerBooking() + " ghế.");
-            return "redirect:/customer/showtimes/" + id + "/seats";
+                    messageSource.getMessage("booking.error.max_seats",
+                            new Object[]{cinemaProperties.getMaxSeatsPerBooking()}, locale));
+            return "redirect:/customer/showtimes/" + showtimeId + "/seats";
         }
+
+        if (SecurityUtils.optionalCurrentUserId() == null) {
+            BookingResumeSession.save(request, showtimeId, seatIds);
+            String loginUrl = request.getContextPath() + "/login?redirect="
+                    + LoginAuthenticationSuccessHandler.encodeContinueUrl(showtimeId);
+            return "redirect:" + loginUrl;
+        }
+
         try {
-            bookingService.lockSeats(id, seatIds, SecurityUtils.currentUserId());
+            bookingService.lockSeats(showtimeId, seatIds, SecurityUtils.currentUserId());
             redirectAttributes.addFlashAttribute("seatIds", seatIds);
-            return "redirect:/customer/showtimes/" + id + "/checkout";
+            return "redirect:/customer/showtimes/" + showtimeId + "/checkout";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/customer/showtimes/" + id + "/seats";
+            return "redirect:/customer/showtimes/" + showtimeId + "/seats";
         }
+    }
+
+    @GetMapping("/booking/continue")
+    public String resumeBooking(HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        Long showtimeId = BookingResumeSession.getShowtimeId(request);
+        List<Long> seatIds = BookingResumeSession.getSeatIds(request);
+        BookingResumeSession.clear(request);
+
+        if (showtimeId == null || seatIds == null || seatIds.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Phiên đặt vé đã hết hạn. Vui lòng chọn ghế lại.");
+            return "redirect:/customer/home";
+        }
+
+        try {
+            bookingService.lockSeats(showtimeId, seatIds, SecurityUtils.currentUserId());
+            redirectAttributes.addFlashAttribute("seatIds", seatIds);
+            return "redirect:/customer/showtimes/" + showtimeId + "/checkout";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/customer/showtimes/" + showtimeId + "/seats";
+        }
+    }
+
+    @PostMapping("/showtimes/{id}/seats/sync-lock")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> syncSeatLock(@PathVariable Long id,
+                                                            @RequestParam(value = "seatIds", required = false) List<Long> seatIds) {
+        try {
+            bookingService.syncSeatLocks(id, seatIds != null ? seatIds : List.of(), SecurityUtils.currentUserId());
+            return ResponseEntity.ok(Map.of("ok", true));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "message", ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/showtimes/{id}/seats/release-lock")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> releaseSeatLock(@PathVariable Long id) {
+        try {
+            bookingService.releaseAllSeatLocks(id, SecurityUtils.currentUserId());
+            return ResponseEntity.ok(Map.of("ok", true));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "message", ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/showtimes/{id}/lock")
+    public String lockSeats(@PathVariable Long id,
+                            @RequestParam(required = false) List<Long> seatIds,
+                            HttpServletRequest request,
+                            RedirectAttributes redirectAttributes) {
+        return startBooking(id, seatIds, request, redirectAttributes);
     }
 
     @GetMapping("/showtimes/{id}/checkout")
@@ -108,16 +204,27 @@ public class CustomerBookingController {
     }
 
     private void addCheckoutModel(Long showtimeId, List<Long> seatIds, Model model) {
-        var seatMap = showtimeService.getSeatMap(showtimeId);
+        var seatMap = showtimeService.getSeatMap(showtimeId, SecurityUtils.currentUserId());
         var seatLabels = seatMap.getSeats().stream()
                 .filter(s -> seatIds.contains(s.getSeatId()))
                 .map(com.re.cinemamoviebookingsystem.dto.response.SeatMapDto.SeatCellDto::getLabel)
                 .toList();
+        var estimatedTotal = showtimeService.estimateSeatTotal(seatMap, seatIds);
         model.addAttribute("seatMap", seatMap);
         model.addAttribute("seatIds", seatIds);
         model.addAttribute("seatLabels", seatLabels);
-        model.addAttribute("estimatedTotal", showtimeService.estimateSeatTotal(seatMap, seatIds));
+        model.addAttribute("seatLabelsJoined", String.join(", ", seatLabels));
+        model.addAttribute("estimatedTotal", estimatedTotal);
+        model.addAttribute("formattedEstimatedTotal", formatVnd(estimatedTotal));
+        if (seatMap.getLockExpiresAt() != null) {
+            model.addAttribute("lockExpiresAtIso",
+                    seatMap.getLockExpiresAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        }
         model.addAttribute("combos", comboRepository.findByStatus("ACTIVE"));
+        model.addAttribute("seatLockMinutes", cinemaProperties.getSeatLockMinutes());
+        model.addAttribute("cinemaBrandName", cinemaProperties.getBrandName());
+        model.addAttribute("showtimeTime", seatMap.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")));
+        model.addAttribute("showtimeDate", seatMap.getStartTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     @PostMapping("/checkout")
@@ -147,12 +254,22 @@ public class CustomerBookingController {
     @GetMapping("/bookings")
     public String history(Model model) {
         model.addAttribute("bookings", bookingHistoryService.getHistoryForUser(SecurityUtils.currentUserId()));
+        model.addAttribute("cinemaBrandName", cinemaProperties.getBrandName());
         return "customer/bookings";
     }
 
     @GetMapping("/bookings/{id}")
-    public String detail(@PathVariable Long id, Model model) {
-        model.addAttribute("booking", bookingHistoryService.getBookingDetail(id, SecurityUtils.currentUserId()));
+    public String detail(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        var booking = bookingHistoryService.getBookingDetail(id, SecurityUtils.currentUserId());
+        if (booking.getStatus() == BookingStatus.HELD) {
+            if (!booking.isHeldActive()) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Phiên giữ ghế đã hết hạn. Vui lòng chọn ghế lại.");
+            }
+            return "redirect:/customer/showtimes/" + booking.getShowtimeId() + "/seats";
+        }
+        model.addAttribute("booking", booking);
+        model.addAttribute("cinemaBrandName", cinemaProperties.getBrandName());
         return "customer/booking-detail";
     }
 
@@ -171,6 +288,14 @@ public class CustomerBookingController {
     public String payVnPay(@PathVariable Long id) {
         String url = vnPaySandboxService.createPaymentUrl(id);
         return "redirect:" + url;
+    }
+
+    private static String formatVnd(BigDecimal amount) {
+        if (amount == null) {
+            return "0đ";
+        }
+        NumberFormat nf = NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN"));
+        return nf.format(amount) + "đ";
     }
 
     private Map<Integer, Integer> parseCombos(Map<String, String> comboQty) {

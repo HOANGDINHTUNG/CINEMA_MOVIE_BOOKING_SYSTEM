@@ -9,6 +9,12 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Shared admin/staff layout helpers */
+.admin-main,
+.staff-main {
+    min-height: 100vh;
+}
+
 .sidebar-link {
     transition: all 0.2s ease;
 }
@@ -70,6 +76,32 @@ body {
 
 .hidden {
     display: none;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 240px;
+    }
+
+    .ml-64.flex-1,
+    .ml-64.admin-main,
+    .ml-64.staff-main {
+        margin-left: 240px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+    }
+
+    .ml-64.flex-1,
+    .ml-64.admin-main,
+    .ml-64.staff-main {
+        margin-left: 0;
+    }
 }
 
 .bg-white.rounded-lg.shadow-md.overflow-hidden:hover {

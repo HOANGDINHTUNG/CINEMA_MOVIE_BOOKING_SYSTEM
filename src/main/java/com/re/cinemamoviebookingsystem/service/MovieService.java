@@ -34,6 +34,33 @@ public class MovieService {
     }
 
     @Transactional(readOnly = true)
+    public Page<MovieDto> listForAdmin(MovieStatus status, String q, Pageable pageable, AppLanguage lang) {
+        Long tmdbFilter = parseNumericQuery(q);
+        Page<MovieDto> page = movieRepository.findForAdmin(status, tmdbFilter, pageable)
+                .map(m -> toDto(m, lang));
+        if (q == null || q.isBlank() || tmdbFilter != null) {
+            return page;
+        }
+        String lower = q.trim().toLowerCase();
+        List<MovieDto> filtered = page.getContent().stream()
+                .filter(d -> d.getDisplayTitle() != null
+                        && d.getDisplayTitle().toLowerCase().contains(lower))
+                .toList();
+        return new org.springframework.data.domain.PageImpl<>(filtered, pageable, filtered.size());
+    }
+
+    private Long parseNumericQuery(String q) {
+        if (q == null || q.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(q.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<MovieDto> listActive(AppLanguage lang) {
         return movieRepository.findByStatusOrderByPublishedAtDesc(MovieStatus.ACTIVE).stream()
                 .map(m -> toDto(m, lang))

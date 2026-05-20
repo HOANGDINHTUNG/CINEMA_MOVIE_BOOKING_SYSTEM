@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "cinema")
 public class CinemaProperties {
+    /** Tên hiển thị rạp trên trang chọn ghế / email. */
+    private String brandName = "Smart Cinema";
+
     private int seatLockMinutes = 15;
     private int cancelHoursBefore = 24;
     private int cleaningBufferMinutes = 15;
@@ -27,4 +30,7 @@ public class CinemaProperties {
 
     /** Số phim tối thiểu «sắp chiếu» (đăng rạp, chưa có suất). */
     private int demoSeedComingSoonTarget = 18;
+
+    /** Số phim tối đa mục «sắp chiếu» trên trang chủ (catalog TMDB upcoming). */
+    private int homeComingSoonMax = 100;
 }

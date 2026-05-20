@@ -1,0 +1,51 @@
+/* Staff UI polish */
+.staff-main {
+    min-height: 100vh;
+}
+
+.staff-card {
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.staff-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.staff-actions > * {
+    min-height: 42px;
+}
+
+.staff-main .form-control,
+.staff-main input[type="text"],
+.staff-main input[type="number"] {
+    min-height: 42px;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 240px;
+    }
+
+    .ml-64.staff-main {
+        margin-left: 240px;
+    }
+}
+
+@media (max-width: 768px) {
+    .staff-main .sticky.top-0 {
+        position: static;
+    }
+
+    .staff-actions {
+        flex-direction: column;
+    }
+
+    .staff-actions > a,
+    .staff-actions > form,
+    .staff-actions button {
+        width: 100%;
+    }
+}

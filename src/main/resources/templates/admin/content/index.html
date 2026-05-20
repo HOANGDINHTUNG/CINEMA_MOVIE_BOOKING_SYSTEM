@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Nội dung web')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('content')}"></div>
+    <div class="ml-64 flex-1 p-6">
+        <h1 class="text-xl font-bold mb-6">Quản lý nội dung website</h1>
+        <p class="text-sm text-gray-600 mb-6">Quản lý bài viết lưu trong MySQL (<code>content_articles</code>).</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a th:href="@{/admin/content/promotion}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg card block text-center">
+                <i class="fas fa-gift text-3xl text-primary mb-3"></i>
+                <h2 class="font-semibold">Khuyến mãi</h2>
+            </a>
+            <a th:href="@{/admin/content/news}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg card block text-center">
+                <i class="fas fa-newspaper text-3xl text-primary mb-3"></i>
+                <h2 class="font-semibold">Tin tức / Sự kiện</h2>
+            </a>
+            <a th:href="@{/admin/content/festival}" class="bg-white rounded-lg shadow p-6 hover:shadow-lg card block text-center">
+                <i class="fas fa-star text-3xl text-primary mb-3"></i>
+                <h2 class="font-semibold">Liên hoan phim</h2>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

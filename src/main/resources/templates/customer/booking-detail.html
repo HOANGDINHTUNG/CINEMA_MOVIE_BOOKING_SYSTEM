@@ -8,12 +8,13 @@
 <div th:replace="~{fragments/customer/loader :: loader}"></div>
 <div th:replace="~{fragments/customer/header :: header}"></div>
 
-<div class="customer-page">
+<div class="customer-page booking-detail-page">
+    <div th:replace="~{fragments/customer/breadcrumb :: bookingBreadcrumb(3, ${booking.movieTitle}, null)}"></div>
     <div th:replace="~{fragments/customer/booking-steps :: steps(3)}"></div>
-    <p th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></p>
-    <p th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></p>
+    <div th:replace="~{fragments/customer/alerts :: alerts}"></div>
+    <p class="booking-cinema-brand" th:if="${cinemaBrandName != null}" th:text="${cinemaBrandName}">Smart Cinema</p>
 
-    <div class="success-container" th:if="${booking.status.name() == 'PAID'}">
+    <div class="success-container is-paid" th:if="${booking.status.name() == 'PAID'}">
         <img th:src="@{/assets/icon/star icon.png}" alt="" class="success-icon"/>
         <div class="success-title" th:text="#{booking.success_title}">Đặt vé thành công!</div>
         <div class="success-note">
@@ -44,9 +45,11 @@
         <p><b th:text="#{booking.showtime}">Suất:</b> <span th:text="${#temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm')}"></span></p>
         <p><b th:text="#{booking.room}">Phòng:</b> <span th:text="${booking.roomName}"></span></p>
         <p><b th:text="#{booking.seats}">Ghế:</b> <span th:text="${#strings.listJoin(booking.seatLabels, ', ')}"></span></p>
-        <p><b th:text="#{booking.total}">Tổng tiền:</b> <span th:text="${booking.totalAmount} + ' đ'"></span></p>
+        <p><b th:text="#{booking.total}">Tổng tiền:</b>
+            <span th:text="${#numbers.formatDecimal(booking.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></p>
         <p><b th:text="#{booking.status}">Trạng thái:</b>
             <span th:switch="${booking.status.name()}">
+                <span th:case="'HELD'" class="status-badge status-held" th:text="#{booking.status.checkout_in_progress}">Đang thanh toán</span>
                 <span th:case="'PAID'" class="status-badge status-paid" th:text="#{booking.status.paid}">Đã thanh toán</span>
                 <span th:case="'PENDING'" class="status-badge status-pending" th:text="#{booking.status.pending}">Chờ thanh toán</span>
                 <span th:case="'CANCELLED'" class="status-badge status-cancelled" th:text="#{booking.status.cancelled}">Đã hủy</span>
@@ -55,7 +58,19 @@
         </p>
     </div>
 
-    <div class="home-btn-wrapper mt-4">
+    <div class="ticket-codes-block" th:if="${booking.ticketCodes != null and !booking.ticketCodes.isEmpty()}">
+        <h3 class="section-title" th:text="#{booking.ticket_codes}">Mã vé</h3>
+        <div th:each="code : ${booking.ticketCodes}" class="ticket-code-row">
+            <code th:text="${code}"></code>
+            <button type="button" class="btn-copy-code"
+                    th:attr="data-copy-code=${code},
+                             data-copy-label=#{booking.copy_code},
+                             data-copied-msg=#{booking.copied_code}"
+                    th:text="#{booking.copy_code}">Sao chép</button>
+        </div>
+    </div>
+
+    <div class="home-btn-wrapper mt-4 booking-detail-actions">
         <form th:if="${booking.status.name() == 'PENDING'}" th:action="@{/customer/bookings/{id}/pay-vnpay(id=${booking.bookingId})}" method="post" class="d-inline me-2">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <button type="submit" class="btn btn-danger" th:text="#{booking.pay_vnpay}">Thanh toán VNPay</button>
@@ -67,6 +82,7 @@
         </form>
         <a th:href="@{/customer/home}" class="home-btn"><span class="text" th:text="#{booking.back_home}">Về trang chủ</span></a>
         <a th:href="@{/customer/bookings}" class="home-btn ms-2"><span class="text" th:text="#{booking.my_tickets}">Danh sách vé</span></a>
+        <a th:href="@{/customer/home}" class="home-btn ms-2"><span class="text" th:text="#{booking.browse_movies}">Đặt thêm vé</span></a>
     </div>
 </div>
 

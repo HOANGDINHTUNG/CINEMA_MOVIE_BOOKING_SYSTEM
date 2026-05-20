@@ -4,12 +4,15 @@ import com.re.cinemamoviebookingsystem.dto.request.MovieCinemaUpdateRequest;
 import com.re.cinemamoviebookingsystem.service.CinemaMovieService;
 import com.re.cinemamoviebookingsystem.service.MovieService;
 import com.re.cinemamoviebookingsystem.service.ShowtimeScheduleService;
+import com.re.cinemamoviebookingsystem.service.ShowtimeService;
 import com.re.cinemamoviebookingsystem.tmdb.enums.AppLanguage;
 import com.re.cinemamoviebookingsystem.tmdb.exception.TmdbApiException;
 import com.re.cinemamoviebookingsystem.tmdb.service.TmdbCatalogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import com.re.cinemamoviebookingsystem.enums.MovieStatus;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin/movies")
@@ -29,13 +33,61 @@ public class AdminMovieController {
     private final CinemaMovieService cinemaMovieService;
     private final TmdbCatalogService tmdbCatalogService;
     private final ShowtimeScheduleService showtimeScheduleService;
+    private final ShowtimeService showtimeService;
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "vi-VN") String lang, Model model) {
+    public String list(@RequestParam(defaultValue = "vi-VN") String lang,
+                       @RequestParam(required = false) MovieStatus status,
+                       @RequestParam(required = false) String q,
+                       @RequestParam(defaultValue = "0") int page,
+                       Model model) {
         AppLanguage appLanguage = AppLanguage.fromParam(lang);
-        model.addAttribute("movies", movieService.listAll(PageRequest.of(0, 100), appLanguage));
+        var pageable = PageRequest.of(page, 15, Sort.by(Sort.Direction.DESC, "publishedAt"));
+        model.addAttribute("movies", movieService.listForAdmin(status, q, pageable, appLanguage));
         model.addAttribute("lang", lang);
+        model.addAttribute("statusFilter", status);
+        model.addAttribute("keyword", q != null ? q : "");
+        model.addAttribute("statuses", MovieStatus.values());
         return "admin/movies/list";
+    }
+
+    @GetMapping("/{id}/showtimes")
+    public String movieShowtimes(@PathVariable Long id,
+                                 @RequestParam(defaultValue = "vi-VN") String lang,
+                                 Model model) {
+        AppLanguage appLanguage = AppLanguage.fromParam(lang);
+        var movie = movieService.findById(id, appLanguage);
+        model.addAttribute("movie", movie);
+        model.addAttribute("showtimes", showtimeService.listByMovieForAdmin(id));
+        model.addAttribute("lang", lang);
+        return "admin/movies/showtimes";
+    }
+
+    @PostMapping("/bulk-sync-tmdb")
+    public String bulkSyncTmdb(@RequestParam(required = false) List<Long> movieIds,
+                               @RequestParam(defaultValue = "vi-VN") String lang,
+                               RedirectAttributes redirectAttributes) {
+        if (movieIds == null || movieIds.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Chọn ít nhất một phim");
+            return "redirect:/admin/movies";
+        }
+        AppLanguage appLanguage = AppLanguage.fromParam(lang);
+        int ok = 0;
+        StringBuilder errors = new StringBuilder();
+        for (Long id : movieIds) {
+            try {
+                cinemaMovieService.refreshRuntimeFromTmdb(id, appLanguage);
+                ok++;
+            } catch (Exception ex) {
+                errors.append("#").append(id).append(": ").append(ex.getMessage()).append("; ");
+            }
+        }
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Đã sync " + ok + "/" + movieIds.size() + " phim");
+        if (errors.length() > 0) {
+            redirectAttributes.addFlashAttribute("errorMessage", errors.toString());
+        }
+        return "redirect:/admin/movies";
     }
 
     @GetMapping("/import")

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="card(m, showSchedule)" class="film-card" th:if="${m != null and m.tmdbId != null}">
-    <a th:href="@{/customer/movies/{tid}(tid=${m.tmdbId})}">
+    <a th:href="${showSchedule and m.hasShowtimes} ? |@{/customer/movies/{tid}(tid=${m.tmdbId})}#schedule| : @{/customer/movies/{tid}(tid=${m.tmdbId})}">
         <div class="image-wrapper">
             <img th:src="${m.posterUrl != null and #strings.startsWith(m.posterUrl, 'http')} ? ${m.posterUrl} : @{/assets/img/poster.jpg}"
                  th:alt="${m.title}" loading="lazy"/>

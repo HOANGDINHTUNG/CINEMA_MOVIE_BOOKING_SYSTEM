@@ -20,8 +20,24 @@ public class StaffController {
     }
 
     @GetMapping("/lookup")
-    public String lookupForm() {
-        return "staff/lookup";
+    public String lookupForm(@RequestParam(required = false) Long bookingId,
+                             @RequestParam(required = false) String ticketCode,
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
+        if (bookingId == null && (ticketCode == null || ticketCode.isBlank())) {
+            return "staff/lookup";
+        }
+        try {
+            if (bookingId != null) {
+                model.addAttribute("booking", staffBookingService.findByBookingId(bookingId));
+            } else {
+                model.addAttribute("booking", staffBookingService.findByTicketCode(ticketCode.trim()));
+            }
+            return "staff/lookup-result";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/staff/lookup";
+        }
     }
 
     @PostMapping("/lookup")

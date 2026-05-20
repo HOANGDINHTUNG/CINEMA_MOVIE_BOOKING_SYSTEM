@@ -15,59 +15,76 @@
             </a>
         </div>
         <div class="p-6">
-            <p th:if="${successMessage}" class="mb-4 p-3 rounded bg-green-100 text-green-800" th:text="${successMessage}"></p>
-            <p th:if="${errorMessage}" class="mb-4 p-3 rounded bg-red-100 text-red-800" th:text="${errorMessage}"></p>
-            <p class="mb-4 text-sm text-gray-600">
-                Metadata (tên, poster, mô tả) lấy từ TMDB. Tại đây chỉ quản lý thời lượng, độ tuổi, giá mặc định và ẩn phim.
-            </p>
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+            <form method="get" class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-end">
+                <input type="hidden" name="lang" th:value="${lang}"/>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Trạng thái</label>
+                    <select name="status" class="border rounded px-3 py-2 text-sm">
+                        <option value="">Tất cả</option>
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                                th:selected="${statusFilter == s}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Tìm (tên / TMDB ID)</label>
+                    <input type="text" name="q" th:value="${keyword}" class="border rounded px-3 py-2 text-sm w-48"/>
+                </div>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Lọc</button>
+            </form>
+            <form id="bulkSyncForm" th:action="@{/admin/movies/bulk-sync-tmdb}" method="post" class="bg-white rounded-lg shadow overflow-hidden">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="lang" th:value="${lang}"/>
+                <div class="px-4 py-2 border-b bg-gray-50 flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Chọn phim rồi sync runtime TMDB</span>
+                    <button type="submit" class="text-sm bg-blue-600 text-white px-3 py-1 rounded"
+                            onclick="return document.querySelectorAll('#bulkSyncForm input[type=checkbox]:checked').length > 0">
+                        Sync đã chọn
+                    </button>
+                </div>
+                <table class="min-w-full text-sm divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">ID</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">TMDB</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Tên (TMDB)</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Thời lượng</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Độ tuổi</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Trạng thái</th>
-                        <th class="px-4 py-3 text-right font-semibold text-gray-600">Thao tác</th>
+                        <th class="px-3 py-3 w-8"></th>
+                        <th class="px-4 py-3 text-left text-gray-600">ID</th>
+                        <th class="px-4 py-3 text-left text-gray-600">TMDB</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Tên</th>
+                        <th class="px-4 py-3 text-left text-gray-600">TG</th>
+                        <th class="px-4 py-3 text-left text-gray-600">TT</th>
+                        <th class="px-4 py-3 text-right text-gray-600">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                     <tr th:each="m : ${movies.content}" class="hover:bg-gray-50">
+                        <td class="px-3 py-3"><input type="checkbox" name="movieIds" th:value="${m.movieId}"/></td>
                         <td class="px-4 py-3" th:text="${m.movieId}"></td>
-                        <td class="px-4 py-3 text-gray-500" th:text="${m.tmdbId}"></td>
+                        <td class="px-4 py-3" th:text="${m.tmdbId}"></td>
                         <td class="px-4 py-3 font-medium" th:text="${m.displayTitle}"></td>
-                        <td class="px-4 py-3" th:text="${m.duration} + ' phút'"></td>
-                        <td class="px-4 py-3" th:text="${m.ageLabel != null ? m.ageLabel : '—'}"></td>
+                        <td class="px-4 py-3" th:text="${m.duration} + 'p'"></td>
                         <td class="px-4 py-3">
-                            <span th:classappend="${m.status.name() == 'ACTIVE'} ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'"
-                                  class="px-2 py-1 rounded text-xs font-semibold" th:text="${m.status}"></span>
+                            <span th:classappend="${m.status.name() == 'ACTIVE'} ? 'bg-green-100 text-green-800' : 'bg-gray-200'"
+                                  class="px-2 py-1 rounded text-xs" th:text="${m.status}"></span>
                         </td>
-                        <td class="px-4 py-3 text-right whitespace-nowrap">
-                            <form th:if="${m.tmdbId != null}" th:action="@{/admin/movies/{id}/sync-tmdb(id=${m.movieId})}" method="post" class="inline mr-2">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <input type="hidden" name="lang" th:value="${lang}"/>
-                                <button type="submit" class="text-blue-600 hover:underline text-xs">Sync runtime</button>
-                            </form>
-                            <a th:href="@{/admin/movies/{id}/edit(id=${m.movieId}, lang=${lang})}"
-                               class="text-primary hover:underline mr-3">Cài đặt rạp</a>
+                        <td class="px-4 py-3 text-right text-xs whitespace-nowrap">
+                            <a th:href="@{/admin/movies/{id}/showtimes(id=${m.movieId})}" class="text-blue-600 hover:underline mr-2">Suất</a>
+                            <a th:href="@{/admin/movies/{id}/edit(id=${m.movieId}, lang=${lang})}" class="text-primary hover:underline mr-2">Sửa</a>
                             <form th:if="${m.status.name() == 'ACTIVE'}" th:action="@{/admin/movies/{id}/delete(id=${m.movieId})}" method="post" class="inline">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button type="submit" class="text-red-600 hover:underline"
-                                        onclick="return confirm('Ẩn phim khỏi rạp?')">Ẩn</button>
-                            </form>
-                            <form th:if="${m.status.name() != 'ACTIVE'}" th:action="@{/admin/movies/{id}/activate(id=${m.movieId})}" method="post" class="inline">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button type="submit" class="text-green-600 hover:underline">Kích hoạt</button>
+                                <button type="submit" class="text-red-600 hover:underline" onclick="return confirm('Ẩn phim?')">Ẩn</button>
                             </form>
                         </td>
-                    </tr>
-                    <tr th:if="${movies.empty}">
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">Chưa có phim đăng chiếu. Dùng «Đăng phim từ TMDB».</td>
                     </tr>
                     </tbody>
                 </table>
+            </form>
+            <div class="mt-4 flex gap-2 text-sm" th:if="${movies.totalPages > 1}">
+                <a th:if="${movies.hasPrevious()}"
+                   th:href="@{/admin/movies(page=${movies.number - 1}, status=${statusFilter}, q=${keyword}, lang=${lang})}"
+                   class="px-3 py-1 border rounded bg-white">Trước</a>
+                <span th:text="'Trang ' + (${movies.number} + 1) + ' / ' + ${movies.totalPages}"></span>
+                <a th:if="${movies.hasNext()}"
+                   th:href="@{/admin/movies(page=${movies.number + 1}, status=${statusFilter}, q=${keyword}, lang=${lang})}"
+                   class="px-3 py-1 border rounded bg-white">Sau</a>
             </div>
         </div>
     </div>

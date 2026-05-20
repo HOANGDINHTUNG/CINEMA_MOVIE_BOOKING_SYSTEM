@@ -4,20 +4,28 @@
     <meta charset="UTF-8"/>
     <title>In vé</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 400px; margin: 24px auto; padding: 16px; }
-        h1 { font-size: 18px; text-align: center; border-bottom: 2px dashed #333; padding-bottom: 8px; }
+        body { font-family: Arial, sans-serif; max-width: 420px; margin: 24px auto; padding: 16px; color: #111827; }
+        .ticket { border: 1px dashed #9ca3af; border-radius: 10px; padding: 14px; }
+        h1 { font-size: 18px; text-align: center; border-bottom: 2px dashed #333; padding-bottom: 8px; margin: 0 0 12px; }
         p { margin: 8px 0; font-size: 14px; }
-        .code { font-family: monospace; font-size: 13px; background: #f5f5f5; padding: 6px; }
-        @media print { body { margin: 0; } }
+        .meta { color: #4b5563; font-size: 13px; }
+        .code { font-family: monospace; font-size: 13px; background: #f3f4f6; border: 1px solid #e5e7eb; padding: 8px; border-radius: 6px; }
+        .footer { margin-top: 16px; font-size: 12px; color: #6b7280; text-align: center; }
+        @media print {
+            body { margin: 0; padding: 0; }
+            .ticket { border: none; border-radius: 0; }
+        }
     </style>
 </head>
 <body onload="window.print()">
-<h1>VE XEM PHIM — NCC</h1>
-<p><strong th:text="${booking.movieTitle}"></strong></p>
-<p th:text="${#temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm')}"></p>
-<p th:if="${booking.roomName != null}" th:text="'Phòng: ' + ${booking.roomName}"></p>
-<p th:if="${booking.seatLabels != null}" th:text="'Ghế: ' + ${#strings.listJoin(booking.seatLabels, ', ')}"></p>
-<p th:each="code : ${booking.ticketCodes}" class="code" th:text="'Mã vé: ' + ${code}"></p>
-<p style="margin-top:16px;font-size:12px;color:#666;">Cảm ơn quý khách!</p>
+<div class="ticket">
+    <h1>VE XEM PHIM — NCC</h1>
+    <p><strong th:text="${booking.movieTitle}"></strong></p>
+    <p class="meta" th:text="${#temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm')}"></p>
+    <p th:if="${booking.roomName != null}" th:text="'Phòng: ' + ${booking.roomName}"></p>
+    <p th:if="${booking.seatLabels != null}" th:text="'Ghế: ' + ${#strings.listJoin(booking.seatLabels, ', ')}"></p>
+    <p th:each="code : ${booking.ticketCodes}" class="code" th:text="'Mã vé: ' + ${code}"></p>
+    <p class="footer">Cảm ơn quý khách!</p>
+</div>
 </body>
 </html>

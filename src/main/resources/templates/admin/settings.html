@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Cấu hình hệ thống')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('settings')}"></div>
+    <div class="ml-64 flex-1 p-6 max-w-2xl">
+        <h1 class="text-xl font-bold text-gray-800 mb-2">Cấu hình vận hành rạp</h1>
+        <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+            Thay đổi có hiệu lực ngay trong phiên chạy. Khởi động lại app sẽ nạp lại từ <code>application.properties</code>.
+        </p>
+        <div class="text-sm mb-4 flex flex-wrap items-center gap-3">
+            <p th:classappend="${tmdbConfigured} ? 'text-green-700' : 'text-red-700'"
+               th:text="${tmdbConfigured} ? 'TMDB API key: đã cấu hình' : 'TMDB API key: chưa cấu hình (sửa application.properties)'"></p>
+            <button type="button" id="btnTestTmdb"
+                    class="border border-gray-300 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+                    th:disabled="${!tmdbConfigured}">
+                <i class="fas fa-plug mr-1"></i> Kiểm tra kết nối TMDB
+            </button>
+        </div>
+        <p id="tmdbTestResult" class="text-sm mb-4 hidden rounded p-3"></p>
+        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+        <form th:action="@{/admin/settings}" th:object="${settings}" method="post"
+              class="bg-white rounded-lg shadow p-6 space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Giữ ghế (phút)</label>
+                    <input th:field="*{seatLockMinutes}" type="number" min="1" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Hủy vé trước giờ chiếu (giờ)</label>
+                    <input th:field="*{cancelHoursBefore}" type="number" min="0" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Buffer dọn phòng (phút)</label>
+                    <input th:field="*{cleaningBufferMinutes}" type="number" min="0" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Hệ số giá VIP</label>
+                    <input th:field="*{vipPriceMultiplier}" type="number" step="0.1" min="1" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Tối đa ghế / đơn</label>
+                    <input th:field="*{maxSeatsPerBooking}" type="number" min="1" class="w-full border rounded px-3 py-2"/>
+                </div>
+            </div>
+            <hr/>
+            <label class="flex items-center gap-2 text-sm">
+                <input th:field="*{demoSeedOnStartup}" type="checkbox"/>
+                Demo seed phim TMDB khi khởi động
+            </label>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Mục tiêu phim đang chiếu (demo)</label>
+                    <input th:field="*{demoSeedNowShowingTarget}" type="number" min="0" class="w-full border rounded px-3 py-2"/>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Mục tiêu phim sắp chiếu (demo)</label>
+                    <input th:field="*{demoSeedComingSoonTarget}" type="number" min="0" class="w-full border rounded px-3 py-2"/>
+                </div>
+            </div>
+            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg">Lưu cấu hình</button>
+        </form>
+        <a th:href="@{/admin/audit}" class="inline-block mt-6 text-sm text-primary hover:underline">Xem nhật ký hoạt động →</a>
+    </div>
+</div>
+<script th:inline="javascript">
+    (function () {
+        const btn = document.getElementById('btnTestTmdb');
+        const box = document.getElementById('tmdbTestResult');
+        if (!btn || !box) return;
+        btn.addEventListener('click', async function () {
+            btn.disabled = true;
+            box.classList.remove('hidden', 'bg-green-50', 'text-green-800', 'bg-red-50', 'text-red-800');
+            box.textContent = 'Đang kiểm tra TMDB...';
+            box.classList.add('bg-gray-50', 'text-gray-700');
+            box.classList.remove('hidden');
+            try {
+                const res = await fetch(/*[[@{/admin/settings/test-tmdb}]]*/ '/admin/settings/test-tmdb');
+                const data = await res.json();
+                box.classList.remove('bg-gray-50', 'text-gray-700');
+                if (data.ok) {
+                    box.classList.add('bg-green-50', 'text-green-800');
+                } else {
+                    box.classList.add('bg-red-50', 'text-red-800');
+                }
+                box.textContent = data.message || (data.ok ? 'OK' : 'Lỗi');
+            } catch (e) {
+                box.classList.remove('bg-gray-50', 'text-gray-700');
+                box.classList.add('bg-red-50', 'text-red-800');
+                box.textContent = 'Không gọi được API: ' + e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    })();
+</script>
+</body>
+</html>

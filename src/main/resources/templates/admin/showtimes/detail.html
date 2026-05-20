@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Chi tiết suất')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('showtimes')}"></div>
+    <div class="ml-64 flex-1 p-6 max-w-2xl">
+        <a th:href="@{/admin/showtimes}" class="text-primary text-sm hover:underline">← Lịch chiếu</a>
+        <h1 class="text-xl font-bold mt-2">Suất #<span th:text="${showtime.showtimeId}"></span></h1>
+        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+        <div class="bg-white rounded-lg shadow p-6 space-y-2 text-sm mt-4">
+            <p><b>Phim:</b> <span th:text="${showtime.movieTitle}"></span></p>
+            <p><b>Phòng:</b> <span th:text="${showtime.roomName}"></span></p>
+            <p><b>Bắt đầu:</b> <span th:text="${#temporals.format(showtime.startTime, 'dd/MM/yyyy HH:mm')}"></span></p>
+            <p><b>Kết thúc:</b> <span th:text="${#temporals.format(showtime.endTime, 'dd/MM/yyyy HH:mm')}"></span></p>
+            <p><b>Giá:</b> <span th:text="${#numbers.formatDecimal(showtime.basePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></p>
+            <p><b>Trạng thái:</b> <span th:text="${showtime.status}"></span></p>
+            <p><b>Ghế:</b> Trống <span th:text="${showtime.availableSeats}"></span> · Khóa <span th:text="${showtime.lockedSeats}"></span> · Đã đặt <span th:text="${showtime.bookedSeats}"></span> / <span th:text="${showtime.totalSeats}"></span></p>
+            <p><b>Dòng showtime_seats:</b> <span th:text="${showtime.showtimeSeatRows}"></span>
+                <span th:if="${!showtime.seatsConfigured}" class="text-amber-600 font-medium"> — chưa có sơ đồ ghế</span>
+            </p>
+            <p><b>Đơn PAID:</b> <span th:text="${showtime.paidBookings}"></span></p>
+        </div>
+        <p th:if="${!showtime.seatsConfigured}" class="mt-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            Khách không thể chọn ghế cho suất này cho đến khi bạn tạo showtime_seats từ ghế phòng.
+        </p>
+        <div class="flex flex-wrap gap-3 mt-6">
+            <form th:if="${!showtime.seatsConfigured}" th:action="@{/admin/showtimes/{id}/repair-seats(id=${showtime.showtimeId})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm">
+                    Tạo sơ đồ ghế
+                </button>
+            </form>
+            <a th:if="${showtime.canEdit}" th:href="@{/admin/showtimes/{id}/edit(id=${showtime.showtimeId})}"
+               class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Sửa suất</a>
+            <form th:if="${showtime.canCancel}" th:action="@{/admin/showtimes/{id}/cancel(id=${showtime.showtimeId})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm"
+                        onclick="return confirm('Hủy suất chiếu?')">Hủy suất</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

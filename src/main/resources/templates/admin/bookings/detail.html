@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Chi tiết đơn')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('bookings')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
+            <h1 class="text-xl font-semibold text-gray-800">Đơn #<span th:text="${booking.bookingId}"></span></h1>
+            <a th:href="@{/admin/bookings}" class="text-primary text-sm hover:underline">← Danh sách</a>
+        </div>
+        <div class="p-6 max-w-3xl">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+            <div class="bg-white rounded-lg shadow p-6 space-y-2 text-gray-700 mb-6">
+                <p><span class="font-medium text-gray-500 w-32 inline-block">Khách hàng</span>
+                    <span th:text="${booking.customerName}"></span>
+                    <span class="text-gray-400 text-sm" th:if="${booking.customerPhone}"
+                          th:text="' · ' + ${booking.customerPhone}"></span></p>
+                <p><span class="font-medium text-gray-500 w-32 inline-block">Phim</span>
+                    <span th:text="${booking.movieTitle}"></span></p>
+                <p><span class="font-medium text-gray-500 w-32 inline-block">Suất chiếu</span>
+                    <span th:text="${#temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm')}"></span>
+                    · <span th:text="${booking.roomName}"></span></p>
+                <p><span class="font-medium text-gray-500 w-32 inline-block">Ghế</span>
+                    <span th:text="${#strings.listJoin(booking.seatLabels, ', ')}"></span></p>
+                <p><span class="font-medium text-gray-500 w-32 inline-block">Mã vé</span>
+                    <span class="text-sm font-mono" th:text="${#strings.listJoin(booking.ticketCodes, ', ')}"></span></p>
+                <p><span class="font-medium text-gray-500 w-32 inline-block">Tổng tiền</span>
+                    <span class="font-semibold text-primary"
+                          th:text="${#numbers.formatDecimal(booking.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></p>
+                <p><span class="font-medium text-gray-500 w-32 inline-block">Trạng thái</span>
+                    <span class="font-semibold" th:text="${booking.status}"></span></p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <form th:if="${booking.status.name() == 'PENDING'}"
+                      th:action="@{/admin/bookings/{id}/confirm(id=${booking.bookingId})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg"
+                            onclick="return confirm('Xác nhận thanh toán quầy?')">Xác nhận quầy</button>
+                </form>
+                <form th:if="${booking.status.name() == 'PENDING'}"
+                      th:action="@{/admin/bookings/{id}/cancel-pending(id=${booking.bookingId})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="px-5 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
+                            onclick="return confirm('Hủy đơn chờ thanh toán và giải phóng ghế?')">Hủy đơn PENDING</button>
+                </form>
+                <form th:if="${booking.status.name() == 'PAID'}"
+                      th:action="@{/admin/bookings/{id}/cancel-paid(id=${booking.bookingId})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="force" value="true"/>
+                    <button type="submit" class="px-5 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
+                            onclick="return confirm('Hủy đơn đã thanh toán (admin)? Ghế sẽ được trả lại.')">Hủy đơn PAID</button>
+                </form>
+                <a th:href="@{/staff/bookings/{id}/print(id=${booking.bookingId})}" target="_blank"
+                   class="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">In vé</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

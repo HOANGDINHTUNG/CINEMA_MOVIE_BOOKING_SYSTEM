@@ -1,0 +1,6 @@
+<div th:fragment="alerts" xmlns:th="http://www.thymeleaf.org">
+    <p th:if="${successMessage}" class="mb-4 p-3 rounded-lg bg-green-100 text-green-800 border border-green-200"
+       th:text="${successMessage}"></p>
+    <p th:if="${errorMessage}" class="mb-4 p-3 rounded-lg bg-red-100 text-red-800 border border-red-200"
+       th:text="${errorMessage}"></p>
+</div>

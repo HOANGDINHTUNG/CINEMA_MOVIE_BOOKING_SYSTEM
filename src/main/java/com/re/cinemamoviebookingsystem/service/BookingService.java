@@ -52,6 +52,86 @@ public class BookingService {
             ss.setLockedUntil(lockUntil);
         }
         showtimeSeatRepository.saveAll(seats);
+        upsertHeldBooking(showtimeId, seatIds, userId);
+        showtimeStatusService.refreshShowtimeStatus(showtimeId);
+    }
+
+    /**
+     * Cập nhật bộ ghế đang giữ sau khi user bỏ chọn / chọn thêm trên trang ghế (đã lock server).
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void syncSeatLocks(Long showtimeId, List<Long> seatIds, Long userId) {
+        validateShowtimeBookable(showtimeId);
+        LocalDateTime now = LocalDateTime.now();
+        List<Long> targetIds = seatIds != null ? seatIds : List.of();
+        if (!targetIds.isEmpty()) {
+            validateSeatCount(targetIds);
+        }
+
+        List<ShowtimeSeat> currentLocks = showtimeSeatRepository.findActiveLocksByUserAndShowtime(
+                userId, showtimeId, now);
+        Set<Long> targetSet = new HashSet<>(targetIds);
+
+        List<ShowtimeSeat> toRelease = new ArrayList<>();
+        for (ShowtimeSeat ss : currentLocks) {
+            if (!targetSet.contains(ss.getSeat().getSeatId())) {
+                ss.setStatus(SeatStatus.AVAILABLE);
+                ss.setLockedByUser(null);
+                ss.setLockedUntil(null);
+                toRelease.add(ss);
+            }
+        }
+        if (!toRelease.isEmpty()) {
+            showtimeSeatRepository.saveAll(toRelease);
+        }
+
+        if (targetIds.isEmpty()) {
+            cancelHeldBookingIfNoActiveLocks(userId, showtimeId, now);
+            showtimeStatusService.refreshShowtimeStatus(showtimeId);
+            return;
+        }
+
+        User user = userRepository.findById(userId).orElseThrow();
+        LocalDateTime lockUntil = now.plusMinutes(cinemaProperties.getSeatLockMinutes());
+        List<ShowtimeSeat> seats = showtimeSeatRepository.findByShowtimeAndSeatIdsForUpdate(showtimeId, targetIds);
+        if (seats.size() != targetIds.size()) {
+            throw new BusinessException(ErrorCode.SEAT_TAKEN, "Một hoặc nhiều ghế không tồn tại");
+        }
+
+        for (ShowtimeSeat ss : seats) {
+            if (ss.getStatus() == SeatStatus.LOCKED
+                    && ss.getLockedByUser() != null
+                    && ss.getLockedByUser().getUserId().equals(userId)
+                    && ss.getLockedUntil() != null
+                    && ss.getLockedUntil().isAfter(now)) {
+                ss.setLockedUntil(lockUntil);
+                continue;
+            }
+            if (!canLock(ss, userId)) {
+                throw new BusinessException(ErrorCode.SEAT_TAKEN,
+                        "Ghế " + ss.getSeat().getLabel() + " đã có người đặt");
+            }
+            ss.setStatus(SeatStatus.LOCKED);
+            ss.setLockedByUser(user);
+            ss.setLockedUntil(lockUntil);
+        }
+        showtimeSeatRepository.saveAll(seats);
+        upsertHeldBooking(showtimeId, targetIds, userId);
+        showtimeStatusService.refreshShowtimeStatus(showtimeId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasActiveSeatLock(Long showtimeId, Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return showtimeSeatRepository.existsActiveLockByUserAndShowtime(
+                userId, showtimeId, LocalDateTime.now());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void releaseAllSeatLocks(Long showtimeId, Long userId) {
+        syncSeatLocks(showtimeId, List.of(), userId);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -74,12 +154,19 @@ public class BookingService {
         BookingStatus bookingStatus = request.getPaymentMode() == PaymentMode.ONLINE
                 ? BookingStatus.PAID : BookingStatus.PENDING;
 
-        Booking booking = Booking.builder()
-                .user(user)
-                .showtime(showtime)
-                .totalAmount(total)
-                .status(bookingStatus)
-                .build();
+        Booking booking = bookingRepository
+                .findByUser_UserIdAndShowtime_ShowtimeIdAndStatus(userId, showtime.getShowtimeId(), BookingStatus.HELD)
+                .orElseGet(() -> Booking.builder()
+                        .user(user)
+                        .showtime(showtime)
+                        .build());
+        booking.setUser(user);
+        booking.setShowtime(showtime);
+        booking.setTotalAmount(total);
+        booking.setStatus(bookingStatus);
+        booking.setBookingDate(LocalDateTime.now());
+        booking.getTickets().clear();
+        booking.getBookingCombos().clear();
 
         if (request.getComboQuantities() != null) {
             for (Map.Entry<Integer, Integer> entry : request.getComboQuantities().entrySet()) {
@@ -176,6 +263,44 @@ public class BookingService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    public void cancelPendingByAdmin(Long bookingId) {
+        Booking booking = bookingRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND, "Đơn không tồn tại"));
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new BusinessException(ErrorCode.BOOKING_INVALID_STATUS, "Chỉ hủy được đơn đang chờ thanh toán");
+        }
+        releaseSeatsForBooking(booking);
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        if (booking.getPayment() != null) {
+            booking.getPayment().setPaymentStatus(PaymentStatus.FAILED);
+            paymentRepository.save(booking.getPayment());
+        }
+        showtimeStatusService.refreshShowtimeStatus(booking.getShowtime().getShowtimeId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelPaidByAdmin(Long bookingId, boolean skipTimeCheck) {
+        Booking booking = bookingRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND, "Đơn không tồn tại"));
+        if (booking.getStatus() != BookingStatus.PAID) {
+            throw new BusinessException(ErrorCode.BOOKING_INVALID_STATUS, "Chỉ hủy được đơn đã thanh toán");
+        }
+        if (!skipTimeCheck) {
+            LocalDateTime showStart = booking.getShowtime().getStartTime();
+            long hoursLeft = Duration.between(LocalDateTime.now(), showStart).toHours();
+            if (hoursLeft < cinemaProperties.getCancelHoursBefore()) {
+                throw new BusinessException(ErrorCode.CANCEL_TOO_LATE,
+                        "Không thể hủy trong vòng " + cinemaProperties.getCancelHoursBefore() + " giờ trước giờ chiếu");
+            }
+        }
+        releaseSeatsForBooking(booking);
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        showtimeStatusService.refreshShowtimeStatus(booking.getShowtime().getShowtimeId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public void cancelBooking(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findByIdWithDetails(bookingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND, "Đơn không tồn tại"));
@@ -193,34 +318,92 @@ public class BookingService {
                     "Không thể hủy trong vòng " + cinemaProperties.getCancelHoursBefore() + " giờ trước giờ chiếu");
         }
 
+        releaseSeatsForBooking(booking);
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        showtimeStatusService.refreshShowtimeStatus(booking.getShowtime().getShowtimeId());
+    }
+
+    private void releaseSeatsForBooking(Booking booking) {
+        if (booking.getStatus() == BookingStatus.HELD) {
+            releaseActiveLocksForUserShowtime(
+                    booking.getUser().getUserId(), booking.getShowtime().getShowtimeId());
+            return;
+        }
         List<Long> seatIds = booking.getTickets().stream()
                 .map(t -> t.getSeat().getSeatId()).toList();
+        if (seatIds.isEmpty()) {
+            return;
+        }
         List<ShowtimeSeat> seats = showtimeSeatRepository.findByShowtimeAndSeatIdsForUpdate(
                 booking.getShowtime().getShowtimeId(), seatIds);
-
         for (ShowtimeSeat ss : seats) {
             ss.setStatus(SeatStatus.AVAILABLE);
             ss.setLockedByUser(null);
             ss.setLockedUntil(null);
         }
-
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
         showtimeSeatRepository.saveAll(seats);
-        showtimeStatusService.refreshShowtimeStatus(booking.getShowtime().getShowtimeId());
+    }
+
+    private void releaseActiveLocksForUserShowtime(Long userId, Long showtimeId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<ShowtimeSeat> locks = showtimeSeatRepository.findActiveLocksByUserAndShowtime(
+                userId, showtimeId, now);
+        for (ShowtimeSeat ss : locks) {
+            ss.setStatus(SeatStatus.AVAILABLE);
+            ss.setLockedByUser(null);
+            ss.setLockedUntil(null);
+        }
+        if (!locks.isEmpty()) {
+            showtimeSeatRepository.saveAll(locks);
+        }
+    }
+
+    private void upsertHeldBooking(Long showtimeId, List<Long> seatIds, Long userId) {
+        Showtime showtime = showtimeRepository.findById(showtimeId).orElseThrow();
+        User user = userRepository.findById(userId).orElseThrow();
+        List<ShowtimeSeat> seats = showtimeSeatRepository.findByShowtimeAndSeatIdsForUpdate(showtimeId, seatIds);
+        BigDecimal total = calculateTicketTotal(showtime, seats);
+
+        Booking booking = bookingRepository
+                .findByUser_UserIdAndShowtime_ShowtimeIdAndStatus(userId, showtimeId, BookingStatus.HELD)
+                .orElseGet(() -> Booking.builder()
+                        .user(user)
+                        .showtime(showtime)
+                        .status(BookingStatus.HELD)
+                        .build());
+        booking.setUser(user);
+        booking.setShowtime(showtime);
+        booking.setTotalAmount(total);
+        booking.setStatus(BookingStatus.HELD);
+        booking.setBookingDate(LocalDateTime.now());
+        bookingRepository.save(booking);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void releaseExpiredLocks() {
-        List<ShowtimeSeat> expired = showtimeSeatRepository.findExpiredLocks(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        List<ShowtimeSeat> expired = showtimeSeatRepository.findExpiredLocks(now);
         Set<Long> showtimeIds = new HashSet<>();
+        Set<String> heldKeys = new HashSet<>();
         for (ShowtimeSeat ss : expired) {
+            if (ss.getLockedByUser() != null && ss.getShowtime() != null) {
+                heldKeys.add(ss.getLockedByUser().getUserId() + ":" + ss.getShowtime().getShowtimeId());
+            }
             ss.setStatus(SeatStatus.AVAILABLE);
             ss.setLockedByUser(null);
             ss.setLockedUntil(null);
             showtimeIds.add(ss.getShowtime().getShowtimeId());
         }
         showtimeSeatRepository.saveAll(expired);
+
+        for (String key : heldKeys) {
+            String[] parts = key.split(":");
+            Long userId = Long.parseLong(parts[0]);
+            Long showtimeId = Long.parseLong(parts[1]);
+            cancelHeldBookingIfNoActiveLocks(userId, showtimeId, now);
+        }
+        cancelOrphanedHeldBookings(now);
 
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(cinemaProperties.getSeatLockMinutes());
         List<Booking> pendingExpired = bookingRepository.findByStatusAndBookingDateBefore(
@@ -242,6 +425,27 @@ public class BookingService {
         }
         bookingRepository.saveAll(pendingExpired);
         showtimeIds.forEach(showtimeStatusService::refreshShowtimeStatus);
+    }
+
+    private void cancelHeldBookingIfNoActiveLocks(Long userId, Long showtimeId, LocalDateTime now) {
+        if (showtimeSeatRepository.existsActiveLockByUserAndShowtime(userId, showtimeId, now)) {
+            return;
+        }
+        bookingRepository.findByUser_UserIdAndShowtime_ShowtimeIdAndStatus(userId, showtimeId, BookingStatus.HELD)
+                .ifPresent(b -> {
+                    b.setStatus(BookingStatus.CANCELLED);
+                    bookingRepository.save(b);
+                });
+    }
+
+    private void cancelOrphanedHeldBookings(LocalDateTime now) {
+        for (Booking held : bookingRepository.findByStatus(BookingStatus.HELD)) {
+            if (!showtimeSeatRepository.existsActiveLockByUserAndShowtime(
+                    held.getUser().getUserId(), held.getShowtime().getShowtimeId(), now)) {
+                held.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(held);
+            }
+        }
     }
 
     private void validateSeatCount(List<Long> seatIds) {

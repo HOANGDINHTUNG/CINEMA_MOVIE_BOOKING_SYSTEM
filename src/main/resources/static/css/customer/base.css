@@ -114,9 +114,34 @@ body.customer-site .status-paid {
     color: #86efac;
 }
 
+body.customer-site .status-held {
+    background: rgba(234, 179, 8, 0.35);
+    color: #fef08a;
+    border: 1px solid rgba(250, 204, 21, 0.5);
+}
+
 body.customer-site .status-pending {
-    background: rgba(234, 179, 8, 0.2);
-    color: #fde047;
+    background: rgba(249, 115, 22, 0.22);
+    color: #fdba74;
+}
+
+body.customer-site .held-expires-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #facc15;
+}
+
+body.customer-site .btn-held-resume {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+    color: #1c1917;
+    border: none;
+    font-weight: 600;
+}
+
+body.customer-site .btn-held-resume:hover {
+    filter: brightness(1.08);
+    color: #0f0f0f;
 }
 
 body.customer-site .status-cancelled {

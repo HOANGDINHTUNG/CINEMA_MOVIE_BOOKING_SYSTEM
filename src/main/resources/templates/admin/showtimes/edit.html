@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Sửa suất')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('showtimes')}"></div>
+    <div class="ml-64 flex-1 p-6 max-w-xl">
+        <h1 class="text-xl font-bold">Sửa suất #<span th:text="${showtime.showtimeId}"></span></h1>
+        <p class="text-sm text-gray-500 mb-4" th:text="${showtime.movieTitle}"></p>
+        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+        <form th:action="@{/admin/showtimes/{id}(id=${showtime.showtimeId})}" th:object="${showtimeRequest}" method="post"
+              class="bg-white rounded-lg shadow p-6 space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Phòng</label>
+                <select th:field="*{roomId}" class="w-full border rounded px-3 py-2">
+                    <option th:each="r : ${rooms}" th:value="${r.roomId}" th:text="${r.roomName}"></option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Giờ bắt đầu</label>
+                <input th:field="*{startTime}" type="datetime-local" class="w-full border rounded px-3 py-2" id="startTime"/>
+                <p id="conflictMsg" class="text-red-600 text-xs mt-1 hidden"></p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Giá cơ bản</label>
+                <input th:field="*{basePrice}" type="number" step="1000" class="w-full border rounded px-3 py-2"/>
+            </div>
+            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg">Lưu</button>
+        </form>
+    </div>
+</div>
+<script th:inline="javascript">
+    (function () {
+        var room = document.querySelector('[name=roomId]');
+        var start = document.getElementById('startTime');
+        var msg = document.getElementById('conflictMsg');
+        var excludeId = /*[[${showtime.showtimeId}]]*/ null;
+        function check() {
+            if (!room || !start || !start.value) return;
+            fetch('/admin/showtimes/check-conflict?roomId=' + room.value + '&start=' + encodeURIComponent(start.value) + '&excludeId=' + excludeId)
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.conflict) { msg.textContent = 'Cảnh báo: phòng trùng lịch'; msg.classList.remove('hidden'); }
+                    else { msg.classList.add('hidden'); }
+                });
+        }
+        if (room) room.addEventListener('change', check);
+        if (start) start.addEventListener('change', check);
+    })();
+</script>
+</body>
+</html>

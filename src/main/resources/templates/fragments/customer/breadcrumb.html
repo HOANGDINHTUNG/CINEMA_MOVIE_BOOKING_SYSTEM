@@ -1,0 +1,24 @@
+<nav th:fragment="bookingBreadcrumb(currentStep, movieTitle, showtimeId)"
+     class="ui-breadcrumb-wrap"
+     xmlns:th="http://www.thymeleaf.org"
+     aria-label="Breadcrumb">
+    <ol class="ui-breadcrumb">
+        <li><a th:href="@{/customer/home}" th:text="#{nav.home}">Trang chủ</a></li>
+        <li th:if="${movieTitle != null}">
+            <span th:text="${movieTitle}">Phim</span>
+        </li>
+        <li th:if="${currentStep == 1}">
+            <span class="active" th:text="#{booking.step.choose_seats}">Chọn ghế</span>
+        </li>
+        <li th:if="${currentStep == 2 and showtimeId != null}">
+            <a th:href="@{/customer/showtimes/{id}/seats(id=${showtimeId})}"
+               th:text="#{booking.step.choose_seats}">Chọn ghế</a>
+        </li>
+        <li th:if="${currentStep == 2}">
+            <span class="active" th:text="#{booking.step.payment}">Thanh toán</span>
+        </li>
+        <li th:if="${currentStep == 3}">
+            <span class="active" th:text="#{booking.step.done}">Hoàn tất</span>
+        </li>
+    </ol>
+</nav>

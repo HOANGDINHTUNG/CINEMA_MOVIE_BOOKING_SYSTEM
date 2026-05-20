@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Phòng chiếu')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('rooms')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 flex justify-between items-center">
+            <h1 class="text-xl font-semibold">Phòng chiếu</h1>
+            <a th:href="@{/admin/rooms/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Tạo phòng</a>
+        </div>
+        <div class="p-6">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a th:each="r : ${rooms}" th:href="@{/admin/rooms/{id}(id=${r.roomId})}"
+                   class="bg-white rounded-lg shadow p-5 hover:shadow-lg transition card block">
+                    <h2 class="font-bold text-lg" th:text="${r.roomName}"></h2>
+                    <p class="text-gray-500 text-sm mt-1" th:text="${r.totalSeats} + ' ghế'"></p>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

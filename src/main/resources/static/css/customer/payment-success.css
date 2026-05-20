@@ -1,0 +1,50 @@
+/* Booking detail / payment success page */
+body.customer-site .customer-page.booking-detail-page {
+    max-width: 720px;
+}
+
+body.customer-site .booking-cinema-brand {
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #e50914;
+}
+
+body.customer-site .success-container {
+    text-align: center;
+    padding: var(--space-6, 24px);
+    margin-bottom: var(--space-4, 16px);
+}
+
+body.customer-site .success-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: var(--space-3, 12px);
+}
+
+body.customer-site .success-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: var(--space-2, 8px);
+}
+
+body.customer-site .success-note {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+body.customer-site .booking-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3, 12px);
+    margin-top: var(--space-6, 24px);
+    align-items: center;
+}
+
+body.customer-site .booking-detail-actions .home-btn,
+body.customer-site .booking-detail-actions .btn {
+    min-height: var(--touch-min, 44px);
+}

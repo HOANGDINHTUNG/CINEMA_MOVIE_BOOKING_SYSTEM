@@ -19,5 +19,10 @@ public class BookingHistoryDto {
     private LocalDateTime showtimeStart;
     private String roomName;
     private List<String> seatLabels;
+    private List<String> ticketCodes;
     private boolean cancellable;
+    private Long showtimeId;
+    private LocalDateTime lockExpiresAt;
+    /** HELD: còn ghế đang giữ — cho phép tiếp tục đặt vé. */
+    private boolean heldActive;
 }

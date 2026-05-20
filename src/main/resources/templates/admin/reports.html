@@ -2,18 +2,26 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:replace="~{fragments/admin/head :: head('Báo cáo doanh thu')}"></th:block>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="bg-gray-100">
 <div class="flex min-h-screen">
     <div th:replace="~{fragments/admin/sidebar :: sidebar('reports')}"></div>
     <div class="ml-64 flex-1">
-        <div class="bg-white shadow-sm p-4 sticky top-0 z-10">
+        <div class="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
             <h1 class="text-xl font-semibold text-gray-800">Báo cáo doanh thu</h1>
+            <div class="flex gap-2 text-sm">
+                <a th:href="@{/admin/reports/export/revenue(year=${year}, from=${from}, to=${to})}"
+                   class="border px-3 py-1 rounded hover:bg-gray-50"><i class="fas fa-download mr-1"></i> CSV doanh thu</a>
+                <a th:href="@{/admin/reports/export/bookings(from=${from}, to=${to})}"
+                   class="border px-3 py-1 rounded hover:bg-gray-50"><i class="fas fa-download mr-1"></i> CSV đơn vé</a>
+            </div>
         </div>
         <div class="p-6">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
             <form method="get" class="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-4 items-end">
                 <div>
-                    <label class="block text-sm text-gray-600 mb-1">Năm</label>
+                    <label class="block text-sm text-gray-600 mb-1">Năm (biểu đồ tháng)</label>
                     <input type="number" name="year" th:value="${year}" class="border rounded px-3 py-2 w-28"/>
                 </div>
                 <div>
@@ -27,37 +35,60 @@
                 <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Xem báo cáo</button>
             </form>
 
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow p-5">
+                    <p class="text-xs text-gray-500 uppercase">Doanh thu kỳ</p>
+                    <p class="text-2xl font-bold text-primary mt-1"
+                       th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"></p>
+                    <p class="text-xs mt-2" th:if="${report.revenueChangePercent != null}">
+                        <span th:classappend="${report.revenueChangePercent >= 0} ? 'text-green-600' : 'text-red-600'"
+                              th:text="${report.revenueChangePercent >= 0 ? '+' : ''} + ${report.revenueChangePercent} + '% vs kỳ trước'"></span>
+                    </p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-5">
+                    <p class="text-xs text-gray-500">Đơn PAID</p>
+                    <p class="text-2xl font-bold" th:text="${report.paidBookings}"></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-5">
+                    <p class="text-xs text-gray-500">Đơn PENDING</p>
+                    <p class="text-2xl font-bold text-amber-600" th:text="${report.pendingBookings}"></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-5">
+                    <p class="text-xs text-gray-500">Đơn CANCELLED</p>
+                    <p class="text-2xl font-bold text-gray-600" th:text="${report.cancelledBookings}"></p>
+                </div>
+            </div>
+
             <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <p class="text-gray-600">Tổng doanh thu (khoảng đã chọn)</p>
-                <p class="text-3xl font-bold text-primary mt-2"
-                   th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"></p>
+                <h2 class="font-semibold mb-4">Doanh thu theo tháng (<span th:text="${year}"></span>)</h2>
+                <canvas id="monthChart" height="100"></canvas>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="font-semibold mb-4">Doanh thu theo tháng (<span th:text="${year}"></span>)</h2>
+                    <h2 class="font-semibold mb-4">Top 5 phim (kỳ đã chọn)</h2>
                     <table class="min-w-full text-sm">
-                        <thead><tr class="border-b"><th class="text-left py-2">Tháng</th><th class="text-right py-2">Doanh thu</th></tr></thead>
-                        <tbody>
-                        <tr th:each="entry : ${report.revenueByMonth}" class="border-b border-gray-100">
-                            <td class="py-2" th:text="'Tháng ' + ${entry.key}"></td>
-                            <td class="py-2 text-right" th:text="${#numbers.formatDecimal(entry.value, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="font-semibold mb-4">Top 5 phim</h2>
-                    <table class="min-w-full text-sm">
-                        <thead><tr class="border-b"><th class="text-left py-2">Phim</th><th class="text-right py-2">Doanh thu</th></tr></thead>
+                        <thead><tr class="border-b"><th class="text-left py-2">Phim</th><th class="text-right py-2">DT</th></tr></thead>
                         <tbody>
                         <tr th:each="m : ${report.topMovies}" class="border-b border-gray-100">
                             <td class="py-2" th:text="${m.title}"></td>
                             <td class="py-2 text-right" th:text="${#numbers.formatDecimal(m.revenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(report.topMovies)}">
-                            <td colspan="2" class="py-4 text-center text-gray-500">Chưa có dữ liệu</td>
+                        <tr th:if="${#lists.isEmpty(report.topMovies)}"><td colspan="2" class="py-4 text-center text-gray-500">Chưa có dữ liệu</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="font-semibold mb-4">Top 5 phòng</h2>
+                    <table class="min-w-full text-sm">
+                        <thead><tr class="border-b"><th class="text-left py-2">Phòng</th><th class="text-right py-2">DT</th><th class="text-right py-2">Đơn</th></tr></thead>
+                        <tbody>
+                        <tr th:each="r : ${report.topRooms}" class="border-b border-gray-100">
+                            <td class="py-2" th:text="${r.roomName}"></td>
+                            <td class="py-2 text-right" th:text="${#numbers.formatDecimal(r.revenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                            <td class="py-2 text-right" th:text="${r.bookingCount}"></td>
                         </tr>
+                        <tr th:if="${#lists.isEmpty(report.topRooms)}"><td colspan="3" class="py-4 text-center text-gray-500">Chưa có dữ liệu</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -65,5 +96,22 @@
         </div>
     </div>
 </div>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        var labels = /*[[${report.revenueMonthLabels}]]*/ [];
+        var values = /*[[${report.revenueMonthValues}]]*/ [];
+        var canvas = document.getElementById('monthChart');
+        if (canvas && typeof Chart !== 'undefined') {
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Doanh thu', data: values, backgroundColor: 'rgba(211,47,47,0.75)' }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+    });
+</script>
 </body>
 </html>

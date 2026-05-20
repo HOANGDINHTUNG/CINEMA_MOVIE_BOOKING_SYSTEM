@@ -10,9 +10,8 @@ import java.util.List;
 public class HomeBootstrapResponseDto {
     private HomeMoviesResponseDto nowShowing;
     private HomeMoviesResponseDto comingSoon;
+    /** Xu hướng tuần TMDB — sidebar (~5 phim). */
+    private List<CinemaMovieCardDto> trending;
     private List<HeroSlideDto> heroSlides;
     private String error;
-    /** Message key gợi ý (chưa đăng phim tại rạp, v.v.). */
-    private String infoMessage;
-    private boolean noPublishedAtCinema;
 }

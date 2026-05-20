@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Sửa nội dung')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('content')}"></div>
+    <div class="ml-64 flex-1 p-6 max-w-3xl">
+        <h1 class="text-xl font-bold mb-4" th:text="${isNew} ? 'Thêm bài' : 'Sửa bài'"></h1>
+        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+        <form th:action="@{/admin/content/{c}(c=${#strings.toLowerCase(category.name())})}"
+              th:object="${article}" method="post" class="bg-white rounded-lg shadow p-6 space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="isNew" th:value="${isNew}"/>
+            <div>
+                <label class="block text-sm mb-1">ID (để trống = tự tạo)</label>
+                <input th:field="*{id}" class="w-full border rounded px-3 py-2" th:readonly="${!isNew}"/>
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Tiêu đề</label>
+                <input th:field="*{title}" required class="w-full border rounded px-3 py-2"/>
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Ngày hiển thị</label>
+                <input th:field="*{date}" class="w-full border rounded px-3 py-2" placeholder="2025-05-15"/>
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Ảnh thumbnail (tên file)</label>
+                <input th:field="*{thumbnail}" class="w-full border rounded px-3 py-2"/>
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Nội dung HTML</label>
+                <textarea th:field="*{contentHtml}" rows="12" class="w-full border rounded px-3 py-2 font-mono text-xs"></textarea>
+            </div>
+            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg">Lưu</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

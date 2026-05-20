@@ -10,7 +10,6 @@
                data-label-in-cinema=#{card.in_cinema},
                data-label-release-date=#{movie.release_date}">
 <div th:replace="~{fragments/customer/loader :: loader}"></div>
-<script>document.getElementById('pageLoader')&&(document.getElementById('pageLoader').style.display='none');</script>
 <div th:replace="~{fragments/customer/header :: header}"></div>
 
 <div id="scroll-container">
@@ -42,10 +41,6 @@
         <div class="main-wrapper">
             <div class="main-content">
                 <p th:if="${homeError != null}" class="alert alert-warning" role="alert" th:text="${homeError}"></p>
-                <p th:if="${homeError == null and homeInfoMessage != null}" class="alert alert-info" role="alert"
-                   th:text="#{${homeInfoMessage}}"></p>
-                <p th:if="${homeError == null and homeInfoMessage == null and noPublishedAtCinema}"
-                   class="alert alert-info" role="alert" th:text="#{home.no_published_hint}"></p>
                 <p th:if="${homeError == null and #lists.isEmpty(nowShowing) and #lists.isEmpty(comingSoon)}"
                    class="alert alert-warning" role="alert" th:text="#{home.tmdb_load_failed}"></p>
 
@@ -88,6 +83,16 @@
             </div>
 
             <aside class="sidebar">
+                <section class="sidebar-trending" th:classappend="${#lists.isEmpty(trending)} ? ' d-none' : ''">
+                    <div class="top-bar bar">
+                        <h1 th:text="#{home.trending}">Xu hướng tuần</h1>
+                    </div>
+                    <div class="trending-list">
+                        <th:block th:each="movie : ${trending}">
+                            <div th:replace="~{fragments/customer/home-trending-item :: item(m=${movie})}"></div>
+                        </th:block>
+                    </div>
+                </section>
                 <div class="promotion">
                     <div class="top-bar bar">
                         <h1 th:text="#{sidebar.promotions}">Khuyến mãi</h1>

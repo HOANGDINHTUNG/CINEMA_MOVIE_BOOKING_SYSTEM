@@ -60,16 +60,115 @@ function initSeatSelection() {
     const basePrice = parseFloat(form.dataset.basePrice || '0');
     const vipMultiplier = parseFloat(form.dataset.vipMultiplier || '1.5');
     const maxSeats = parseInt(form.dataset.maxSeats || '8', 10);
+    const syncEnabled = form.dataset.syncEnabled === 'true';
+    const serverLocked = form.dataset.seatsLockedOnServer === 'true';
+    const syncUrl = form.dataset.syncUrl || '';
+    const releaseUrl = form.dataset.releaseUrl || '';
     const titleEl = document.getElementById('seatSummaryTitle');
     const detailEl = document.getElementById('seatSummaryDetail');
     const totalEl = document.getElementById('seatSummaryTotal');
     const submitBtn = document.getElementById('seatSubmitBtn');
+    const clearAllBtn = document.getElementById('seatClearAllBtn');
+    const backLink = document.getElementById('seatBackLink');
+    const chipsWrap = document.getElementById('seatChipsWrap');
+    const modal = document.getElementById('seatConfirmModal');
+    let pendingSubmit = false;
+    let syncDebounceTimer = null;
+    let syncInFlight = false;
+
+    function getCsrfField() {
+        return form.querySelector('input[type="hidden"]:not([name="showtimeId"])');
+    }
+
+    function collectSeatIds() {
+        return Array.from(form.querySelectorAll('input[name="seatIds"]:checked'))
+            .map(function (input) { return input.value; });
+    }
+
+    function postSeatAction(url, seatIds) {
+        const csrf = getCsrfField();
+        const fd = new FormData();
+        if (seatIds && seatIds.length) {
+            seatIds.forEach(function (id) { fd.append('seatIds', id); });
+        }
+        if (csrf) {
+            fd.append(csrf.name, csrf.value);
+        }
+        return fetch(url, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+                if (!res.ok || !data.ok) {
+                    throw new Error(data.message || bodyMsg('data-msg-seat-sync-failed') || 'Sync failed');
+                }
+                return data;
+            });
+        });
+    }
+
+    function notifySyncError(message) {
+        const msg = message || bodyMsg('data-msg-seat-sync-failed') || 'Không cập nhật được ghế.';
+        if (window.UiToast) {
+            UiToast.error(msg);
+        } else {
+            alert(msg);
+        }
+    }
+
+    function runServerSync() {
+        if (!serverLocked || !syncEnabled || !syncUrl || syncInFlight) {
+            return Promise.resolve();
+        }
+        syncInFlight = true;
+        return postSeatAction(syncUrl, collectSeatIds())
+            .catch(function (err) {
+                notifySyncError(err.message);
+                window.location.reload();
+                throw err;
+            })
+            .finally(function () {
+                syncInFlight = false;
+            });
+    }
+
+    function scheduleServerSync() {
+        if (!serverLocked || !syncEnabled) return;
+        clearTimeout(syncDebounceTimer);
+        syncDebounceTimer = setTimeout(function () {
+            runServerSync();
+        }, 400);
+    }
 
     function seatUnitPrice(type) {
         if (type && type.toUpperCase() === 'VIP') {
             return basePrice * vipMultiplier;
         }
         return basePrice;
+    }
+
+    function renderChips(checked) {
+        if (!chipsWrap) return;
+        chipsWrap.innerHTML = '';
+        const removeLabel = bodyMsg('data-label-remove-seat') || 'Xóa ghế';
+        checked.forEach(function (input) {
+            const chip = document.createElement('span');
+            const isVip = (input.dataset.seatType || '').toUpperCase() === 'VIP';
+            chip.className = 'seat-chip' + (isVip ? ' seat-chip--vip' : '');
+            chip.innerHTML = '<span>' + (input.dataset.seatLabel || '') + '</span>' +
+                '<button type="button" class="seat-chip__remove" aria-label="' + removeLabel + ' ' +
+                (input.dataset.seatLabel || '') + '">&times;</button>';
+            chip.querySelector('.seat-chip__remove').addEventListener('click', function () {
+                input.checked = false;
+                const seat = input.closest('.seat');
+                if (seat) seat.classList.remove('selected');
+                updateSummary();
+                scheduleServerSync();
+            });
+            chipsWrap.appendChild(chip);
+        });
     }
 
     function updateSummary() {
@@ -81,6 +180,8 @@ function initSeatSelection() {
             if (detailEl) detailEl.textContent = '';
             if (totalEl) totalEl.textContent = '';
             if (submitBtn) submitBtn.disabled = true;
+            if (clearAllBtn) clearAllBtn.hidden = true;
+            renderChips(checked);
             return;
         }
 
@@ -105,40 +206,118 @@ function initSeatSelection() {
                 : formatVnd(total);
         }
         if (submitBtn) submitBtn.disabled = false;
+        if (clearAllBtn) clearAllBtn.hidden = false;
+        renderChips(checked);
+    }
+
+    function clearAllSeats() {
+        form.querySelectorAll('input[name="seatIds"]:checked').forEach(function (input) {
+            input.checked = false;
+            const seat = input.closest('.seat');
+            if (seat) seat.classList.remove('selected');
+        });
+        updateSummary();
+        scheduleServerSync();
     }
 
     form.querySelectorAll('input[name="seatIds"]').forEach(function (input) {
+        const seat = input.closest('.seat');
+        if (seat && input.checked) {
+            seat.classList.add('selected');
+        }
+        input.addEventListener('click', function () {
+            input._prevChecked = input.checked;
+        });
         input.addEventListener('change', function () {
             const checked = form.querySelectorAll('input[name="seatIds"]:checked');
             if (input.checked && checked.length > maxSeats) {
                 input.checked = false;
-                alert(applyMsgTpl(bodyMsg('data-msg-seat-max'), { __0__: maxSeats }) || maxSeats);
+                if (seat) {
+                    seat.classList.remove('selected');
+                    seat.classList.add('shake-limit');
+                    setTimeout(function () { seat.classList.remove('shake-limit'); }, 400);
+                }
+                if (window.UiToast) {
+                    UiToast.error(applyMsgTpl(bodyMsg('data-msg-seat-max'), { __0__: maxSeats }));
+                } else {
+                    alert(applyMsgTpl(bodyMsg('data-msg-seat-max'), { __0__: maxSeats }));
+                }
                 return;
             }
-            const seat = input.closest('.seat');
             if (seat) {
                 seat.classList.toggle('selected', input.checked);
             }
             updateSummary();
+            scheduleServerSync();
         });
     });
 
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', clearAllSeats);
+    }
+
+    if (backLink && serverLocked && syncEnabled && releaseUrl) {
+        backLink.addEventListener('click', function (event) {
+            event.preventDefault();
+            const msg = bodyMsg('data-msg-seat-back-release')
+                || 'Ghế đang được giữ. Bỏ giữ và quay lại?';
+            if (!confirm(msg)) return;
+            const href = backLink.getAttribute('href');
+            postSeatAction(releaseUrl, [])
+                .then(function () { window.location.href = href; })
+                .catch(function (err) { notifySyncError(err.message); });
+        });
+    }
+
+    function showConfirmModal(count, onOk) {
+        if (!modal) {
+            var confirmTpl = bodyMsg('data-msg-seat-confirm');
+            if (confirm(confirmTpl ? applyMsgTpl(confirmTpl, { __0__: count }) : true)) onOk();
+            return;
+        }
+        var msgEl = document.getElementById('seatConfirmMessage');
+        if (msgEl) {
+            var tpl = bodyMsg('data-msg-seat-confirm');
+            msgEl.textContent = tpl ? applyMsgTpl(tpl, { __0__: count }) : '';
+        }
+        modal.hidden = false;
+        var okBtn = modal.querySelector('[data-seat-confirm-ok]');
+        var cancelBtn = modal.querySelector('[data-seat-confirm-cancel]');
+        function close() { modal.hidden = true; }
+        if (cancelBtn) cancelBtn.onclick = close;
+        modal.onclick = function (e) { if (e.target === modal) close(); };
+        if (okBtn) {
+            okBtn.onclick = function () {
+                close();
+                onOk();
+            };
+        }
+    }
+
     form.addEventListener('submit', function (event) {
+        if (pendingSubmit) return;
         const checked = form.querySelectorAll('input[name="seatIds"]:checked');
         if (checked.length === 0) {
             event.preventDefault();
-            alert(bodyMsg('data-msg-seat-pick-at-least') || 'Vui lòng chọn ít nhất một ghế.');
+            if (window.UiToast) {
+                UiToast.error(bodyMsg('data-msg-seat-pick-at-least') || 'Vui lòng chọn ghế.');
+            }
             return;
         }
         if (checked.length > maxSeats) {
             event.preventDefault();
-            alert('Mỗi đơn chỉ được chọn tối đa ' + maxSeats + ' ghế.');
             return;
         }
-        var confirmTpl = bodyMsg('data-msg-seat-confirm');
-        if (!confirm(confirmTpl ? applyMsgTpl(confirmTpl, { __0__: checked.length }) : checked.length)) {
-            event.preventDefault();
-        }
+        event.preventDefault();
+        showConfirmModal(checked.length, function () {
+            pendingSubmit = true;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.setAttribute('data-loading-text', submitBtn.textContent);
+                submitBtn.textContent = 'Đang xử lý...';
+            }
+            form.submit();
+        });
     });
 
     updateSummary();
@@ -150,38 +329,170 @@ function initCheckoutForm() {
     if (!form) return;
 
     const baseTotal = parseFloat(form.dataset.estimatedTotal || '0');
-    const totalDisplay = document.getElementById('checkoutLiveTotal');
+    const paymentModeField = document.getElementById('paymentModeField');
+    const subtotalEl = document.getElementById('checkoutCostSubtotal');
+    const grandEl = document.getElementById('checkoutGrandTotal');
+    const termsCheckbox = document.getElementById('checkoutTermsAgree');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const modal = document.getElementById('checkoutConfirmModal');
+    let pendingSubmit = false;
+
+    function syncPaymentMode() {
+        const provider = form.querySelector('input[name="paymentProvider"]:checked');
+        const isCounter = provider && provider.value === 'counter';
+        if (paymentModeField) {
+            paymentModeField.value = isCounter ? 'COUNTER' : 'ONLINE';
+        }
+        form.querySelectorAll('.payment-method-card').forEach(function (card) {
+            const input = card.querySelector('input[name="paymentProvider"]');
+            card.classList.toggle('is-selected', input && input.checked);
+        });
+    }
 
     function updateCheckoutTotal() {
         let comboTotal = 0;
-        form.querySelectorAll('input[name^="combo_"]').forEach(function (input) {
+        form.querySelectorAll('.checkout-table__combo-row').forEach(function (row) {
+            const input = row.querySelector('input[name^="combo_"]');
+            const lineEl = row.querySelector('.checkout-combo-line-total');
+            if (!input) return;
             const price = parseFloat(input.dataset.price || '0');
-            const qty = parseInt(input.value, 10) || 0;
-            comboTotal += price * qty;
+            const qty = Math.max(0, parseInt(input.value, 10) || 0);
+            const line = price * qty;
+            comboTotal += line;
+            if (lineEl) {
+                lineEl.textContent = formatVnd(line);
+            }
         });
         const grand = baseTotal + comboTotal;
-        if (totalDisplay) {
-            totalDisplay.textContent = formatVnd(grand);
-        }
+        if (subtotalEl) subtotalEl.textContent = formatVnd(grand);
+        if (grandEl) grandEl.textContent = formatVnd(grand);
     }
 
-    form.querySelectorAll('input[name^="combo_"]').forEach(function (input) {
-        input.addEventListener('input', updateCheckoutTotal);
-        input.addEventListener('change', updateCheckoutTotal);
-    });
+    function bindQtySteppers() {
+        form.querySelectorAll('.qty-stepper').forEach(function (wrap) {
+            const input = wrap.querySelector('.qty-stepper__input');
+            const minus = wrap.querySelector('[data-qty-minus]');
+            const plus = wrap.querySelector('[data-qty-plus]');
+            if (!input) return;
+            function setQty(next) {
+                const max = parseInt(input.getAttribute('max'), 10) || 20;
+                input.value = String(Math.min(max, Math.max(0, next)));
+                updateCheckoutTotal();
+            }
+            if (minus) minus.addEventListener('click', function () { setQty((parseInt(input.value, 10) || 0) - 1); });
+            if (plus) plus.addEventListener('click', function () { setQty((parseInt(input.value, 10) || 0) + 1); });
+            input.addEventListener('input', updateCheckoutTotal);
+            input.addEventListener('change', updateCheckoutTotal);
+        });
+    }
 
-    form.addEventListener('submit', function (event) {
-        const mode = form.querySelector('input[name="paymentMode"]:checked');
-        const modeText = mode && mode.value === 'COUNTER'
+    form.querySelectorAll('input[name="paymentProvider"]').forEach(function (radio) {
+        radio.addEventListener('change', syncPaymentMode);
+    });
+    syncPaymentMode();
+    bindQtySteppers();
+
+    function showCheckoutConfirm(onOk) {
+        const isCounter = paymentModeField && paymentModeField.value === 'COUNTER';
+        const modeText = isCounter
             ? bodyMsg('data-msg-checkout-counter')
             : bodyMsg('data-msg-checkout-online');
         const confirmTpl = bodyMsg('data-msg-checkout-confirm');
-        if (!confirm(confirmTpl ? applyMsgTpl(confirmTpl, { __0__: modeText }) : modeText)) {
-            event.preventDefault();
+        const message = confirmTpl ? applyMsgTpl(confirmTpl, { __0__: modeText }) : modeText;
+
+        if (!modal) {
+            if (confirm(message)) onOk();
+            return;
         }
+        var msgEl = document.getElementById('checkoutConfirmMessage');
+        if (msgEl) msgEl.textContent = message;
+        modal.hidden = false;
+        var okBtn = modal.querySelector('[data-checkout-confirm-ok]');
+        var cancelBtn = modal.querySelector('[data-checkout-confirm-cancel]');
+        function close() { modal.hidden = true; }
+        if (cancelBtn) cancelBtn.onclick = close;
+        modal.onclick = function (e) { if (e.target === modal) close(); };
+        if (okBtn) okBtn.onclick = function () { close(); onOk(); };
+    }
+
+    form.addEventListener('submit', function (event) {
+        if (pendingSubmit) return;
+        event.preventDefault();
+        if (termsCheckbox && !termsCheckbox.checked) {
+            const msg = bodyMsg('data-msg-checkout-terms') || 'Vui lòng đồng ý điều khoản.';
+            if (window.UiToast) UiToast.error(msg);
+            else alert(msg);
+            return;
+        }
+        showCheckoutConfirm(function () {
+            pendingSubmit = true;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Đang xử lý...';
+            }
+            form.submit();
+        });
     });
 
     updateCheckoutTotal();
+}
+
+function initCheckoutLockCountdown() {
+    var countdownEl = document.getElementById('checkoutLockCountdown');
+    var wrap = document.getElementById('checkoutLockTimerWrap');
+    if (!countdownEl) return;
+    var raw = countdownEl.getAttribute('data-expires-at');
+    if (!raw) return;
+    var remaining = Math.floor((new Date(raw).getTime() - Date.now()) / 1000);
+    if (remaining <= 0) {
+        countdownEl.textContent = '00:00';
+        if (wrap) wrap.classList.add('is-urgent');
+        return;
+    }
+    function tick() {
+        if (remaining <= 0) {
+            countdownEl.textContent = '00:00';
+            return;
+        }
+        var m = Math.floor(remaining / 60);
+        var s = remaining % 60;
+        countdownEl.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        if (remaining <= 120 && wrap) wrap.classList.add('is-urgent');
+        remaining -= 1;
+        setTimeout(tick, 1000);
+    }
+    tick();
+}
+
+function initFlashToasts() {
+    document.querySelectorAll('[data-flash-success]').forEach(function (el) {
+        if (window.UiToast && el.textContent.trim()) {
+            UiToast.success(el.textContent.trim());
+        }
+    });
+    document.querySelectorAll('[data-flash-error]').forEach(function (el) {
+        if (window.UiToast && el.textContent.trim()) {
+            UiToast.error(el.textContent.trim());
+        }
+    });
+}
+
+function initCopyTicketCodes() {
+    document.querySelectorAll('[data-copy-code]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var code = btn.getAttribute('data-copy-code');
+            if (!code) return;
+            navigator.clipboard.writeText(code).then(function () {
+                if (window.UiToast) {
+                    UiToast.success(btn.getAttribute('data-copied-msg') || 'Đã sao chép mã vé');
+                }
+                btn.textContent = btn.getAttribute('data-copied-msg') || 'Đã sao chép';
+                setTimeout(function () {
+                    btn.textContent = btn.getAttribute('data-copy-label') || 'Sao chép';
+                }, 2000);
+            });
+        });
+    });
 }
 
 /* ---------- First-time guide ---------- */
@@ -230,9 +541,9 @@ const NCC_GUIDES = {
                 text: 'Chọn Online để thanh toán ngay, hoặc Quầy để giữ ghế 15 phút và trả tiền tại rạp.'
             },
             {
-                selector: '#checkoutLiveTotal',
+                selector: '#checkoutGrandTotal',
                 title: 'Tổng tiền',
-                text: 'Tổng dự kiến gồm vé và combo (nếu có). Kiểm tra kỹ trước khi xác nhận.'
+                text: 'Tổng dự kiến gồm vé và combo (nếu có). Kiểm tra kỹ trước khi thanh toán.'
             }
         ]
     }
@@ -375,6 +686,9 @@ function initResetGuideButton() {
 document.addEventListener('DOMContentLoaded', function () {
     initSeatSelection();
     initCheckoutForm();
+    initCheckoutLockCountdown();
+    initFlashToasts();
+    initCopyTicketCodes();
     initOnboarding();
     initResetGuideButton();
 });

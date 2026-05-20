@@ -9,7 +9,6 @@
                data-msg-seat-max=#{seat.max_seats},
                data-msg-seat-confirm=#{seat.confirm_checkout}">
 <div th:replace="~{fragments/customer/loader :: loader}"></div>
-<script>document.getElementById('pageLoader')&&(document.getElementById('pageLoader').style.display='none');</script>
 <div th:replace="~{fragments/customer/header :: header}"></div>
 
 <th:block th:if="${catalogDetail != null}"
@@ -83,6 +82,11 @@
                         <i class="fa-solid fa-play"></i>
                         <span th:text="#{movie.play_trailer}">Play Trailer</span>
                     </a>
+                    <a th:if="${showtimeDays != null and !#lists.isEmpty(showtimeDays)}"
+                       href="#schedule" class="btn-book-tickets">
+                        <i class="fa-solid fa-ticket" aria-hidden="true"></i>
+                        <span th:text="#{movie.book_tickets}">Đặt vé</span>
+                    </a>
                 </div>
 
                 <h2 class="movie-detail-section-title" th:text="#{movie.overview}">Overview</h2>
@@ -121,7 +125,9 @@
     <div class="movie-detail-body">
         <section class="movie-detail-schedule" id="schedule"
                  th:if="${showtimeDays != null and !#lists.isEmpty(showtimeDays)}">
+            <p class="movie-detail-cinema-brand" th:text="${cinemaBrandName}">Smart Cinema</p>
             <h2 th:text="#{movie.showtimes}">Chọn suất chiếu</h2>
+            <p class="movie-detail-schedule-hint" th:text="#{movie.showtimes_hint}"></p>
             <p class="movie-detail-age-note">
                 <span th:text="#{movie.note}">Lưu ý:</span>
                 <span th:text="#{movie.age_warning}"></span>
@@ -145,11 +151,18 @@
                  th:attr="data-day-index=${dayStat.index}">
                 <div class="schedule-time-pills">
                     <a th:each="s : ${day.slots}"
+                       th:if="${!s.soldOut}"
                        th:href="@{/customer/showtimes/{id}/seats(id=${s.showtimeId})}"
-                       class="schedule-time-pill"
-                       th:classappend="${s.soldOut} ? ' sold-out' : ''">
-                        <span th:text="${#temporals.format(s.startTime, 'HH:mm')}"></span>
+                       class="schedule-time-pill">
+                        <span class="schedule-time-pill__time" th:text="${#temporals.format(s.startTime, 'HH:mm')}"></span>
                     </a>
+                    <span th:each="s : ${day.slots}"
+                          th:if="${s.soldOut}"
+                          class="schedule-time-pill sold-out"
+                          th:attr="aria-label=#{showtime.sold_out}">
+                        <span class="schedule-time-pill__time" th:text="${#temporals.format(s.startTime, 'HH:mm')}"></span>
+                        <span class="schedule-time-pill__badge" th:text="#{showtime.sold_out}">Hết vé</span>
+                    </span>
                 </div>
             </div>
         </section>

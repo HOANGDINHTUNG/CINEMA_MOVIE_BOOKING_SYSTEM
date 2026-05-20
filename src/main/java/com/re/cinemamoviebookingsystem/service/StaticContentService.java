@@ -1,65 +1,40 @@
 package com.re.cinemamoviebookingsystem.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.re.cinemamoviebookingsystem.dto.response.ContentArticleDto;
-import org.springframework.core.io.ClassPathResource;
+import com.re.cinemamoviebookingsystem.enums.ContentCategory;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class StaticContentService {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ContentArticleService contentArticleService;
 
     public List<ContentArticleDto> listPromotions() {
-        return loadArticles("database/promotion.json", "/assets/img/events/");
+        return contentArticleService.list(ContentCategory.PROMOTION);
     }
 
     public List<ContentArticleDto> listNews() {
-        return loadArticles("database/event.json", "/assets/img/events/");
+        return contentArticleService.list(ContentCategory.NEWS);
     }
 
     public List<ContentArticleDto> listFestivals() {
-        return loadArticles("database/festival.json", "/assets/img/eventFestival/");
+        return contentArticleService.list(ContentCategory.FESTIVAL);
     }
 
     public Optional<ContentArticleDto> findPromotion(String id) {
-        return listPromotions().stream().filter(a -> a.getId().equals(id)).findFirst();
+        return contentArticleService.find(ContentCategory.PROMOTION, id);
     }
 
     public Optional<ContentArticleDto> findNews(String id) {
-        return listNews().stream().filter(a -> a.getId().equals(id)).findFirst();
+        return contentArticleService.find(ContentCategory.NEWS, id);
     }
 
     public Optional<ContentArticleDto> findFestival(String id) {
-        return listFestivals().stream().filter(a -> a.getId().equals(id)).findFirst();
-    }
-
-    private List<ContentArticleDto> loadArticles(String classpathFile, String imageBase) {
-        try (InputStream in = new ClassPathResource(classpathFile).getInputStream()) {
-            List<ContentArticleDto> items = objectMapper.readValue(in, new TypeReference<>() {});
-            items.forEach(item -> resolveUrls(item, imageBase));
-            return items;
-        } catch (IOException e) {
-            return List.of();
-        }
-    }
-
-    private void resolveUrls(ContentArticleDto item, String imageBase) {
-        if (item.getThumbnail() != null && !item.getThumbnail().isBlank()) {
-            item.setThumbnailUrl(imageBase + item.getThumbnail());
-        }
-        if (item.getImages() != null) {
-            item.getImages().forEach(img -> {
-                if (img != null && !img.isBlank()) {
-                    item.getImageUrls().add(imageBase + img);
-                }
-            });
-        }
+        return contentArticleService.find(ContentCategory.FESTIVAL, id);
     }
 }

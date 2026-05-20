@@ -10,7 +10,6 @@ import com.re.cinemamoviebookingsystem.dto.response.catalog.MovieCatalogSummaryD
 import com.re.cinemamoviebookingsystem.dto.response.catalog.TmdbGenreItemDto;
 import com.re.cinemamoviebookingsystem.entity.Movie;
 import com.re.cinemamoviebookingsystem.enums.MovieStatus;
-import com.re.cinemamoviebookingsystem.enums.ShowtimeStatus;
 import com.re.cinemamoviebookingsystem.exception.BusinessException;
 import com.re.cinemamoviebookingsystem.exception.ErrorCode;
 import com.re.cinemamoviebookingsystem.repository.MovieRepository;
@@ -36,11 +35,9 @@ public class CinemaCatalogService {
 
     @Transactional(readOnly = true)
     public HomeMovieSectionsDto listHomeMovieSections(AppLanguage lang) {
-        List<CinemaMovieCardDto> nowShowing = listNowShowingAtCinema(lang);
-        List<CinemaMovieCardDto> comingSoon = listPublishedWithoutShowtimes(lang);
         return HomeMovieSectionsDto.builder()
-                .nowShowing(nowShowing)
-                .comingSoon(comingSoon)
+                .nowShowing(listNowShowingAtCinema(lang))
+                .comingSoon(List.of())
                 .build();
     }
 
@@ -49,40 +46,51 @@ public class CinemaCatalogService {
         return listNowShowingPage(lang, 1, Integer.MAX_VALUE);
     }
 
+    /**
+     * Phim ACTIVE trong DB có ít nhất một suất tương lai (ACTIVE/SOLD_OUT).
+     * Hiển thị: TMDB theo {@code tmdb_id}; suất gần nhất từ DB.
+     */
     @Transactional(readOnly = true)
     public List<CinemaMovieCardDto> listNowShowingPage(AppLanguage lang, int page, int pageSize) {
         Map<Long, LocalDateTime> nextByTmdb = showtimeService.mapNextShowtimeByTmdbId();
-        List<MovieDto> movies = movieService.listActiveWithUpcomingShowtimes(lang);
+        List<MovieDto> movies = movieService.listActiveWithUpcomingShowtimes(lang).stream()
+                .filter(dto -> dto.getTmdbId() != null && nextByTmdb.containsKey(dto.getTmdbId()))
+                .sorted(Comparator.comparing(dto -> nextByTmdb.get(dto.getTmdbId())))
+                .collect(Collectors.toList());
         return sliceAndEnrich(movies, page, pageSize, lang, nextByTmdb, true);
     }
 
     @Transactional(readOnly = true)
     public int countNowShowingAtCinema() {
-        LocalDateTime now = LocalDateTime.now();
-        List<ShowtimeStatus> statuses = List.of(ShowtimeStatus.ACTIVE, ShowtimeStatus.SOLD_OUT);
-        return movieRepository.findActiveWithUpcomingShowtimes(MovieStatus.ACTIVE, now, statuses).size();
+        return (int) movieService.listActiveWithUpcomingShowtimes(AppLanguage.VI_VN).stream()
+                .filter(dto -> dto.getTmdbId() != null)
+                .count();
     }
 
+    /** Phim đã đăng rạp, chưa có suất (dùng cho demo seed). */
     @Transactional(readOnly = true)
     public List<CinemaMovieCardDto> listPublishedWithoutShowtimes(AppLanguage lang) {
-        return listComingSoonPage(lang, 1, Integer.MAX_VALUE);
-    }
-
-    @Transactional(readOnly = true)
-    public List<CinemaMovieCardDto> listComingSoonPage(AppLanguage lang, int page, int pageSize) {
         Set<Long> withShowtimes = showtimeService.mapNextShowtimeByTmdbId().keySet();
         List<MovieDto> movies = movieService.listActive(lang).stream()
                 .filter(dto -> dto.getTmdbId() != null && !withShowtimes.contains(dto.getTmdbId()))
                 .collect(Collectors.toList());
-        return sliceAndEnrich(movies, page, pageSize, lang, Map.of(), false);
+        return sliceAndEnrich(movies, 1, Integer.MAX_VALUE, lang, Map.of(), false);
     }
 
+    /** Phim đăng rạp chưa có suất (demo seed). */
     @Transactional(readOnly = true)
-    public int countComingSoonAtCinema() {
+    public int countPublishedWithoutShowtimes() {
         Set<Long> withShowtimes = showtimeService.mapNextShowtimeByTmdbId().keySet();
         return (int) movieRepository.findByStatusOrderByPublishedAtDesc(MovieStatus.ACTIVE).stream()
                 .filter(m -> m.getTmdbId() != null && !withShowtimes.contains(m.getTmdbId()))
                 .count();
+    }
+
+    /** @deprecated Dùng {@link #countPublishedWithoutShowtimes()} cho demo seed. */
+    @Deprecated
+    @Transactional(readOnly = true)
+    public int countComingSoonAtCinema() {
+        return countPublishedWithoutShowtimes();
     }
 
     private List<CinemaMovieCardDto> sliceAndEnrich(List<MovieDto> movies,

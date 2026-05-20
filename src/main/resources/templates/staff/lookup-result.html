@@ -2,17 +2,19 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:replace="~{fragments/admin/head :: head('Kết quả tra cứu')}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/staff/staff-ui.css}"/>
 </head>
 <body class="bg-gray-100">
 <div class="flex min-h-screen">
     <div th:replace="~{fragments/staff/sidebar :: sidebar('lookup')}"></div>
-    <div class="ml-64 flex-1">
+    <div class="ml-64 flex-1 staff-main">
         <div class="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
             <h1 class="text-xl font-semibold text-gray-800">Đơn #<span th:text="${booking.bookingId}"></span></h1>
             <a th:href="@{/staff/lookup}" class="text-primary text-sm hover:underline">Tra cứu khác</a>
         </div>
         <div class="p-6 max-w-2xl">
-            <div class="bg-white rounded-lg shadow p-6 space-y-2 text-gray-700">
+            <div th:replace="~{fragments/staff/alerts :: alerts}"></div>
+            <div class="bg-white rounded-lg shadow p-6 space-y-2 text-gray-700 staff-card">
                 <p><span class="font-medium text-gray-500 w-28 inline-block">Khách hàng</span> <span th:text="${booking.customerName}"></span></p>
                 <p><span class="font-medium text-gray-500 w-28 inline-block">Phim</span> <span th:text="${booking.movieTitle}"></span></p>
                 <p><span class="font-medium text-gray-500 w-28 inline-block">Suất chiếu</span>
@@ -22,9 +24,11 @@
                 <p><span class="font-medium text-gray-500 w-28 inline-block">Tổng tiền</span>
                     <span th:text="${#numbers.formatDecimal(booking.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></p>
                 <p><span class="font-medium text-gray-500 w-28 inline-block">Trạng thái</span>
-                    <span class="font-semibold" th:text="${booking.status}"></span></p>
+                    <span class="font-semibold px-2 py-1 rounded text-xs"
+                          th:classappend="${booking.status.name() == 'PAID'} ? ' bg-green-100 text-green-700' : (${booking.status.name() == 'PENDING'} ? ' bg-amber-100 text-amber-700' : ' bg-gray-100 text-gray-700')"
+                          th:text="${booking.status}"></span></p>
             </div>
-            <div class="flex flex-wrap gap-3 mt-6">
+            <div class="staff-actions mt-6">
                 <form th:if="${booking.status.name() == 'PENDING'}"
                       th:action="@{/staff/bookings/{id}/confirm(id=${booking.bookingId})}" method="post">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

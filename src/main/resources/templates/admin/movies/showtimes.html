@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Suất chiếu theo phim')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('movies')}"></div>
+    <div class="ml-64 flex-1 p-6">
+        <a th:href="@{/admin/movies}" class="text-primary text-sm hover:underline">← Danh sách phim</a>
+        <h1 class="text-xl font-bold text-gray-800 mt-2" th:text="${movie.displayTitle}"></h1>
+        <p class="text-sm text-gray-500 mb-4">TMDB #<span th:text="${movie.tmdbId}"></span> · movieId=<span th:text="${movie.movieId}"></span></p>
+        <a th:href="@{/admin/showtimes/bulk(movieId=${movie.movieId})}"
+           class="inline-block mb-4 bg-primary text-white px-4 py-2 rounded-lg text-sm">Tạo suất hàng loạt</a>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left">ID</th>
+                    <th class="px-4 py-3 text-left">Phòng</th>
+                    <th class="px-4 py-3 text-left">Bắt đầu</th>
+                    <th class="px-4 py-3 text-left">Giá</th>
+                    <th class="px-4 py-3 text-left">Lấp đầy</th>
+                    <th class="px-4 py-3 text-left">TT</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${showtimes}" class="hover:bg-gray-50 divide-y">
+                    <td class="px-4 py-3" th:text="${s.showtimeId}"></td>
+                    <td class="px-4 py-3" th:text="${s.roomName}"></td>
+                    <td class="px-4 py-3" th:text="${#temporals.format(s.startTime, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td class="px-4 py-3" th:text="${#numbers.formatDecimal(s.basePrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                    <td class="px-4 py-3" th:text="${s.fillPercent} + '%'"></td>
+                    <td class="px-4 py-3" th:text="${s.status}"></td>
+                    <td class="px-4 py-3 text-right">
+                        <a th:href="@{/admin/showtimes/{id}(id=${s.showtimeId})}" class="text-primary hover:underline">Chi tiết</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(showtimes)}">
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">Chưa có suất</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -3,6 +3,7 @@ package com.re.cinemamoviebookingsystem.controller.customer;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.TmdbGenreItemDto;
 import com.re.cinemamoviebookingsystem.dto.response.ShowtimeBrowseDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.MovieCatalogDetailDto;
+import com.re.cinemamoviebookingsystem.config.CinemaProperties;
 import com.re.cinemamoviebookingsystem.service.CinemaCatalogService;
 import com.re.cinemamoviebookingsystem.service.CinemaMovieService;
 import com.re.cinemamoviebookingsystem.service.ShowtimeService;
@@ -32,6 +33,7 @@ public class CustomerMovieController {
     private final CinemaCatalogService cinemaCatalogService;
     private final CinemaMovieService cinemaMovieService;
     private final TmdbCatalogService tmdbCatalogService;
+    private final CinemaProperties cinemaProperties;
 
     @GetMapping("/movies/{tmdbId}")
     public String movieDetail(@PathVariable long tmdbId,
@@ -57,6 +59,7 @@ public class CustomerMovieController {
         model.addAttribute("publishedAtCinema", published);
         model.addAttribute("showtimes", showtimes);
         model.addAttribute("showtimeDays", showtimeService.groupShowtimesByDay(showtimes, appLanguage.toLocale()));
+        model.addAttribute("cinemaBrandName", cinemaProperties.getBrandName());
         return "customer/movie-detail";
     }
 

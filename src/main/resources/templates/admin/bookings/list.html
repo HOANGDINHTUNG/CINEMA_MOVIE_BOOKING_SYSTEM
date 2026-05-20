@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Quản lý đơn đặt vé')}"></th:block>
+</head>
+<body class="bg-gray-100">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('bookings')}"></div>
+    <div class="ml-64 flex-1">
+        <div class="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
+            <h1 class="text-xl font-semibold text-gray-800">Đơn đặt vé</h1>
+        </div>
+        <div class="p-6">
+            <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+            <form method="get" class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-3 items-end">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Trạng thái</label>
+                    <select name="status" class="border rounded px-3 py-2 text-sm">
+                        <option value="">Tất cả</option>
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                                th:selected="${statusFilter == s}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Mã đơn</label>
+                    <input type="number" name="bookingId" th:value="${bookingIdFilter}"
+                           class="border rounded px-3 py-2 text-sm w-32" placeholder="ID"/>
+                </div>
+                <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">Lọc</button>
+                <a th:href="@{/admin/bookings}" class="text-sm text-gray-600 hover:underline py-2">Xóa lọc</a>
+            </form>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full text-sm divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-gray-600">Mã</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Khách</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Phim</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Suất</th>
+                        <th class="px-4 py-3 text-left text-gray-600">Trạng thái</th>
+                        <th class="px-4 py-3 text-right text-gray-600">Tổng</th>
+                        <th class="px-4 py-3"></th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                    <tr th:each="b : ${bookings.content}" class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium" th:text="${b.bookingId}"></td>
+                        <td class="px-4 py-3" th:text="${b.customerName}"></td>
+                        <td class="px-4 py-3" th:text="${b.movieTitle}"></td>
+                        <td class="px-4 py-3"
+                            th:text="${#temporals.format(b.showtimeStart, 'dd/MM HH:mm')} + ' · ' + ${b.roomName}"></td>
+                        <td class="px-4 py-3">
+                            <span th:classappend="${b.status.name() == 'PAID'} ? 'bg-green-100 text-green-800' : (${b.status.name() == 'PENDING'} ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600')"
+                                  class="px-2 py-1 rounded text-xs font-semibold" th:text="${b.status}"></span>
+                        </td>
+                        <td class="px-4 py-3 text-right"
+                            th:text="${#numbers.formatDecimal(b.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                        <td class="px-4 py-3 text-right">
+                            <a th:href="@{/admin/bookings/{id}(id=${b.bookingId})}"
+                               class="text-primary hover:underline">Chi tiết</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${bookings.totalElements == 0}">
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">Không có đơn phù hợp</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 flex gap-2 text-sm" th:if="${bookings.totalPages > 1}">
+                <a th:if="${bookings.hasPrevious()}"
+                   th:href="@{/admin/bookings(page=${bookings.number - 1}, status=${statusFilter}, bookingId=${bookingIdFilter})}"
+                   class="px-3 py-1 border rounded hover:bg-white">Trước</a>
+                <span class="px-3 py-1 text-gray-600"
+                      th:text="'Trang ' + (${bookings.number} + 1) + ' / ' + ${bookings.totalPages}"></span>
+                <a th:if="${bookings.hasNext()}"
+                   th:href="@{/admin/bookings(page=${bookings.number + 1}, status=${statusFilter}, bookingId=${bookingIdFilter})}"
+                   class="px-3 py-1 border rounded hover:bg-white">Sau</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

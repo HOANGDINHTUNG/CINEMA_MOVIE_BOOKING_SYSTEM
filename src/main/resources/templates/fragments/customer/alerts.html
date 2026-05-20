@@ -1,0 +1,16 @@
+<th:block th:fragment="alerts" xmlns:th="http://www.thymeleaf.org">
+    <p th:if="${successMessage}"
+       class="customer-alert customer-alert--success"
+       data-flash-success
+       th:text="${successMessage}"
+       role="status"></p>
+    <p th:if="${errorMessage}"
+       class="customer-alert customer-alert--error"
+       data-flash-error
+       th:text="${errorMessage}"
+       role="alert"></p>
+    <p th:if="${infoMessage}"
+       class="customer-alert customer-alert--info"
+       th:text="${infoMessage}"
+       role="status"></p>
+</th:block>

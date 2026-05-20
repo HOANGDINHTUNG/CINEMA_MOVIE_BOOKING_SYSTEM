@@ -1,5 +1,6 @@
 package com.re.cinemamoviebookingsystem.service;
 
+import com.re.cinemamoviebookingsystem.config.CinemaProperties;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.CinemaMovieCardDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.HomeBootstrapResponseDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.HomeMoviesResponseDto;
@@ -11,18 +12,25 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Trang chủ: phim đã đăng tại rạp (DB + TMDB enrich), phân trang «Tải thêm».
+ * Trang chủ: «đang chiếu» = {@code movies} + suất (DB), poster/tên (TMDB theo {@code tmdb_id});
+ * «sắp chiếu» = TMDB upcoming (tối đa {@link CinemaProperties#getHomeComingSoonMax()}).
  */
 @Service
 @RequiredArgsConstructor
 public class TmdbHomeCatalogService {
 
     public static final int PAGE_SIZE = 20;
+    public static final int TRENDING_SIDEBAR_SIZE = 5;
+    public static final String TRENDING_WINDOW = "week";
 
+    private final CinemaProperties cinemaProperties;
     private final CinemaCatalogService cinemaCatalogService;
     private final HeroBannerService heroBannerService;
     private final TmdbCatalogService tmdbCatalogService;
@@ -30,27 +38,9 @@ public class TmdbHomeCatalogService {
 
     public HomeBootstrapResponseDto loadHomeBootstrap(AppLanguage lang) {
         try {
-            int nowTotal = cinemaCatalogService.countNowShowingAtCinema();
-            int soonTotal = cinemaCatalogService.countComingSoonAtCinema();
-            boolean noPublishedAtCinema = nowTotal == 0 && soonTotal == 0;
-            String infoMessage = null;
-
-            HomeMoviesResponseDto nowPage = buildNowShowingPage(lang, 1, nowTotal);
-            HomeMoviesResponseDto soonPage = buildComingSoonPage(lang, 1, soonTotal);
-
-            if (nowTotal == 0) {
-                List<CinemaMovieCardDto> tmdbFallback = loadTmdbNowPlayingFallback(lang);
-                if (!tmdbFallback.isEmpty()) {
-                    nowPage = HomeMoviesResponseDto.builder()
-                            .movies(tmdbFallback.stream().limit(PAGE_SIZE).toList())
-                            .page(1)
-                            .hasMore(tmdbFallback.size() > PAGE_SIZE)
-                            .build();
-                    if (noPublishedAtCinema) {
-                        infoMessage = "home.no_published_use_catalog";
-                    }
-                }
-            }
+            HomeMoviesResponseDto nowPage = loadNowShowingApi(lang, 1);
+            HomeMoviesResponseDto soonPage = loadComingSoonApi(lang, 1);
+            List<CinemaMovieCardDto> trending = loadTrendingSidebar(lang);
 
             List<CinemaMovieCardDto> heroSource = nowPage.getMovies() != null ? nowPage.getMovies() : List.of();
             List<MovieCatalogSummaryDto> heroSummaries = heroSource.stream()
@@ -61,14 +51,14 @@ public class TmdbHomeCatalogService {
             return HomeBootstrapResponseDto.builder()
                     .nowShowing(nowPage)
                     .comingSoon(soonPage)
+                    .trending(trending)
                     .heroSlides(heroBannerService.buildSlidesFromSummaries(heroSummaries, lang))
-                    .infoMessage(infoMessage)
-                    .noPublishedAtCinema(noPublishedAtCinema && nowTotal == 0)
                     .build();
         } catch (Exception ex) {
             return HomeBootstrapResponseDto.builder()
                     .nowShowing(emptyApi(1))
                     .comingSoon(emptyApi(1))
+                    .trending(List.of())
                     .heroSlides(List.of())
                     .error(ex.getMessage())
                     .build();
@@ -76,60 +66,97 @@ public class TmdbHomeCatalogService {
     }
 
     public HomeMoviesResponseDto loadNowShowingApi(AppLanguage lang, int page) {
-        int total = cinemaCatalogService.countNowShowingAtCinema();
-        if (total == 0) {
-            return loadTmdbNowPlayingPage(lang, page);
-        }
-        return buildNowShowingPage(lang, page, total);
+        return loadCinemaNowShowingPage(lang, page);
     }
 
     public HomeMoviesResponseDto loadComingSoonApi(AppLanguage lang, int page) {
-        int total = cinemaCatalogService.countComingSoonAtCinema();
-        return buildComingSoonPage(lang, page, total);
+        return loadTmdbComingSoonPage(lang, page);
     }
 
-    private HomeMoviesResponseDto buildNowShowingPage(AppLanguage lang, int page, int total) {
-        List<CinemaMovieCardDto> movies = cinemaCatalogService.listNowShowingPage(lang, page, PAGE_SIZE);
+    private HomeMoviesResponseDto loadCinemaNowShowingPage(AppLanguage lang, int page) {
+        int safePage = Math.max(1, page);
+        List<CinemaMovieCardDto> movies = cinemaCatalogService.listNowShowingPage(lang, safePage, PAGE_SIZE);
+        int total = cinemaCatalogService.countNowShowingAtCinema();
+        int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / PAGE_SIZE);
+        boolean hasMore = totalPages > 0 && safePage < totalPages;
         return HomeMoviesResponseDto.builder()
                 .movies(movies)
-                .page(page)
-                .hasMore((long) page * PAGE_SIZE < total)
-                .build();
-    }
-
-    private HomeMoviesResponseDto buildComingSoonPage(AppLanguage lang, int page, int total) {
-        List<CinemaMovieCardDto> movies = cinemaCatalogService.listComingSoonPage(lang, page, PAGE_SIZE);
-        return HomeMoviesResponseDto.builder()
-                .movies(movies)
-                .page(page)
-                .hasMore((long) page * PAGE_SIZE < total)
-                .build();
-    }
-
-    private HomeMoviesResponseDto loadTmdbNowPlayingPage(AppLanguage lang, int page) {
-        MovieCatalogPageDto batch = tmdbCatalogService.nowPlaying(lang, page);
-        if (batch.getResults() == null || batch.getResults().isEmpty()) {
-            return emptyApi(page);
-        }
-        Map<Integer, String> genreMap = safeGenreMap(lang);
-        Map<Long, LocalDateTime> nextByTmdb = showtimeService.mapNextShowtimeByTmdbId();
-        List<MovieCatalogSummaryDto> summaries = batch.getResults().stream()
-                .filter(TmdbCatalogService::hasHomeListMetadata)
-                .limit(PAGE_SIZE)
-                .toList();
-        List<CinemaMovieCardDto> cards = cinemaCatalogService.mapSummariesToCards(
-                summaries, genreMap, nextByTmdb, true);
-        boolean hasMore = batch.getTotalPages() > 0 && page < batch.getTotalPages();
-        return HomeMoviesResponseDto.builder()
-                .movies(cards)
-                .page(page)
+                .page(safePage)
                 .hasMore(hasMore)
                 .build();
     }
 
-    private List<CinemaMovieCardDto> loadTmdbNowPlayingFallback(AppLanguage lang) {
-        HomeMoviesResponseDto page = loadTmdbNowPlayingPage(lang, 1);
-        return page.getMovies() != null ? page.getMovies() : List.of();
+    /**
+     * TMDB upcoming (tối đa {@link CinemaProperties#getHomeComingSoonMax()}, mặc định 100), phân trang 20/trang.
+     */
+    private HomeMoviesResponseDto loadTmdbComingSoonPage(AppLanguage lang, int page) {
+        int safePage = Math.max(1, page);
+        int maxItems = Math.max(20, cinemaProperties.getHomeComingSoonMax());
+        List<MovieCatalogSummaryDto> all = tmdbCatalogService.upcomingUpTo(lang, maxItems);
+        if (all.isEmpty()) {
+            return emptyApi(safePage);
+        }
+        int from = (safePage - 1) * PAGE_SIZE;
+        if (from >= all.size()) {
+            return emptyApi(safePage);
+        }
+        int to = Math.min(from + PAGE_SIZE, all.size());
+        List<MovieCatalogSummaryDto> summaries = all.subList(from, to);
+        Map<Integer, String> genreMap = safeGenreMap(lang);
+        Map<Long, LocalDateTime> nextByTmdb = showtimeService.mapNextShowtimeByTmdbId();
+        List<CinemaMovieCardDto> cards = cinemaCatalogService.mapSummariesToCards(
+                summaries, genreMap, nextByTmdb, true);
+        boolean hasMore = to < all.size();
+        return HomeMoviesResponseDto.builder()
+                .movies(cards)
+                .page(safePage)
+                .hasMore(hasMore)
+                .build();
+    }
+
+    private List<CinemaMovieCardDto> loadTrendingSidebar(AppLanguage lang) {
+        Map<Long, LocalDateTime> nextByTmdb = showtimeService.mapNextShowtimeByTmdbId();
+        Set<Long> cinemaTmdbIds = nextByTmdb.keySet();
+        if (cinemaTmdbIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<CinemaMovieCardDto> result = new ArrayList<>();
+        Set<Long> seen = new LinkedHashSet<>();
+
+        try {
+            MovieCatalogPageDto batch = tmdbCatalogService.trending(lang, 1, TRENDING_WINDOW);
+            if (batch.getResults() != null) {
+                Map<Integer, String> genreMap = safeGenreMap(lang);
+                List<MovieCatalogSummaryDto> summaries = batch.getResults().stream()
+                        .filter(TmdbCatalogService::hasHomeListMetadata)
+                        .filter(s -> cinemaTmdbIds.contains(s.getTmdbId()))
+                        .limit(TRENDING_SIDEBAR_SIZE)
+                        .toList();
+                for (CinemaMovieCardDto card : cinemaCatalogService.mapSummariesToCards(
+                        summaries, genreMap, nextByTmdb, true)) {
+                    if (card.getTmdbId() != null && seen.add(card.getTmdbId())) {
+                        result.add(card);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // fallback below
+        }
+
+        if (result.size() < TRENDING_SIDEBAR_SIZE) {
+            for (CinemaMovieCardDto card : cinemaCatalogService.listNowShowingPage(lang, 1, TRENDING_SIDEBAR_SIZE)) {
+                if (card.getTmdbId() != null && seen.add(card.getTmdbId())) {
+                    result.add(card);
+                }
+                if (result.size() >= TRENDING_SIDEBAR_SIZE) {
+                    break;
+                }
+            }
+        }
+        return result.size() > TRENDING_SIDEBAR_SIZE
+                ? result.subList(0, TRENDING_SIDEBAR_SIZE)
+                : result;
     }
 
     private Map<Integer, String> safeGenreMap(AppLanguage lang) {
