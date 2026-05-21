@@ -5,6 +5,7 @@
     }
 
     initHomePromoModal();
+    initHomeSidebarCarousels();
 
     const lang = body.dataset.appLang;
     const labels = {
@@ -145,6 +146,79 @@ function initTrendingPeriodToggle(lang) {
                 list.classList.remove('is-loading');
             }
         });
+    });
+}
+
+function initHomeSidebarCarousels() {
+    const AUTO_MS = 4500;
+    const roots = document.querySelectorAll('.home-sidebar-carousel__root');
+    if (!roots.length) {
+        return;
+    }
+
+    roots.forEach(function (root) {
+        const slideCount = parseInt(root.getAttribute('data-slide-count') || '0', 10);
+        if (slideCount < 2) {
+            return;
+        }
+
+        const slides = root.querySelectorAll('.home-sidebar-carousel__slide');
+        const dots = root.querySelectorAll('.home-sidebar-carousel__dot');
+        if (!slides.length) {
+            return;
+        }
+
+        let index = 0;
+        let timer = null;
+        const section = root.closest('.home-sidebar-carousel');
+
+        function showSlide(nextIndex) {
+            index = (nextIndex + slides.length) % slides.length;
+            slides.forEach(function (slide, i) {
+                slide.classList.toggle('is-active', i === index);
+            });
+            dots.forEach(function (dot, i) {
+                dot.classList.toggle('is-active', i === index);
+                dot.setAttribute('aria-selected', i === index ? 'true' : 'false');
+            });
+        }
+
+        function nextSlide() {
+            showSlide(index + 1);
+        }
+
+        function startAutoplay() {
+            stopAutoplay();
+            timer = window.setInterval(nextSlide, AUTO_MS);
+            if (section) {
+                section.classList.remove('is-paused');
+            }
+        }
+
+        function stopAutoplay() {
+            if (timer) {
+                window.clearInterval(timer);
+                timer = null;
+            }
+            if (section) {
+                section.classList.add('is-paused');
+            }
+        }
+
+        dots.forEach(function (dot) {
+            dot.addEventListener('click', function () {
+                const to = parseInt(dot.getAttribute('data-slide-to') || '0', 10);
+                showSlide(to);
+                startAutoplay();
+            });
+        });
+
+        root.addEventListener('mouseenter', stopAutoplay);
+        root.addEventListener('mouseleave', startAutoplay);
+        root.addEventListener('focusin', stopAutoplay);
+        root.addEventListener('focusout', startAutoplay);
+
+        startAutoplay();
     });
 }
 

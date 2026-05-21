@@ -1,15 +1,21 @@
 (function () {
     'use strict';
 
+    const body = document.body;
+    const hubPhase = body.dataset.hubPhase || '';
+
     const section = document.getElementById('section-waiting');
     const grid = document.getElementById('waiting-grid');
     const sentinel = document.getElementById('waiting-sentinel');
     const loadingEl = document.getElementById('waiting-loading');
     const endEl = document.getElementById('waiting-end');
     const emptyEl = document.getElementById('waiting-empty');
-    const body = document.body;
 
     if (!section || !grid || !sentinel) {
+        return;
+    }
+
+    if (hubPhase && hubPhase !== 'WAITING_SCHEDULE') {
         return;
     }
 
@@ -45,10 +51,14 @@
             + '<input type="hidden" name="' + escapeHtml(csrfParam) + '" value="' + escapeHtml(csrfToken) + '"/>'
             + '<button type="submit" class="text-amber-700 hover:underline" onclick="return confirm(\'Tạo lịch mẫu 10 ngày cho phim này?\')">Tạo lịch mẫu</button></form>'
             : '';
-        const hideBtn = m.status === 'ACTIVE'
+        const canHide = m.status === 'ACTIVE' && (!m.audienceBookings || m.audienceBookings === 0) && m.canDeactivate !== false;
+        const hideBtn = canHide
             ? '<form action="/admin/movies/' + m.movieId + '/delete" method="post" class="inline">'
             + '<input type="hidden" name="' + escapeHtml(csrfParam) + '" value="' + escapeHtml(csrfToken) + '"/>'
             + '<button type="submit" class="text-red-600 hover:underline" onclick="return confirm(\'Ẩn phim khỏi rạp?\')">Ẩn</button></form>'
+            : (m.status === 'ACTIVE' ? '<span class="text-gray-400" title="Đã có khách đặt">Ẩn</span>' : '');
+        const bookingLine = (m.audienceBookings && m.audienceBookings > 0)
+            ? '<p class="text-xs text-amber-800 mt-2"><i class="fas fa-users"></i> Đã có ' + m.audienceBookings + ' đơn đặt — không thể ẩn</p>'
             : '';
 
         return '<article class="movie-card bg-white rounded-lg shadow overflow-hidden" data-movie-id="' + m.movieId + '">'
@@ -58,6 +68,7 @@
             + '<h2 class="font-semibold text-sm leading-snug line-clamp-2">' + escapeHtml(m.displayTitle) + '</h2>'
             + '<p class="text-xs text-gray-500 mt-1">' + escapeHtml(formatMeta(m)) + '</p>'
             + '<p class="text-xs text-gray-600 mt-2"><i class="fas fa-calendar-plus text-amber-600"></i> Chưa có suất — cần xếp lịch</p>'
+            + bookingLine
             + '<div class="mt-auto pt-3 flex flex-wrap gap-2 text-xs border-t border-gray-100 movie-card__actions">'
             + '<a href="/admin/movies/' + m.movieId + '/showtimes" class="text-blue-600 hover:underline">Suất</a>'
             + '<a href="/admin/movies/' + m.movieId + '/edit?lang=' + encodeURIComponent(lang) + '" class="text-primary hover:underline">Sửa</a>'

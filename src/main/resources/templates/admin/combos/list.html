@@ -2,24 +2,13 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:replace="~{fragments/admin/head :: head('Combo')}"></th:block>
-    <style>
-        .combo-icon-cell { width: 3.5rem; }
-        .combo-icon {
-            width: 2.75rem; height: 2.75rem; border-radius: .75rem;
-            display: inline-flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; font-size: 1.1rem;
-        }
-        .combo-icon--inactive { background: #f3f4f6; color: #6b7280; }
-    </style>
 </head>
 <body class="bg-gray-100">
 <div class="flex min-h-screen">
     <div th:replace="~{fragments/admin/sidebar :: sidebar('combos')}"></div>
     <div class="ml-64 flex-1">
         <div class="bg-white shadow-sm p-4 flex justify-between items-center">
-            <h1 class="text-xl font-semibold flex items-center gap-2">
-                <i class="fas fa-popcorn text-amber-600"></i> Combo bắp nước
-            </h1>
+            <h1 class="text-xl font-semibold">Combo bắp nước</h1>
             <a th:href="@{/admin/combos/new}" class="bg-primary text-white px-4 py-2 rounded-lg text-sm">
                 <i class="fas fa-plus mr-1"></i> Thêm combo
             </a>
@@ -39,13 +28,6 @@
                 </thead>
                 <tbody>
                 <tr th:each="c : ${combos}" class="border-t hover:bg-gray-50">
-                    <td class="px-4 py-3 combo-icon-cell">
-                        <span th:classappend="${c.status == 'INACTIVE'} ? ' combo-icon--inactive' : ''"
-                              class="combo-icon"
-                              th:with="icon=${T(com.re.cinemamoviebookingsystem.util.ComboIconSupport).iconClass(c.name, c.description)}">
-                            <i th:class="'fas ' + ${icon}"></i>
-                        </span>
-                    </td>
                     <td class="px-4 py-3 text-gray-500" th:text="${c.comboId}"></td>
                     <td class="px-4 py-3">
                         <div class="font-medium" th:text="${c.name}"></div>

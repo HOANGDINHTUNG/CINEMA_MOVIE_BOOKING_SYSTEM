@@ -180,22 +180,26 @@ def generate_showtimes_all(movies: list[tuple[int, int]]) -> list[dict]:
         for day_offset in range(SCHEDULE_DAYS):
             day = base_day + timedelta(days=day_offset)
             for slot_index, (time_str, price) in enumerate(SLOTS):
-                room_id = ROOM_IDS[(room_offset + slot_index + day_offset) % len(ROOM_IDS)]
-                st = try_place(
-                    room_schedules,
-                    tmdb_id,
-                    duration,
-                    day,
-                    slot_index,
-                    time_str,
-                    price,
-                    room_id,
-                    showtime_id,
-                    earliest,
-                )
-                if st:
-                    showtimes.append(st)
-                    showtime_id += 1
+                placed = False
+                for room_try in range(len(ROOM_IDS)):
+                    room_id = ROOM_IDS[(room_offset + slot_index + day_offset + room_try) % len(ROOM_IDS)]
+                    st = try_place(
+                        room_schedules,
+                        tmdb_id,
+                        duration,
+                        day,
+                        slot_index,
+                        time_str,
+                        price,
+                        room_id,
+                        showtime_id,
+                        earliest,
+                    )
+                    if st:
+                        showtimes.append(st)
+                        showtime_id += 1
+                        placed = True
+                        break
     return showtimes
 
 

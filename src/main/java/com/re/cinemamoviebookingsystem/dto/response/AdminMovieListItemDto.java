@@ -23,6 +23,9 @@ public class AdminMovieListItemDto {
     private AdminMovieScreeningPhase phase;
     private long totalShowtimes;
     private long upcomingShowtimes;
+    /** Đơn HELD / PENDING / PAID — có khách đặt thì không được ẩn phim. */
+    private long audienceBookings;
+    private boolean canDeactivate;
     private LocalDateTime nextShowtimeAt;
     private LocalDateTime lastShowtimeAt;
 }

@@ -2,6 +2,7 @@ package com.re.cinemamoviebookingsystem.repository;
 
 import com.re.cinemamoviebookingsystem.entity.Booking;
 import com.re.cinemamoviebookingsystem.enums.BookingStatus;
+import com.re.cinemamoviebookingsystem.repository.projection.MovieAudienceBookingRow;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +24,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             JOIN FETCH st.room
             LEFT JOIN FETCH b.tickets t
             LEFT JOIN FETCH t.seat
+            LEFT JOIN FETCH b.userVoucher uv
+            LEFT JOIN FETCH uv.voucher
             WHERE b.user.userId = :userId
             ORDER BY b.bookingDate DESC
             """)
@@ -36,6 +40,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             JOIN FETCH st.room
             LEFT JOIN FETCH b.tickets t
             LEFT JOIN FETCH t.seat
+            LEFT JOIN FETCH b.userVoucher uv
+            LEFT JOIN FETCH uv.voucher
             WHERE b.bookingId = :bookingId
             """)
     Optional<Booking> findByIdWithDetails(@Param("bookingId") Long bookingId);
@@ -174,4 +180,22 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                                                        BookingStatus status);
 
     List<Booking> findByStatus(BookingStatus status);
+
+    @Query("""
+            SELECT COUNT(b) FROM Booking b
+            WHERE b.showtime.movie.movieId = :movieId
+            AND b.status IN :statuses
+            """)
+    long countByMovieIdAndStatusIn(@Param("movieId") Long movieId,
+                                 @Param("statuses") Collection<BookingStatus> statuses);
+
+    @Query("""
+            SELECT b.showtime.movie.movieId AS movieId, COUNT(b) AS bookingCount
+            FROM Booking b
+            WHERE b.showtime.movie.movieId IN :movieIds
+            AND b.status IN :statuses
+            GROUP BY b.showtime.movie.movieId
+            """)
+    List<MovieAudienceBookingRow> countAudienceBookingsByMovieIds(@Param("movieIds") List<Long> movieIds,
+                                                                @Param("statuses") Collection<BookingStatus> statuses);
 }

@@ -30,6 +30,21 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             SELECT s FROM Showtime s
             JOIN FETCH s.movie m
             JOIN FETCH s.room r
+            WHERE s.room.roomId = :roomId
+            AND s.status <> com.re.cinemamoviebookingsystem.enums.ShowtimeStatus.CANCELLED
+            AND s.startTime < :endTime AND s.endTime > :startTime
+            AND (:excludeId IS NULL OR s.showtimeId <> :excludeId)
+            ORDER BY s.startTime ASC
+            """)
+    List<Showtime> findOverlappingInRoom(@Param("roomId") Integer roomId,
+                                         @Param("startTime") LocalDateTime startTime,
+                                         @Param("endTime") LocalDateTime endTime,
+                                         @Param("excludeId") Long excludeId);
+
+    @Query("""
+            SELECT s FROM Showtime s
+            JOIN FETCH s.movie m
+            JOIN FETCH s.room r
             WHERE s.status IN :statuses
             AND s.startTime > :now
             ORDER BY s.startTime ASC

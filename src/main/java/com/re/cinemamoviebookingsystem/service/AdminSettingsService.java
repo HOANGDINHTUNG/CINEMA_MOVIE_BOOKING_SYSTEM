@@ -22,8 +22,8 @@ public class AdminSettingsService {
         req.setVipPriceMultiplier(cinemaProperties.getVipPriceMultiplier());
         req.setMaxSeatsPerBooking(cinemaProperties.getMaxSeatsPerBooking());
         req.setDemoSeedOnStartup(cinemaProperties.isDemoSeedOnStartup());
-        req.setDemoSeedNowShowingTarget(cinemaProperties.getDemoSeedNowShowingTarget());
-        req.setDemoSeedComingSoonTarget(cinemaProperties.getDemoSeedComingSoonTarget());
+        req.setDemoSeedNowShowingTarget(cinemaProperties.getDemoSeedWaitingTarget());
+        req.setDemoSeedComingSoonTarget(cinemaProperties.getDemoSeedScheduledTarget());
         return req;
     }
 
@@ -35,8 +35,8 @@ public class AdminSettingsService {
         cinemaProperties.setVipPriceMultiplier(request.getVipPriceMultiplier());
         cinemaProperties.setMaxSeatsPerBooking(request.getMaxSeatsPerBooking());
         cinemaProperties.setDemoSeedOnStartup(request.isDemoSeedOnStartup());
-        cinemaProperties.setDemoSeedNowShowingTarget(request.getDemoSeedNowShowingTarget());
-        cinemaProperties.setDemoSeedComingSoonTarget(request.getDemoSeedComingSoonTarget());
+        cinemaProperties.setDemoSeedWaitingTarget(request.getDemoSeedNowShowingTarget());
+        cinemaProperties.setDemoSeedScheduledTarget(request.getDemoSeedComingSoonTarget());
 
         auditLogService.log("SETTINGS_UPDATE", "SETTINGS", null,
                 "seatLock=" + request.getSeatLockMinutes()

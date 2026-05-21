@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{account.vouchers_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/account.css}"/>
+</head>
+<body class="customer-site account-page account-vouchers-page">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<div class="account-layout">
+    <div th:replace="~{fragments/customer/account-sidebar :: sidebar}"></div>
+    <main class="account-content">
+        <h1 class="account-content__title" th:text="#{account.vouchers_title}">Voucher của tôi</h1>
+        <p class="account-content__lead" th:text="#{account.vouchers_lead}">Các mã giảm giá trong ví — dùng khi thanh toán vé.</p>
+        <div th:replace="~{fragments/customer/alerts :: alerts}"></div>
+
+        <div class="voucher-wallet" th:if="${vouchers != null && !vouchers.isEmpty()}">
+            <article th:each="v : ${vouchers}" class="voucher-card"
+                     th:classappend="${v.status.name() == 'EXPIRED' || v.status.name() == 'USED'} ? ' voucher-card--inactive' : ''">
+                <div class="voucher-card__head">
+                    <span class="voucher-card__code" th:text="${v.code}">NCC10</span>
+                    <span class="voucher-card__badge"
+                          th:classappend="' voucher-card__badge--' + ${v.status.name().toLowerCase()}"
+                          th:switch="${v.status.name()}">
+                        <span th:case="'AVAILABLE'" th:text="#{voucher.status.available}">Còn hiệu lực</span>
+                        <span th:case="'USED'" th:text="#{voucher.status.used}">Đã dùng</span>
+                        <span th:case="*" th:text="#{voucher.status.expired}">Hết hạn</span>
+                    </span>
+                </div>
+                <h2 class="voucher-card__title" th:text="${v.title}">Giảm 10%</h2>
+                <ul class="voucher-card__details">
+                    <li class="voucher-card__discount" th:text="${v.discountLabel}">Giảm 10%</li>
+                    <li class="voucher-card__condition" th:text="${v.conditionLabel}">Đơn từ 100.000đ</li>
+                </ul>
+                <p class="voucher-card__expiry" th:if="${v.validUntil != null}">
+                    <span th:text="#{voucher.valid_until}">Hạn dùng:</span>
+                    <strong th:text="${#temporals.format(v.validUntil, 'dd/MM/yyyy')}"></strong>
+                </p>
+                <p class="voucher-card__desc" th:if="${v.description != null && !#strings.isEmpty(v.description)}"
+                   th:text="${v.description}"></p>
+                <a th:if="${v.status.name() == 'AVAILABLE'}" th:href="@{/customer/home}"
+                   class="voucher-card__cta" th:text="#{voucher.use_now}">Đặt vé ngay</a>
+            </article>
+        </div>
+
+        <div class="voucher-wallet-empty" th:if="${vouchers == null || vouchers.isEmpty()}">
+            <i class="fa-solid fa-ticket" aria-hidden="true"></i>
+            <p th:text="#{account.vouchers_empty}">Bạn chưa có voucher nào.</p>
+            <a th:href="@{/customer/promotions}" class="btn btn-primary" th:text="#{nav.promotions}">Xem khuyến mãi</a>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+</body>
+</html>

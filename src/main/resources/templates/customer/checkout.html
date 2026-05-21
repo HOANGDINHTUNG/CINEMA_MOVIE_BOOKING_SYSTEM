@@ -30,7 +30,8 @@
 
     <form id="checkoutForm" class="checkout-form" th:action="@{/customer/checkout}" th:object="${checkoutRequest}" method="post"
           th:data-estimated-total="${estimatedTotal}"
-          th:data-seat-count="${seatIds != null ? seatIds.size() : 0}">
+          th:data-seat-count="${seatIds != null ? seatIds.size() : 0}"
+          th:data-voucher-preview-url="@{/customer/checkout/voucher-preview(showtimeId=${seatMap.showtimeId})}">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
         <input type="hidden" th:field="*{showtimeId}"/>
         <input type="hidden" th:each="sid : ${seatIds}" name="seatIds" th:value="${sid}"/>
@@ -81,15 +82,9 @@
                             <tr th:each="c : ${combos}" class="checkout-table__combo-row"
                                 th:data-combo-id="${c.comboId}" th:data-combo-price="${c.price}">
                                 <td>
-                                    <div class="checkout-combo-label"
-                                         th:with="icon=${T(com.re.cinemamoviebookingsystem.util.ComboIconSupport).iconClass(c.name, c.description)}">
-                                        <span class="checkout-combo-icon" aria-hidden="true">
-                                            <i th:class="'fas ' + ${icon}"></i>
-                                        </span>
-                                        <span>
-                                            <span class="checkout-combo-name" th:text="${c.name}">Combo</span>
-                                            <span class="checkout-combo-desc" th:if="${c.description != null}" th:text="${c.description}"></span>
-                                        </span>
+                                    <div class="checkout-combo-label">
+                                        <span class="checkout-combo-name" th:text="${c.name}">Combo</span>
+                                        <span class="checkout-combo-desc" th:if="${c.description != null}" th:text="${c.description}"></span>
                                     </div>
                                 </td>
                                 <td class="checkout-table__qty">
@@ -150,11 +145,41 @@
 
                     <div class="checkout-promo">
                         <h3 class="checkout-promo__title" th:text="#{checkout.promo}">Khuyến mãi</h3>
-                        <p class="checkout-promo__label" th:text="#{checkout.voucher_code}">Mã giảm giá</p>
-                        <div class="checkout-promo__row">
-                            <input type="text" class="checkout-promo__input" placeholder="Nhập mã (demo)" disabled="disabled"/>
-                            <button type="button" class="btn-voucher" disabled="disabled" th:text="#{checkout.select_voucher}">Chọn voucher</button>
+                        <p class="checkout-promo__label" th:text="#{checkout.select_voucher}">Chọn voucher</p>
+                        <input type="hidden" name="userVoucherId" id="checkoutUserVoucherId" value=""/>
+                        <div class="checkout-voucher-list" id="checkoutVoucherList" role="radiogroup"
+                             th:attr="aria-label=#{checkout.select_voucher}">
+                            <label class="checkout-voucher-option checkout-voucher-option--none is-selected">
+                                <input type="radio" name="checkoutVoucherPick" value="" checked="checked"/>
+                                <span class="checkout-voucher-option__body">
+                                    <span class="checkout-voucher-option__code" th:text="#{checkout.voucher_none}">Không dùng voucher</span>
+                                </span>
+                            </label>
+                            <label th:each="v : ${checkoutVouchers}"
+                                   class="checkout-voucher-option"
+                                   th:classappend="${v.recommended} ? ' checkout-voucher-option--recommended' : ''">
+                                <input type="radio" name="checkoutVoucherPick"
+                                       th:value="${v.userVoucherId}"
+                                       th:attr="data-discount=${v.estimatedDiscount}"/>
+                                <span class="checkout-voucher-option__body">
+                                    <span class="checkout-voucher-option__top">
+                                        <span class="checkout-voucher-option__code" th:text="${v.code}">NCC10</span>
+                                        <span class="checkout-voucher-option__badge"
+                                              th:if="${v.recommended}"
+                                              th:text="#{checkout.voucher_recommended}">Đề xuất</span>
+                                    </span>
+                                    <span class="checkout-voucher-option__title" th:text="${v.title}">Giảm 10%</span>
+                                    <span class="checkout-voucher-option__discount" th:text="${v.discountLabel}">Giảm 10%</span>
+                                    <span class="checkout-voucher-option__condition" th:text="${v.conditionLabel}">Đơn từ 100.000đ</span>
+                                    <span class="checkout-voucher-option__save">
+                                        <span th:text="#{checkout.voucher_save_prefix}">Tiết kiệm khoảng</span>
+                                        <strong th:text="${#numbers.formatDecimal(v.estimatedDiscount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong>
+                                    </span>
+                                </span>
+                            </label>
                         </div>
+                        <p class="checkout-voucher-hint" th:if="${checkoutVouchers == null || checkoutVouchers.isEmpty()}"
+                           th:text="#{checkout.voucher_empty}">Bạn chưa có voucher khả dụng cho đơn này.</p>
                     </div>
 
                     <div class="checkout-cost">

@@ -10,6 +10,7 @@ import com.re.cinemamoviebookingsystem.repository.ComboRepository;
 import com.re.cinemamoviebookingsystem.service.BookingHistoryService;
 import com.re.cinemamoviebookingsystem.service.BookingService;
 import com.re.cinemamoviebookingsystem.service.ShowtimeService;
+import com.re.cinemamoviebookingsystem.service.VoucherService;
 import com.re.cinemamoviebookingsystem.service.VnPaySandboxService;
 import com.re.cinemamoviebookingsystem.tmdb.enums.AppLanguage;
 import com.re.cinemamoviebookingsystem.util.SeatLayoutHelper;
@@ -47,6 +48,7 @@ public class CustomerBookingController {
     private final VnPaySandboxService vnPaySandboxService;
     private final CinemaProperties cinemaProperties;
     private final MessageSource messageSource;
+    private final VoucherService voucherService;
 
     @GetMapping("/showtimes/{id}/seats")
     public String seatMap(@PathVariable Long id, AppLanguage appLanguage, Model model, HttpServletRequest request) {
@@ -225,6 +227,8 @@ public class CustomerBookingController {
         model.addAttribute("cinemaBrandName", cinemaProperties.getBrandName());
         model.addAttribute("showtimeTime", seatMap.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")));
         model.addAttribute("showtimeDate", seatMap.getStartTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        model.addAttribute("checkoutVouchers", voucherService.getEligibleCheckoutOptions(
+                SecurityUtils.currentUserId(), estimatedTotal, false));
     }
 
     @PostMapping("/checkout")

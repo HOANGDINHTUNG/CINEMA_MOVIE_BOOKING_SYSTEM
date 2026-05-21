@@ -46,7 +46,7 @@ Nếu vẫn thấy bảng `genres` hoặc cột `title` trên `movies`: đó là
 
 - File `DemoTmdbCatalog.java`: 100 id **đang hot** (trending + now playing + discover) và 100 id **sắp chiếu** (upcoming + discover).
 - Sinh lại danh sách: `python scripts/fetch_tmdb_demo_catalog.py` (cần `tmdb.api-key`).
-- Khi khởi động: `CinemaDemoSeedRunner` đăng phim thiếu tới đủ `cinema.demo-seed-now-showing-target` / `coming-soon-target` (mặc định 100).
+- Khi khởi động: `CinemaDemoSeedRunner` đăng phim thiếu (now showing có lịch mẫu). `cinema.demo-seed-coming-soon-target=0` → **không** auto-đăng phim «chờ lịch»; admin đăng thủ công qua `/admin/movies/import` (mặc định không tạo suất → mục **Đang đợi lịch chiếu**).
 
 ## Phim / user bổ sung từ JSON
 

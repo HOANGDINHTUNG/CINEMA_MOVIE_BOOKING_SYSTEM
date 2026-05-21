@@ -14,7 +14,10 @@ public class BookingHistoryDto {
     private Long bookingId;
     private LocalDateTime bookingDate;
     private BookingStatus status;
+    private BigDecimal subtotalAmount;
+    private BigDecimal discountAmount;
     private BigDecimal totalAmount;
+    private String voucherCode;
     private String movieTitle;
     private LocalDateTime showtimeStart;
     private String roomName;

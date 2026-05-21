@@ -1,7 +1,10 @@
 package com.re.cinemamoviebookingsystem.controller.auth;
 
 import com.re.cinemamoviebookingsystem.dto.request.RegisterRequest;
+import com.re.cinemamoviebookingsystem.security.RegistrationAuthSupport;
 import com.re.cinemamoviebookingsystem.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -17,12 +20,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AuthController {
 
     private final AuthService authService;
+    private final RegistrationAuthSupport registrationAuthSupport;
 
     @GetMapping("/login")
-    public String login(Model model, @ModelAttribute("errorMessage") String errorMessage) {
-        if (errorMessage != null) {
-            model.addAttribute("errorMessage", errorMessage);
-        }
+    public String login() {
         return "auth/login";
     }
 
@@ -35,22 +36,24 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute RegisterRequest registerRequest,
+    public String register(@Valid @ModelAttribute("registerRequest") RegisterRequest registerRequest,
                            BindingResult bindingResult,
+                           HttpServletRequest request,
+                           HttpServletResponse response,
+                           Model model,
                            RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.registerRequest", bindingResult);
-            redirectAttributes.addFlashAttribute("registerRequest", registerRequest);
-            return "redirect:/register";
+            return "auth/register";
         }
         try {
             authService.register(registerRequest);
-            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công. Vui lòng đăng nhập.");
-            return "redirect:/login";
+            registrationAuthSupport.signInAfterRegistration(registerRequest.getUsername(), request, response);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đăng ký thành công! Chào mừng bạn — bạn đã được đăng nhập.");
+            return "redirect:/customer/home";
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            redirectAttributes.addFlashAttribute("registerRequest", registerRequest);
-            return "redirect:/register";
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "auth/register";
         }
     }
 }

@@ -11,12 +11,8 @@
 <div class="ncc-content-page customer-page">
     <p class="title">Khuyến mãi</p>
     <div class="grid" th:if="${!#lists.isEmpty(articles)}">
-        <a th:each="a : ${articles}" th:href="@{/customer/promotions/{id}(id=${a.id})}" class="card">
-            <img th:src="${a.thumbnailUrl != null} ? @{${a.thumbnailUrl}} : @{/assets/img/poster.jpg}" th:alt="${a.title}"/>
-            <div class="text">
-                <p class="date" th:text="${a.date}"></p>
-                <p class="desc" th:text="${a.title}"></p>
-            </div>
+        <a th:each="a : ${articles}" th:href="@{/customer/promotions/{id}(id=${a.id})}" class="card card--image-only">
+            <img th:src="${a.thumbnailUrl != null} ? @{${a.thumbnailUrl}} : @{/assets/img/poster.jpg}" alt=""/>
         </a>
     </div>
     <p th:if="${#lists.isEmpty(articles)}" style="color:#ccc;">Chưa có khuyến mãi.</p>

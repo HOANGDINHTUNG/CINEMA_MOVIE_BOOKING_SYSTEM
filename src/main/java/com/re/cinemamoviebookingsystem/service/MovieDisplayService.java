@@ -18,6 +18,9 @@ public class MovieDisplayService {
         if (movie == null) {
             return "Phim";
         }
+        if (movie.getDisplayTitleVi() != null && !movie.getDisplayTitleVi().isBlank()) {
+            return movie.getDisplayTitleVi().trim();
+        }
         String local = resolveTitleLocal(movie);
         if (local != null && !local.startsWith("TMDB #")) {
             return local;
@@ -76,6 +79,9 @@ public class MovieDisplayService {
     public String resolveTitleLocal(Movie movie) {
         if (movie == null) {
             return "Phim";
+        }
+        if (movie.getDisplayTitleVi() != null && !movie.getDisplayTitleVi().isBlank()) {
+            return movie.getDisplayTitleVi().trim();
         }
         String fromNote = titleFromAdminNote(movie.getAdminNote());
         if (fromNote != null) {

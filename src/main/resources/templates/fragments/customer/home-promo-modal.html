@@ -1,25 +1,10 @@
-<div th:fragment="homePromoModal" id="homePromoModal" class="home-promo-overlay" role="dialog" aria-modal="true"
-     aria-labelledby="homePromoTitle" hidden xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="homePromoModal" th:if="${homePromoImage}" id="homePromoModal" class="home-promo-overlay" role="dialog"
+     aria-modal="true" th:attr="aria-label=#{home.promo.dialog_label}" hidden xmlns:th="http://www.thymeleaf.org">
     <div class="home-promo-modal">
         <button type="button" class="home-promo-close" id="homePromoCloseBtn"
                 th:attr="aria-label=#{home.promo.close}">&times;</button>
-        <div class="home-promo-graphic">
-            <div class="home-promo-graphic__glow" aria-hidden="true"></div>
-            <div class="home-promo-graphic__room" aria-hidden="true">
-                <img th:src="@{/assets/img/promotions/promo1.png}" alt="" class="home-promo-graphic__room-img"
-                     onerror="this.style.display='none'"/>
-            </div>
-            <div class="home-promo-graphic__text">
-                <h2 id="homePromoTitle" class="home-promo-title">
-                    <span class="home-promo-title__line" th:text="#{home.promo.title_line1}">ĐẶT VÉ TRỌN GÓI</span>
-                    <span class="home-promo-title__line home-promo-title__line--gold" th:text="#{home.promo.title_line2}">PHÒNG CHIẾU</span>
-                </h2>
-                <p class="home-promo-subtitle" th:text="#{home.promo.subtitle}">XEM PHIM TẬP THỂ — TỔ CHỨC SỰ KIỆN</p>
-                <a th:href="@{/register}" class="home-promo-cta">
-                    <span class="home-promo-cta__icon" aria-hidden="true"><i class="fa-solid fa-ticket"></i></span>
-                    <span class="home-promo-cta__text" th:text="#{home.promo.cta}">NHẬN NGAY ƯU ĐÃI KHI ĐĂNG KÝ TẠI ĐÂY</span>
-                </a>
-            </div>
-        </div>
+        <a th:href="@{${homePromoLink}}" class="home-promo-card">
+            <img th:src="${homePromoImage}" alt="" class="home-promo-card__img" decoding="async"/>
+        </a>
     </div>
 </div>

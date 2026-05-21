@@ -1,0 +1,32 @@
+<aside class="auth-hero" th:fragment="hero" xmlns:th="http://www.thymeleaf.org">
+    <div class="auth-hero__bg" aria-hidden="true"></div>
+    <div class="auth-hero__content">
+        <a th:href="@{/customer/home}" class="auth-hero__brand">
+            <img th:src="@{/assets/img/image.png}" alt="" class="auth-hero__logo"/>
+            <div>
+                <span class="auth-hero__brand-name" th:text="#{auth.brand.name}">NCC Cinema</span>
+                <span class="auth-hero__brand-tag" th:text="#{auth.brand.tagline}">Smart Cinema Booking</span>
+            </div>
+        </a>
+        <h1 class="auth-hero__title" th:text="#{auth.hero.title}">Đặt vé nhanh — trải nghiệm điện ảnh trọn vẹn</h1>
+        <p class="auth-hero__lead" th:text="#{auth.hero.lead}">Tham gia cộng đồng khán giả NCC để không bỏ lỡ suất chiếu và ưu đãi hấp dẫn.</p>
+        <ul class="auth-hero__benefits">
+            <li>
+                <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                <span th:text="#{auth.hero.benefit1}">Xem lịch chiếu &amp; chọn ghế theo thời gian thực</span>
+            </li>
+            <li>
+                <i class="fa-solid fa-ticket" aria-hidden="true"></i>
+                <span th:text="#{auth.hero.benefit2}">Lưu lịch sử đặt vé và mã QR tiện lợi</span>
+            </li>
+            <li>
+                <i class="fa-solid fa-gift" aria-hidden="true"></i>
+                <span th:text="#{auth.hero.benefit3}">Cập nhật khuyến mãi, sự kiện &amp; tin điện ảnh</span>
+            </li>
+            <li>
+                <i class="fa-solid fa-users" aria-hidden="true"></i>
+                <span th:text="#{auth.hero.benefit4}">Hỗ trợ đặt vé nhóm &amp; tổ chức sự kiện</span>
+            </li>
+        </ul>
+    </div>
+</aside>

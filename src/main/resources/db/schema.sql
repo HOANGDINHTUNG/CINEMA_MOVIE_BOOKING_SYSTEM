@@ -114,12 +114,48 @@ CREATE TABLE combos (
     CONSTRAINT chk_combo_status CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
 
+CREATE TABLE vouchers (
+    voucher_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(32) NOT NULL UNIQUE,
+    title VARCHAR(120) NOT NULL,
+    description TEXT NULL,
+    discount_type VARCHAR(20) NOT NULL,
+    discount_value DECIMAL(12,2) NOT NULL,
+    min_order_amount DECIMAL(12,2) NULL DEFAULT 0,
+    max_discount_amount DECIMAL(12,2) NULL,
+    valid_from DATETIME NOT NULL,
+    valid_until DATETIME NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    require_combo TINYINT(1) NOT NULL DEFAULT 0,
+    CONSTRAINT chk_voucher_discount_type CHECK (discount_type IN ('PERCENT', 'FIXED')),
+    CONSTRAINT chk_voucher_status CHECK (status IN ('ACTIVE', 'INACTIVE'))
+);
+
+CREATE TABLE user_vouchers (
+    user_voucher_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    voucher_id BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    claimed_at DATETIME NOT NULL,
+    used_at DATETIME NULL,
+    used_booking_id BIGINT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (voucher_id) REFERENCES vouchers(voucher_id) ON DELETE CASCADE,
+    CONSTRAINT chk_user_voucher_status CHECK (status IN ('AVAILABLE', 'USED', 'EXPIRED'))
+);
+
+CREATE INDEX idx_user_vouchers_user_status ON user_vouchers (user_id, status);
+CREATE INDEX idx_vouchers_valid ON vouchers (status, valid_until);
+
 CREATE TABLE bookings (
     booking_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     showtime_id BIGINT NOT NULL,
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    subtotal_amount DECIMAL(10,2) NULL,
+    discount_amount DECIMAL(10,2) NULL DEFAULT 0,
     total_amount DECIMAL(10,2) NOT NULL,
+    user_voucher_id BIGINT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE RESTRICT,
     FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id) ON DELETE RESTRICT,

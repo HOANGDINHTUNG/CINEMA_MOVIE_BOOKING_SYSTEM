@@ -86,11 +86,19 @@ public class BookingHistoryService {
                 && Duration.between(LocalDateTime.now(), booking.getShowtime().getStartTime()).toHours()
                 >= cinemaProperties.getCancelHoursBefore();
 
+        String voucherCode = null;
+        if (booking.getUserVoucher() != null && booking.getUserVoucher().getVoucher() != null) {
+            voucherCode = booking.getUserVoucher().getVoucher().getCode();
+        }
+
         return BookingHistoryDto.builder()
                 .bookingId(booking.getBookingId())
                 .bookingDate(booking.getBookingDate())
                 .status(booking.getStatus())
+                .subtotalAmount(booking.getSubtotalAmount())
+                .discountAmount(booking.getDiscountAmount())
                 .totalAmount(booking.getTotalAmount())
+                .voucherCode(voucherCode)
                 .movieTitle(movieDisplayService.resolveTitle(booking.getShowtime().getMovie(), AppLanguage.VI_VN))
                 .showtimeStart(booking.getShowtime().getStartTime())
                 .roomName(booking.getShowtime().getRoom().getRoomName())

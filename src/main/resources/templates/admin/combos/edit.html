@@ -7,13 +7,7 @@
 <div class="flex min-h-screen">
     <div th:replace="~{fragments/admin/sidebar :: sidebar('combos')}"></div>
     <div class="ml-64 flex-1 p-6 max-w-md">
-        <h1 class="text-xl font-bold mb-4 flex items-center gap-2"
-            th:with="icon=${T(com.re.cinemamoviebookingsystem.util.ComboIconSupport).iconClass(comboRequest.name, comboRequest.description)}">
-            <span class="inline-flex w-10 h-10 rounded-lg bg-amber-100 text-amber-800 items-center justify-center">
-                <i th:class="'fas ' + ${icon}"></i>
-            </span>
-            Sửa combo #<span th:text="${comboId}"></span>
-        </h1>
+        <h1 class="text-xl font-bold mb-4">Sửa combo #<span th:text="${comboId}"></span></h1>
         <form th:action="@{/admin/combos/{id}(id=${comboId})}" th:object="${comboRequest}" method="post"
               class="bg-white rounded-lg shadow p-6 space-y-4">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

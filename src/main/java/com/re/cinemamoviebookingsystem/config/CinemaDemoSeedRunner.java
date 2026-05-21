@@ -15,7 +15,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Đồng bộ {@link DemoTmdbCatalog} vào DB mỗi lần khởi động: đăng phim còn thiếu (không bỏ qua vì đã đủ target cũ).
+ * Đồng bộ catalog TMDB vào DB khi khởi động:
+ * <ul>
+ *   <li>{@link DemoTmdbCatalog#WAITING_SCHEDULE_TMDB_IDS} — now_playing, không suất → «Đang đợi lịch chiếu»</li>
+ *   <li>{@link DemoTmdbCatalog#DEMO_SCHEDULED_TMDB_IDS} — id riêng, có lịch mẫu (nếu target &gt; 0)</li>
+ * </ul>
  */
 @Component
 @Order(100)
@@ -40,38 +44,43 @@ public class CinemaDemoSeedRunner implements ApplicationRunner {
             return;
         }
 
+        int waitingBefore = cinemaCatalogService.countPublishedWithoutShowtimes();
         int nowBefore = cinemaCatalogService.countNowShowingAtCinema();
-        int soonBefore = cinemaCatalogService.countPublishedWithoutShowtimes();
 
         log.info(
-                "Demo seed: đồng bộ catalog TMDB ({} id đang chiếu, {} id sắp chiếu). Hiện có: đang chiếu={}, sắp chiếu={}",
-                DemoTmdbCatalog.NOW_SHOWING_TMDB_IDS.size(),
-                DemoTmdbCatalog.COMING_SOON_TMDB_IDS.size(),
-                nowBefore,
-                soonBefore
+                "Demo seed: waiting(now_playing)={} id, scheduled={} id. Hiện có: đợi lịch={}, có suất={}",
+                DemoTmdbCatalog.WAITING_SCHEDULE_TMDB_IDS.size(),
+                DemoTmdbCatalog.DEMO_SCHEDULED_TMDB_IDS.size(),
+                waitingBefore,
+                nowBefore
         );
 
         AppLanguage lang = AppLanguage.VI_VN;
-        int publishedNow = syncCatalog(DemoTmdbCatalog.NOW_SHOWING_TMDB_IDS, lang, true);
-        int publishedSoon = syncCatalog(DemoTmdbCatalog.COMING_SOON_TMDB_IDS, lang, false);
+        int publishedWaiting = syncCatalog(DemoTmdbCatalog.WAITING_SCHEDULE_TMDB_IDS, lang, false);
+        int publishedScheduled = 0;
+        if (cinemaProperties.getDemoSeedScheduledTarget() > 0) {
+            publishedScheduled = syncCatalog(DemoTmdbCatalog.DEMO_SCHEDULED_TMDB_IDS, lang, true);
+        } else {
+            log.info("Demo seed: bỏ qua đăng phim có lịch mẫu (cinema.demo-seed-scheduled-target=0)");
+        }
 
+        int waitingAfter = cinemaCatalogService.countPublishedWithoutShowtimes();
         int nowAfter = cinemaCatalogService.countNowShowingAtCinema();
-        int soonAfter = cinemaCatalogService.countPublishedWithoutShowtimes();
 
         log.info(
-                "Demo seed xong: +{} phim đang chiếu (có lịch), +{} phim sắp chiếu. Tổng: đang chiếu={}/{}, sắp chiếu={}/{}",
-                publishedNow,
-                publishedSoon,
+                "Demo seed xong: +{} đợi lịch (now_playing), +{} có lịch mẫu. Tổng: đợi lịch={}/{}, có suất={}/{}",
+                publishedWaiting,
+                publishedScheduled,
+                waitingAfter,
+                cinemaProperties.getDemoSeedWaitingTarget(),
                 nowAfter,
-                cinemaProperties.getDemoSeedNowShowingTarget(),
-                soonAfter,
-                cinemaProperties.getDemoSeedComingSoonTarget()
+                cinemaProperties.getDemoSeedScheduledTarget()
         );
 
-        if (publishedNow == 0 && publishedSoon == 0
-                && nowAfter < cinemaProperties.getDemoSeedNowShowingTarget()) {
+        if (publishedWaiting == 0 && publishedScheduled == 0
+                && waitingAfter < cinemaProperties.getDemoSeedWaitingTarget()) {
             log.warn(
-                    "Không đăng thêm phim mới — kiểm tra TMDB_API_KEY trong application-local.properties và log 'publish failed' phía trên");
+                    "Không đăng thêm phim — kiểm tra TMDB_API_KEY và log 'publish failed' phía trên");
         }
     }
 

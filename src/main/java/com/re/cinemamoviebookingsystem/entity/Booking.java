@@ -34,8 +34,19 @@ public class Booking {
     @Column(name = "booking_date")
     private LocalDateTime bookingDate;
 
+    @Column(name = "subtotal_amount", precision = 10, scale = 2)
+    private BigDecimal subtotalAmount;
+
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_voucher_id")
+    private UserVoucher userVoucher;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

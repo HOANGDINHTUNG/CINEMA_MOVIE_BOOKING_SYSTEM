@@ -54,6 +54,8 @@ public class CinemaMovieService {
                 .status(MovieStatus.ACTIVE)
                 .publishedAt(LocalDateTime.now())
                 .defaultBasePrice(base)
+                .displayTitleVi(resolveDisplayTitle(catalog))
+                .posterPath(trimPosterPath(catalog.getPosterPath()))
                 .runtimeSyncedAt(LocalDateTime.now())
                 .build();
         movie = movieRepository.save(movie);
@@ -83,6 +85,11 @@ public class CinemaMovieService {
         }
         String title = catalog.getTitle() != null ? catalog.getTitle() : catalog.getOriginalTitle();
         movie.setAgeLabel(resolveAgeLabel(catalog, title));
+        movie.setDisplayTitleVi(resolveDisplayTitle(catalog));
+        String posterPath = trimPosterPath(catalog.getPosterPath());
+        if (posterPath != null) {
+            movie.setPosterPath(posterPath);
+        }
         movie.setRuntimeSyncedAt(LocalDateTime.now());
         return movieService.toDto(movieRepository.save(movie), lang);
     }
@@ -119,5 +126,22 @@ public class CinemaMovieService {
             return catalog.getAgeLabel();
         }
         return MovieAgeUtil.extractAgeLabel(title);
+    }
+
+    private static String resolveDisplayTitle(MovieCatalogDetailDto catalog) {
+        if (catalog.getTitle() != null && !catalog.getTitle().isBlank()) {
+            return catalog.getTitle().trim();
+        }
+        if (catalog.getOriginalTitle() != null && !catalog.getOriginalTitle().isBlank()) {
+            return catalog.getOriginalTitle().trim();
+        }
+        return catalog.getTmdbId() != null ? "TMDB #" + catalog.getTmdbId() : "Phim";
+    }
+
+    private static String trimPosterPath(String path) {
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        return path.trim();
     }
 }

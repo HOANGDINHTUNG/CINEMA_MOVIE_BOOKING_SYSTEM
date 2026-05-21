@@ -48,6 +48,14 @@ public class Movie {
     @Column(name = "admin_note", columnDefinition = "TEXT")
     private String adminNote;
 
+    /** TMDB poster_path — dùng build URL ảnh, không gọi API khi list admin. */
+    @Column(name = "poster_path", length = 255)
+    private String posterPath;
+
+    /** Tiêu đề hiển thị cache (vi), đồng bộ khi đăng/sync TMDB. */
+    @Column(name = "display_title_vi", length = 500)
+    private String displayTitleVi;
+
     @Column(name = "runtime_synced_at")
     private LocalDateTime runtimeSyncedAt;
 }

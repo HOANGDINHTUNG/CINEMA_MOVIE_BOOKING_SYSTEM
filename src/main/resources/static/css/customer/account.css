@@ -343,6 +343,132 @@ body.customer-site.account-page {
     font-size: 0.9rem;
 }
 
+.account-content__lead {
+    margin: -8px 0 20px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.voucher-wallet {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.voucher-card {
+    background: linear-gradient(145deg, rgba(230, 57, 70, 0.15), rgba(22, 27, 38, 0.95));
+    border: 1px dashed rgba(230, 57, 70, 0.45);
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.voucher-card--inactive {
+    opacity: 0.55;
+    filter: grayscale(0.4);
+}
+
+.voucher-card--inactive .voucher-card__code {
+    text-decoration: line-through;
+}
+
+.voucher-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.voucher-card__code {
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fca5a5;
+    letter-spacing: 0.06em;
+}
+
+.voucher-card__badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.voucher-card__badge--available {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+}
+
+.voucher-card__badge--used {
+    background: rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+}
+
+.voucher-card__badge--expired {
+    background: rgba(248, 113, 113, 0.2);
+    color: #f87171;
+}
+
+.voucher-card__title {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.voucher-card__details {
+    margin: 0 0 8px;
+    padding: 0 0 0 1.1rem;
+    list-style: disc;
+}
+
+.voucher-card__details li {
+    margin: 0 0 4px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.voucher-card__discount {
+    font-weight: 600;
+    color: #fbbf24;
+}
+
+.voucher-card__condition {
+    color: #94a3b8;
+}
+
+.voucher-card__expiry,
+.voucher-card__desc {
+    margin: 0 0 6px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.voucher-card__cta {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e50914;
+    text-decoration: none;
+}
+
+.voucher-card__cta:hover {
+    text-decoration: underline;
+}
+
+.voucher-wallet-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: #94a3b8;
+}
+
+.voucher-wallet-empty i {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
 @media (max-width: 900px) {
     .account-layout {
         grid-template-columns: 1fr;

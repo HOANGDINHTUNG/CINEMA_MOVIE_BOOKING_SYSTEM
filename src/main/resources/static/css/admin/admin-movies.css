@@ -194,6 +194,24 @@ body {
     font-size: 2rem;
 }
 
+.movie-card--skeleton .movie-card__poster-placeholder {
+    background: #e5e7eb;
+    color: transparent;
+}
+
+@keyframes movie-skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+.animate-pulse {
+    animation: movie-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.scroll-mt-28 {
+    scroll-margin-top: 7rem;
+}
+
 .phase-badge {
     display: inline-flex;
     align-items: center;

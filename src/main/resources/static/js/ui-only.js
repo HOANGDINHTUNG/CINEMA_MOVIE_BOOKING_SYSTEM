@@ -331,7 +331,30 @@ function initCheckoutForm() {
     const baseTotal = parseFloat(form.dataset.estimatedTotal || '0');
     const paymentModeField = document.getElementById('paymentModeField');
     const subtotalEl = document.getElementById('checkoutCostSubtotal');
+    const discountEl = document.getElementById('checkoutCostDiscount');
     const grandEl = document.getElementById('checkoutGrandTotal');
+    const voucherHidden = document.getElementById('checkoutUserVoucherId');
+    const voucherList = document.getElementById('checkoutVoucherList');
+    const previewBaseUrl = form.dataset.voucherPreviewUrl || '';
+
+    function getSelectedVoucherId() {
+        const picked = form.querySelector('input[name="checkoutVoucherPick"]:checked');
+        return picked ? picked.value : '';
+    }
+
+    function syncVoucherHidden() {
+        if (voucherHidden) {
+            voucherHidden.value = getSelectedVoucherId();
+        }
+        if (voucherList) {
+            voucherList.querySelectorAll('.checkout-voucher-option').forEach(function (opt) {
+                const input = opt.querySelector('input[name="checkoutVoucherPick"]');
+                opt.classList.toggle('is-selected', input && input.checked);
+            });
+        }
+    }
+    let discountAmount = 0;
+    let previewTimer = null;
     const termsCheckbox = document.getElementById('checkoutTermsAgree');
     const submitBtn = form.querySelector('button[type="submit"]');
     const modal = document.getElementById('checkoutConfirmModal');
@@ -363,9 +386,72 @@ function initCheckoutForm() {
                 lineEl.textContent = formatVnd(line);
             }
         });
-        const grand = baseTotal + comboTotal;
-        if (subtotalEl) subtotalEl.textContent = formatVnd(grand);
+        const subtotal = baseTotal + comboTotal;
+        if (subtotalEl) subtotalEl.textContent = formatVnd(subtotal);
+        if (discountEl) {
+            discountEl.textContent = discountAmount > 0 ? ('-' + formatVnd(discountAmount)) : formatVnd(0);
+            discountEl.classList.toggle('checkout-cost__discount--active', discountAmount > 0);
+        }
+        const grand = Math.max(0, subtotal - discountAmount);
         if (grandEl) grandEl.textContent = formatVnd(grand);
+        scheduleVoucherPreview(subtotal);
+    }
+
+    function scheduleVoucherPreview(subtotal) {
+        if (!previewBaseUrl || !voucherList) return;
+        if (previewTimer) clearTimeout(previewTimer);
+        previewTimer = setTimeout(function () {
+            fetchVoucherDiscount(subtotal);
+        }, 200);
+    }
+
+    function fetchVoucherDiscount(subtotal) {
+        const selected = getSelectedVoucherId();
+        if (!selected) {
+            discountAmount = 0;
+            if (subtotalEl) subtotalEl.textContent = formatVnd(subtotal);
+            if (discountEl) {
+                discountEl.textContent = formatVnd(0);
+                discountEl.classList.remove('checkout-cost__discount--active');
+            }
+            if (grandEl) grandEl.textContent = formatVnd(subtotal);
+            return;
+        }
+        const params = new URLSearchParams();
+        params.set('userVoucherId', selected);
+        form.querySelectorAll('input[name="seatIds"]').forEach(function (inp) {
+            params.append('seatIds', inp.value);
+        });
+        form.querySelectorAll('.checkout-table__combo-row input[name^="combo_"]').forEach(function (inp) {
+            if (inp.name && (parseInt(inp.value, 10) || 0) > 0) {
+                params.set(inp.name, inp.value);
+            }
+        });
+        fetch(previewBaseUrl + (previewBaseUrl.indexOf('?') >= 0 ? '&' : '?') + params.toString(), {
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data) {
+                    discountAmount = 0;
+                } else {
+                    discountAmount = parseFloat(data.discount || 0) || 0;
+                }
+                if (subtotalEl) subtotalEl.textContent = formatVnd(subtotal);
+                if (discountEl) {
+                    discountEl.textContent = discountAmount > 0 ? ('-' + formatVnd(discountAmount)) : formatVnd(0);
+                    discountEl.classList.toggle('checkout-cost__discount--active', discountAmount > 0);
+                }
+                if (grandEl) grandEl.textContent = formatVnd(Math.max(0, subtotal - discountAmount));
+            })
+            .catch(function () {
+                const picked = form.querySelector('input[name="checkoutVoucherPick"]:checked');
+                discountAmount = parseFloat(picked && picked.dataset.discount ? picked.dataset.discount : '0') || 0;
+                if (discountEl) {
+                    discountEl.textContent = discountAmount > 0 ? ('-' + formatVnd(discountAmount)) : formatVnd(0);
+                }
+                if (grandEl) grandEl.textContent = formatVnd(Math.max(0, subtotal - discountAmount));
+            });
     }
 
     function bindQtySteppers() {
@@ -391,6 +477,13 @@ function initCheckoutForm() {
     });
     syncPaymentMode();
     bindQtySteppers();
+    form.querySelectorAll('input[name="checkoutVoucherPick"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            syncVoucherHidden();
+            updateCheckoutTotal();
+        });
+    });
+    syncVoucherHidden();
 
     function showCheckoutConfirm(onOk) {
         const isCounter = paymentModeField && paymentModeField.value === 'COUNTER';

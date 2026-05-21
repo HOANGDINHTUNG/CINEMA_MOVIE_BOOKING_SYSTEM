@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  title, viewAllUrl, carousel (HomeSidebarCarouselDto), extraClass (promotion | event | sidebar-news)
+-->
+<section th:fragment="block(title, viewAllUrl, carousel, extraClass)"
+         th:if="${carousel != null and !#lists.isEmpty(carousel.slides)}"
+         class="sidebar-block home-sidebar-carousel"
+         th:classappend="${extraClass}">
+    <div th:replace="~{fragments/customer/home-section-head :: head(${title}, ${viewAllUrl}, false, null)}"></div>
+
+    <div class="home-sidebar-carousel__root"
+         th:attr="data-slide-count=${#lists.size(carousel.slides)}">
+        <div class="home-sidebar-carousel__viewport">
+            <div class="home-sidebar-carousel__track">
+                <div th:each="slide, slideStat : ${carousel.slides}"
+                     class="home-sidebar-carousel__slide"
+                     th:classappend="${slideStat.first} ? ' is-active' : ''"
+                     th:attr="data-slide-index=${slideStat.index}">
+                    <a th:each="card : ${slide.cards}"
+                       th:href="@{${card.linkPath}}"
+                       class="home-sidebar-carousel__card">
+                        <img th:src="${card.imageUrl}" alt="" loading="lazy" decoding="async"/>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-sidebar-carousel__dots"
+             th:if="${#lists.size(carousel.slides) > 1}"
+             role="tablist"
+             th:attr="aria-label=#{home.sidebar_carousel_dots}">
+            <button th:each="slide, dotStat : ${carousel.slides}"
+                    type="button"
+                    class="home-sidebar-carousel__dot"
+                    th:classappend="${dotStat.first} ? ' is-active' : ''"
+                    th:attr="data-slide-to=${dotStat.index},
+                             aria-label=${'Slide ' + (dotStat.index + 1)},
+                             aria-selected=${dotStat.first}">
+            </button>
+        </div>
+    </div>
+</section>
+</body>
+</html>

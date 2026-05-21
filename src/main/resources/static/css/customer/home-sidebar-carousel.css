@@ -1,0 +1,132 @@
+/* Sidebar Khuyến mãi / Sự kiện / Tin — 3 thẻ xếp dọc, carousel tự lướt */
+.home-sidebar-carousel .home-section-head {
+    margin-bottom: 12px;
+}
+
+.home-sidebar-carousel .home-section-head__title {
+    position: relative;
+    padding-bottom: 4px;
+}
+
+.home-sidebar-carousel .home-section-head__title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 2.8em;
+    height: 2px;
+    background: #e63946;
+    border-radius: 1px;
+}
+
+.home-sidebar-carousel__root {
+    width: 100%;
+    max-width: 256px;
+}
+
+.home-sidebar-carousel__viewport {
+    position: relative;
+    overflow: hidden;
+    min-height: 286px;
+}
+
+.home-sidebar-carousel__track {
+    position: relative;
+    width: 100%;
+    min-height: 286px;
+}
+
+.home-sidebar-carousel__slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(12px);
+    transition: opacity 0.45s ease, transform 0.45s ease, visibility 0.45s;
+    pointer-events: none;
+}
+
+.home-sidebar-carousel__slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+    z-index: 1;
+}
+
+.home-sidebar-carousel__card {
+    display: block;
+    border-radius: 12px;
+    overflow: hidden;
+    line-height: 0;
+    background: linear-gradient(145deg, #2a3344 0%, #1e2636 100%);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+    flex: 0 0 auto;
+    height: 88px;
+}
+
+.home-sidebar-carousel__card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(1.05) contrast(1.02);
+    transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.home-sidebar-carousel__card:hover img {
+    transform: scale(1.03);
+    filter: brightness(1.1) contrast(1.02);
+}
+
+.home-sidebar-carousel__dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-bottom: 2px;
+}
+
+.home-sidebar-carousel__dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(100, 116, 139, 0.65);
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.home-sidebar-carousel__dot.is-active {
+    background: #f5a623;
+    transform: scale(1.15);
+}
+
+.home-sidebar-carousel__dot:hover:not(.is-active) {
+    background: rgba(148, 163, 184, 0.9);
+}
+
+.home-sidebar-carousel.is-paused .home-sidebar-carousel__slide.is-active {
+    /* giữ trạng thái khi hover — không cần style thêm */
+}
+
+@media (max-width: 991px) {
+    .home-sidebar-carousel__root {
+        max-width: 100%;
+    }
+
+    .home-sidebar-carousel__card {
+        height: 80px;
+    }
+
+    .home-sidebar-carousel__viewport,
+    .home-sidebar-carousel__track {
+        min-height: 262px;
+    }
+}

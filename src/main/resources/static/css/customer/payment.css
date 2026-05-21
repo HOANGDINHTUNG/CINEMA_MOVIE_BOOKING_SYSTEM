@@ -156,22 +156,7 @@
 }
 
 .checkout-combo-label {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.65rem;
-}
-
-.checkout-combo-icon {
-    flex-shrink: 0;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.5rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15));
-    color: #fbbf24;
-    font-size: 1rem;
+    display: block;
 }
 
 .checkout-combo-name {
@@ -369,17 +354,126 @@
     font-size: 0.85rem;
 }
 
-.btn-voucher {
+.checkout-voucher-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.checkout-voucher-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #52525b;
+    border-radius: 10px;
+    background: #27272a;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.checkout-voucher-option input[type="radio"] {
+    margin-top: 4px;
     flex-shrink: 0;
-    padding: 10px 14px;
-    border: none;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #e50914, #b20710);
-    color: #fff;
-    font-size: 0.8rem;
+    accent-color: #e50914;
+}
+
+.checkout-voucher-option__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+    line-height: 1.35;
+}
+
+.checkout-voucher-option__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+}
+
+.checkout-voucher-option__code {
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fca5a5;
+    letter-spacing: 0.04em;
+}
+
+.checkout-voucher-option__badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.checkout-voucher-option__title {
+    font-size: 0.82rem;
     font-weight: 600;
-    cursor: not-allowed;
-    opacity: 0.85;
+    color: #f4f4f5;
+}
+
+.checkout-voucher-option__discount {
+    font-size: 0.8rem;
+    color: #fbbf24;
+}
+
+.checkout-voucher-option__condition {
+    font-size: 0.78rem;
+    color: #a1a1aa;
+    white-space: pre-line;
+}
+
+.checkout-voucher-option__save {
+    font-size: 0.78rem;
+    color: #4ade80;
+    margin-top: 2px;
+}
+
+.checkout-voucher-option__save strong {
+    font-weight: 700;
+}
+
+.checkout-voucher-option:hover {
+    border-color: #71717a;
+    background: #3f3f46;
+}
+
+.checkout-voucher-option.is-selected,
+.checkout-voucher-option:has(input:checked) {
+    border-color: #e50914;
+    background: rgba(229, 9, 20, 0.12);
+    box-shadow: 0 0 0 1px rgba(229, 9, 20, 0.35);
+}
+
+.checkout-voucher-option--recommended:not(.checkout-voucher-option--none) {
+    border-color: rgba(251, 191, 36, 0.45);
+}
+
+.checkout-voucher-option--none .checkout-voucher-option__code {
+    font-family: inherit;
+    color: #d4d4d8;
+    font-weight: 600;
+}
+
+.checkout-voucher-hint {
+    margin: 8px 0 0;
+    font-size: 0.78rem;
+    color: #a1a1aa;
+}
+
+.checkout-cost__discount--active {
+    color: #4ade80 !important;
 }
 
 .checkout-cost__row {

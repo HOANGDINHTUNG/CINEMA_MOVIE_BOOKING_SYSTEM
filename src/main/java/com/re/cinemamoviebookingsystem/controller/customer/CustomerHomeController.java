@@ -5,6 +5,7 @@ import com.re.cinemamoviebookingsystem.dto.response.catalog.CinemaMovieCardDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.HeroSlideDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.HomeBootstrapResponseDto;
 import com.re.cinemamoviebookingsystem.dto.response.catalog.HomeMoviesResponseDto;
+import com.re.cinemamoviebookingsystem.service.HomeFeaturedContentService;
 import com.re.cinemamoviebookingsystem.service.TmdbHomeCatalogService;
 import com.re.cinemamoviebookingsystem.tmdb.enums.AppLanguage;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class CustomerHomeController {
 
     private final CinemaProperties cinemaProperties;
     private final TmdbHomeCatalogService tmdbHomeCatalogService;
+    private final HomeFeaturedContentService homeFeaturedContentService;
 
     @GetMapping("/home")
     public String home(AppLanguage appLanguage, Model model) {
@@ -53,6 +55,16 @@ public class CustomerHomeController {
         model.addAttribute("homeError", bundle.getError());
         model.addAttribute("homePageSize", TmdbHomeCatalogService.PAGE_SIZE);
         model.addAttribute("maxSeatsPerBooking", cinemaProperties.getMaxSeatsPerBooking());
+        homeFeaturedContentService.featuredHomePromo().ifPresent(card -> {
+            model.addAttribute("homePromoImage", card.getImageUrl());
+            model.addAttribute("homePromoLink", card.getLinkPath());
+        });
+        homeFeaturedContentService.sidebarPromotionsCarousel().ifPresent(carousel ->
+                model.addAttribute("sidebarPromoCarousel", carousel));
+        homeFeaturedContentService.sidebarFestivalsCarousel().ifPresent(carousel ->
+                model.addAttribute("sidebarFestivalCarousel", carousel));
+        homeFeaturedContentService.sidebarNewsCarousel().ifPresent(carousel ->
+                model.addAttribute("sidebarNewsCarousel", carousel));
         return "customer/home";
     }
 

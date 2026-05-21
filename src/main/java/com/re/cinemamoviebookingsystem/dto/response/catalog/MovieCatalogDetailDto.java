@@ -13,6 +13,7 @@ public class MovieCatalogDetailDto {
     private String originalTitle;
     private String overview;
     private String posterUrl;
+    private String posterPath;
     private String backdropUrl;
     private String releaseDate;
     private Double voteAverage;

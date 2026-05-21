@@ -45,6 +45,15 @@
         <p><b th:text="#{booking.showtime}">Suất:</b> <span th:text="${#temporals.format(booking.showtimeStart, 'dd/MM/yyyy HH:mm')}"></span></p>
         <p><b th:text="#{booking.room}">Phòng:</b> <span th:text="${booking.roomName}"></span></p>
         <p><b th:text="#{booking.seats}">Ghế:</b> <span th:text="${#strings.listJoin(booking.seatLabels, ', ')}"></span></p>
+        <p th:if="${booking.discountAmount != null && booking.discountAmount > 0}">
+            <b th:text="#{booking.subtotal}">Tạm tính:</b>
+            <span th:text="${#numbers.formatDecimal(booking.subtotalAmount != null ? booking.subtotalAmount : booking.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+        </p>
+        <p th:if="${booking.discountAmount != null && booking.discountAmount > 0}">
+            <b th:text="#{booking.voucher_discount}">Giảm voucher</b>
+            <span th:if="${booking.voucherCode != null}" th:text="'(' + ${booking.voucherCode} + ')'"></span>:
+            <span class="text-success" th:text="'-' + ${#numbers.formatDecimal(booking.discountAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+        </p>
         <p><b th:text="#{booking.total}">Tổng tiền:</b>
             <span th:text="${#numbers.formatDecimal(booking.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></p>
         <p><b th:text="#{booking.status}">Trạng thái:</b>

@@ -221,6 +221,7 @@ public class TmdbCatalogService {
                 .originalTitle(raw.getOriginalTitle())
                 .overview(raw.getOverview())
                 .posterUrl(imageUrlBuilder.posterW500(raw.getPosterPath()))
+                .posterPath(raw.getPosterPath())
                 .backdropUrl(imageUrlBuilder.backdropOriginal(raw.getBackdropPath()))
                 .releaseDate(raw.getReleaseDate())
                 .voteAverage(raw.getVoteAverage())

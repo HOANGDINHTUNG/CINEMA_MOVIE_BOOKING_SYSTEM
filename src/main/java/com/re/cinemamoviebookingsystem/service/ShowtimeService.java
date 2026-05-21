@@ -58,13 +58,17 @@ public class ShowtimeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "Phòng không tồn tại"));
 
         LocalDateTime start = request.getStartTime();
+        if (start == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Chọn giờ bắt đầu");
+        }
+        if (!start.isAfter(LocalDateTime.now())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Giờ bắt đầu phải sau thời điểm hiện tại");
+        }
         LocalDateTime end = start.plusMinutes(movie.getDuration())
                 .plusMinutes(cinemaProperties.getCleaningBufferMinutes());
 
-        if (showtimeRepository.existsRoomConflict(room.getRoomId(), start, end, null)) {
-            throw new BusinessException(ErrorCode.ROOM_CONFLICT,
-                    "Phòng đã có suất chiếu trùng lịch. Vui lòng chọn giờ khác.");
-        }
+        assertNoRoomConflict(room, start, end, null);
 
         Showtime showtime = Showtime.builder()
                 .movie(movie)
@@ -272,7 +276,7 @@ public class ShowtimeService {
                 .showtimeId(showtime.getShowtimeId())
                 .movieId(showtime.getMovie().getMovieId())
                 .tmdbId(showtime.getMovie().getTmdbId())
-                .movieTitle(movieDisplayService.resolveTitle(showtime.getMovie(), AppLanguage.VI_VN))
+                .movieTitle(movieDisplayService.resolveTitleLocal(showtime.getMovie()))
                 .roomId(showtime.getRoom().getRoomId())
                 .roomName(showtime.getRoom().getRoomName())
                 .startTime(showtime.getStartTime())
@@ -311,9 +315,7 @@ public class ShowtimeService {
         LocalDateTime end = start.plusMinutes(showtime.getMovie().getDuration())
                 .plusMinutes(cinemaProperties.getCleaningBufferMinutes());
 
-        if (showtimeRepository.existsRoomConflict(room.getRoomId(), start, end, showtimeId)) {
-            throw new BusinessException(ErrorCode.ROOM_CONFLICT, "Phòng trùng lịch với suất khác");
-        }
+        assertNoRoomConflict(room, start, end, showtimeId);
 
         if (!room.getRoomId().equals(showtime.getRoom().getRoomId())) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST,
@@ -344,19 +346,64 @@ public class ShowtimeService {
 
     @Transactional(readOnly = true)
     public boolean checkRoomConflict(Integer roomId, LocalDateTime start, Long excludeShowtimeId, int durationMinutes) {
-        LocalDateTime end = start.plusMinutes(durationMinutes)
-                .plusMinutes(cinemaProperties.getCleaningBufferMinutes());
-        return showtimeRepository.existsRoomConflict(roomId, start, end, excludeShowtimeId);
+        return checkRoomConflictDetail(roomId, start, excludeShowtimeId, durationMinutes).isConflict();
+    }
+
+    @Transactional(readOnly = true)
+    public ShowtimeConflictCheckDto checkRoomConflictDetail(Integer roomId,
+                                                            LocalDateTime start,
+                                                            Long excludeShowtimeId,
+                                                            int durationMinutes) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "Phòng không tồn tại"));
+        LocalDateTime end = computeBlockedEnd(start, durationMinutes);
+        List<Showtime> overlapping = showtimeRepository.findOverlappingInRoom(
+                roomId, start, end, excludeShowtimeId);
+        if (overlapping.isEmpty()) {
+            return ShowtimeConflictCheckDto.builder()
+                    .conflict(false)
+                    .message("Khung giờ hợp lệ — có thể đặt suất chiếu.")
+                    .proposedStart(start)
+                    .proposedEnd(end)
+                    .cleaningBufferMinutes(cinemaProperties.getCleaningBufferMinutes())
+                    .conflicts(List.of())
+                    .build();
+        }
+        List<ShowtimeConflictCheckDto.ConflictingShowtimeDto> conflictItems = overlapping.stream()
+                .map(s -> ShowtimeConflictCheckDto.ConflictingShowtimeDto.builder()
+                        .showtimeId(s.getShowtimeId())
+                        .movieTitle(movieDisplayService.resolveTitleLocal(s.getMovie()))
+                        .roomName(s.getRoom().getRoomName())
+                        .startTime(s.getStartTime())
+                        .endTime(s.getEndTime())
+                        .build())
+                .toList();
+        LocalDateTime suggested = overlapping.stream()
+                .map(Showtime::getEndTime)
+                .max(LocalDateTime::compareTo)
+                .orElse(end);
+        String message = buildConflictMessage(room.getRoomName(), start, end, overlapping, suggested);
+        return ShowtimeConflictCheckDto.builder()
+                .conflict(true)
+                .message(message)
+                .proposedStart(start)
+                .proposedEnd(end)
+                .suggestedStart(suggested)
+                .cleaningBufferMinutes(cinemaProperties.getCleaningBufferMinutes())
+                .conflicts(conflictItems)
+                .build();
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public int bulkCreate(ShowtimeBulkCreateRequest request) {
+    public ShowtimeBulkCreateResultDto bulkCreate(ShowtimeBulkCreateRequest request) {
         Movie movie = resolveMovieForBulk(request);
         List<java.time.LocalTime> slots = parseTimeSlots(request.getTimeSlots());
         if (slots.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "Cần ít nhất một khung giờ");
         }
+        validateBulkDateAndTimes(request, slots);
         int created = 0;
+        List<String> conflictMessages = new ArrayList<>();
         for (LocalDate day = request.getStartDate(); !day.isAfter(request.getEndDate()); day = day.plusDays(1)) {
             for (java.time.LocalTime slot : slots) {
                 ShowtimeCreateRequest single = new ShowtimeCreateRequest();
@@ -372,10 +419,59 @@ public class ShowtimeService {
                     if (ex.getErrorCode() != ErrorCode.ROOM_CONFLICT) {
                         throw ex;
                     }
+                    conflictMessages.add(day + " " + slot + ": " + ex.getMessage());
                 }
             }
         }
-        return created;
+        return ShowtimeBulkCreateResultDto.builder()
+                .created(created)
+                .skippedConflicts(conflictMessages.size())
+                .conflictMessages(conflictMessages)
+                .build();
+    }
+
+    private LocalDateTime computeBlockedEnd(LocalDateTime start, int durationMinutes) {
+        return start.plusMinutes(durationMinutes)
+                .plusMinutes(cinemaProperties.getCleaningBufferMinutes());
+    }
+
+    private void assertNoRoomConflict(Room room, LocalDateTime start, LocalDateTime end, Long excludeShowtimeId) {
+        List<Showtime> overlapping = showtimeRepository.findOverlappingInRoom(
+                room.getRoomId(), start, end, excludeShowtimeId);
+        if (overlapping.isEmpty()) {
+            return;
+        }
+        LocalDateTime suggested = overlapping.stream()
+                .map(Showtime::getEndTime)
+                .max(LocalDateTime::compareTo)
+                .orElse(end);
+        throw new BusinessException(ErrorCode.ROOM_CONFLICT,
+                buildConflictMessage(room.getRoomName(), start, end, overlapping, suggested));
+    }
+
+    private String buildConflictMessage(String roomName,
+                                        LocalDateTime proposedStart,
+                                        LocalDateTime proposedEnd,
+                                        List<Showtime> overlapping,
+                                        LocalDateTime suggestedNextStart) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        Showtime first = overlapping.get(0);
+        String title = movieDisplayService.resolveTitleLocal(first.getMovie());
+        StringBuilder sb = new StringBuilder();
+        sb.append("Phòng ").append(roomName).append(" không đủ khoảng trống. ");
+        sb.append("Suất đề xuất ").append(proposedStart.format(fmt))
+                .append("–").append(proposedEnd.format(fmt));
+        sb.append(" (đã gồm ").append(cinemaProperties.getCleaningBufferMinutes())
+                .append(" phút dọn phòng sau phim). ");
+        sb.append("Trùng suất #").append(first.getShowtimeId()).append(" «")
+                .append(title).append("» ")
+                .append(first.getStartTime().format(fmt))
+                .append("–").append(first.getEndTime().format(fmt));
+        if (overlapping.size() > 1) {
+            sb.append(" (+").append(overlapping.size() - 1).append(" suất khác)");
+        }
+        sb.append(". Gợi ý: bắt đầu từ ").append(suggestedNextStart.format(fmt));
+        return sb.toString();
     }
 
     private Movie resolveMovieForBulk(ShowtimeBulkCreateRequest request) {
@@ -383,6 +479,56 @@ public class ShowtimeService {
         tmp.setMovieId(request.getMovieId());
         tmp.setTmdbId(request.getTmdbId());
         return resolveMovie(tmp);
+    }
+
+    /**
+     * Kiểm tra khoảng ngày lọc admin: đến ngày ≥ từ ngày.
+     */
+    public void validateAdminFilterDateRange(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && toDate.isBefore(fromDate)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Đến ngày phải sau hoặc bằng Từ ngày");
+        }
+    }
+
+    private void validateBulkDateAndTimes(ShowtimeBulkCreateRequest request, List<java.time.LocalTime> slots) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate start = request.getStartDate();
+        LocalDate end = request.getEndDate();
+
+        if (start == null || end == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Chọn đủ Từ ngày và Đến ngày");
+        }
+        if (start.isBefore(today)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Từ ngày không được trước hôm nay (" + today.format(TAB_DATE) + ")");
+        }
+        if (end.isBefore(today)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Đến ngày không được trước hôm nay");
+        }
+        if (end.isBefore(start)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Đến ngày phải sau hoặc bằng Từ ngày");
+        }
+
+        List<String> pastSlots = new ArrayList<>();
+        for (LocalDate day = start; !day.isAfter(end); day = day.plusDays(1)) {
+            for (java.time.LocalTime slot : slots) {
+                LocalDateTime showStart = day.atTime(slot);
+                if (!showStart.isAfter(now)) {
+                    pastSlots.add(day.format(TAB_DATE) + " " + slot.format(SLOT_TIME));
+                }
+            }
+        }
+        if (!pastSlots.isEmpty()) {
+            String preview = pastSlots.stream().limit(6).reduce((a, b) -> a + ", " + b).orElse("");
+            String suffix = pastSlots.size() > 6 ? " …" : "";
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Có khung giờ đã qua (không tạo suất trong quá khứ): " + preview + suffix
+                            + ". Chỉ chọn ngày và khung giờ từ hiện tại trở đi.");
+        }
     }
 
     private List<java.time.LocalTime> parseTimeSlots(String raw) {
@@ -396,7 +542,19 @@ public class ShowtimeService {
         List<java.time.LocalTime> result = new ArrayList<>();
         for (String part : raw.split("[,;\\s]+")) {
             if (part.isBlank()) continue;
-            result.add(java.time.LocalTime.parse(part.trim()));
+            String token = part.trim();
+            try {
+                if (token.length() == 4 && token.indexOf(':') < 0) {
+                    token = token.substring(0, 2) + ":" + token.substring(2);
+                }
+                result.add(java.time.LocalTime.parse(token));
+            } catch (Exception ex) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                        "Khung giờ không hợp lệ: «" + part.trim() + "». Dùng định dạng HH:mm, cách nhau dấu phẩy.");
+            }
+        }
+        if (result.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Cần ít nhất một khung giờ hợp lệ");
         }
         return result;
     }
@@ -468,7 +626,7 @@ public class ShowtimeService {
                 .showtimeId(s.getShowtimeId())
                 .roomId(s.getRoom().getRoomId())
                 .roomName(s.getRoom().getRoomName())
-                .movieTitle(movieDisplayService.resolveTitle(s.getMovie(), AppLanguage.VI_VN))
+                .movieTitle(movieDisplayService.resolveTitleLocal(s.getMovie()))
                 .startTime(s.getStartTime())
                 .endTime(s.getEndTime())
                 .status(s.getStatus())
@@ -486,7 +644,7 @@ public class ShowtimeService {
                 .showtimeId(s.getShowtimeId())
                 .movieId(movie.getMovieId())
                 .tmdbId(movie.getTmdbId())
-                .movieTitle(movieDisplayService.resolveTitle(movie, AppLanguage.VI_VN))
+                .movieTitle(movieDisplayService.resolveTitleLocal(movie))
                 .roomName(s.getRoom().getRoomName())
                 .roomId(s.getRoom().getRoomId())
                 .startTime(s.getStartTime())

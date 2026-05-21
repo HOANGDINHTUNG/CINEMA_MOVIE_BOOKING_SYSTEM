@@ -1,132 +1,111 @@
-<!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <th:block th:replace="~{fragments/customer/head :: head(#{home.page_title})}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/customer/homepage.css}"/>
-    <link rel="stylesheet" th:href="@{/css/customer/home-promo.css}"/>
-</head>
-<body class="customer-site home-has-promo" data-guide-page="home"
-      th:attr="data-app-lang=${appLang},
-               data-label-next-showtime=#{card.next_showtime},
-               data-label-in-cinema=#{card.in_cinema},
-               data-label-release-date=#{movie.release_date},
-               data-trending-window=${trendingWindow}">
-<div th:replace="~{fragments/customer/loader :: loader}"></div>
-<div th:replace="~{fragments/customer/home-promo-modal :: homePromoModal}"></div>
-<div th:replace="~{fragments/customer/header :: header}"></div>
-
-<div id="scroll-container">
-    <div id="heroCarouselTmdb"
-         class="carousel slide carousel-fade hero-carousel"
-         th:classappend="${#lists.isEmpty(heroSlides)} ? ' d-none' : ''"
-         data-bs-ride="carousel">
-        <div class="carousel-inner">
-            <div th:each="slide, stat : ${heroSlides}"
-                 th:class="'carousel-item' + (${stat.first} ? ' active' : '')">
-                <div th:replace="~{fragments/customer/hero-slide :: slide(${slide})}"></div>
-            </div>
-        </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarouselTmdb" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarouselTmdb" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        </button>
-        <div class="carousel-indicators">
-            <button th:each="slide, stat : ${heroSlides}" type="button"
-                    data-bs-target="#heroCarouselTmdb"
-                    th:attr="data-bs-slide-to=${stat.index}"
-                    th:classappend="${stat.first} ? ' active' : ''"></button>
-        </div>
-    </div>
-
-    <div class="body">
-        <div class="main-wrapper">
-            <div class="main-content">
-                <p th:if="${homeError != null}" class="alert alert-warning" role="alert" th:text="${homeError}"></p>
-                <p th:if="${homeError == null and #lists.isEmpty(nowShowing) and #lists.isEmpty(comingSoon)}"
-                   class="alert alert-warning" role="alert" th:text="#{home.tmdb_load_failed}"></p>
-
-                <div th:replace="~{fragments/customer/home-section-head :: head(#{home.now_showing}, @{/customer/calendar}, false, null)}"></div>
-                <p th:if="${#lists.isEmpty(nowShowing)}" class="home-section-status" th:text="#{home.now_showing_empty}"></p>
-                <div class="parent currFilm" id="nowShowingGrid">
-                    <th:block th:each="movie : ${nowShowing}">
-                        <div th:if="${movie != null and movie.tmdbId != null}"
-                             th:replace="~{fragments/customer/home-movie-card :: card(m=${movie}, showSchedule=true)}"></div>
-                    </th:block>
-                </div>
-                <div class="home-load-more-wrap" id="nowShowingLoadMoreWrap"
-                     th:classappend="${nowHasMore} ? '' : ' d-none'">
-                    <button type="button" class="button home-load-more" id="loadMoreNowShowing"
-                            th:text="#{home.load_more}"
-                            th:attr="data-loading-label=#{home.loading_more}">Tải thêm</button>
-                </div>
-
-                <br/><hr/>
-
-                <div th:replace="~{fragments/customer/home-section-head :: head(#{home.coming_soon}, null, false, null)}"></div>
-                <p th:if="${#lists.isEmpty(comingSoon)}" class="home-section-status" th:text="#{home.coming_soon_empty}"></p>
-                <div class="parent currFilm upcoming-movies" id="comingSoonGrid">
-                    <th:block th:each="movie : ${comingSoon}">
-                        <div th:if="${movie != null and movie.tmdbId != null}"
-                             th:replace="~{fragments/customer/home-movie-card :: card(m=${movie}, showSchedule=false)}"></div>
-                    </th:block>
-                </div>
-                <div class="home-load-more-wrap" id="comingSoonLoadMoreWrap"
-                     th:classappend="${soonHasMore} ? '' : ' d-none'">
-                    <button type="button" class="button home-load-more" id="loadMoreComingSoon"
-                            th:text="#{home.load_more}"
-                            th:attr="data-loading-label=#{home.loading_more}">Tải thêm</button>
-                </div>
-            </div>
-
-            <aside class="sidebar">
-                <section class="sidebar-trending" th:classappend="${#lists.isEmpty(trending)} ? ' d-none' : ''">
-                    <div th:replace="~{fragments/customer/home-section-head :: head(#{home.trending}, null, true, ${trendingWindow})}"></div>
-                    <div class="trending-list" id="trendingList">
-                        <th:block th:each="movie : ${trending}">
-                            <div th:replace="~{fragments/customer/home-trending-item :: item(m=${movie})}"></div>
-                        </th:block>
-                    </div>
-                </section>
-
-                <div class="promotion sidebar-block">
-                    <div th:replace="~{fragments/customer/home-section-head :: head(#{sidebar.promotions}, @{/customer/promotions}, false, null)}"></div>
-                    <a th:href="@{/customer/promotions}" class="card-container">
-                        <div class="box">
-                            <img th:src="@{/assets/img/promotions/promo1.png}" alt=""/>
-                            <div class="description"><p th:text="#{sidebar.promo_sample}">Ưu đãi đặc biệt hàng tuần</p></div>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="event sidebar-block">
-                    <div th:replace="~{fragments/customer/home-section-head :: head(#{sidebar.events}, @{/customer/festival}, false, null)}"></div>
-                    <a th:href="@{/customer/festival}" class="card-container">
-                        <div class="box">
-                            <img th:src="@{/assets/img/events/event3.jpg}" alt=""/>
-                            <div class="description"><p th:text="#{sidebar.event_sample}">Chương trình phim hè</p></div>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="sidebar-news sidebar-block">
-                    <div th:replace="~{fragments/customer/home-section-head :: head(#{sidebar.news}, @{/customer/news}, false, null)}"></div>
-                    <a th:href="@{/customer/news}" class="card-container">
-                        <div class="box">
-                            <img th:src="@{/assets/img/events/event3.jpg}" alt=""/>
-                            <div class="description"><p th:text="#{sidebar.event_sample}">Tin mới từ rạp</p></div>
-                        </div>
-                    </a>
-                </div>
-            </aside>
-        </div>
-    </div>
-</div>
-
-<div th:replace="~{fragments/customer/footer :: footer}"></div>
-<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
-<script th:src="@{/js/home.js}" defer></script>
-</body>
-</html>
-
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/customer/head :: head(#{home.page_title})}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/customer/homepage.css}"/>
+    <link rel="stylesheet" th:href="@{/css/customer/home-promo.css}"/>
+</head>
+<body class="customer-site home-has-promo" data-guide-page="home"
+      th:attr="data-app-lang=${appLang},
+               data-label-next-showtime=#{card.next_showtime},
+               data-label-in-cinema=#{card.in_cinema},
+               data-label-release-date=#{movie.release_date},
+               data-trending-window=${trendingWindow}">
+<div th:replace="~{fragments/customer/loader :: loader}"></div>
+<div th:replace="~{fragments/customer/home-promo-modal :: homePromoModal}"></div>
+<div th:replace="~{fragments/customer/header :: header}"></div>
+<div class="container" style="max-width:1200px;margin:0 auto;padding:0 1rem;">
+    <div th:replace="~{fragments/customer/alerts :: alerts}"></div>
+</div>
+
+<div id="scroll-container">
+    <div id="heroCarouselTmdb"
+         class="carousel slide carousel-fade hero-carousel"
+         th:classappend="${#lists.isEmpty(heroSlides)} ? ' d-none' : ''"
+         data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <div th:each="slide, stat : ${heroSlides}"
+                 th:class="'carousel-item' + (${stat.first} ? ' active' : '')">
+                <div th:replace="~{fragments/customer/hero-slide :: slide(${slide})}"></div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarouselTmdb" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarouselTmdb" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+        <div class="carousel-indicators">
+            <button th:each="slide, stat : ${heroSlides}" type="button"
+                    data-bs-target="#heroCarouselTmdb"
+                    th:attr="data-bs-slide-to=${stat.index}"
+                    th:classappend="${stat.first} ? ' active' : ''"></button>
+        </div>
+    </div>
+
+    <div class="body">
+        <div class="main-wrapper">
+            <div class="main-content">
+                <p th:if="${homeError != null}" class="alert alert-warning" role="alert" th:text="${homeError}"></p>
+                <p th:if="${homeError == null and #lists.isEmpty(nowShowing) and #lists.isEmpty(comingSoon)}"
+                   class="alert alert-warning" role="alert" th:text="#{home.tmdb_load_failed}"></p>
+
+                <div th:replace="~{fragments/customer/home-section-head :: head(#{home.now_showing}, @{/customer/calendar}, false, null)}"></div>
+                <p th:if="${#lists.isEmpty(nowShowing)}" class="home-section-status" th:text="#{home.now_showing_empty}"></p>
+                <div class="parent currFilm" id="nowShowingGrid">
+                    <th:block th:each="movie : ${nowShowing}">
+                        <div th:if="${movie != null and movie.tmdbId != null}"
+                             th:replace="~{fragments/customer/home-movie-card :: card(m=${movie}, showSchedule=true)}"></div>
+                    </th:block>
+                </div>
+                <div class="home-load-more-wrap" id="nowShowingLoadMoreWrap"
+                     th:classappend="${nowHasMore} ? '' : ' d-none'">
+                    <button type="button" class="button home-load-more" id="loadMoreNowShowing"
+                            th:text="#{home.load_more}"
+                            th:attr="data-loading-label=#{home.loading_more}">Tải thêm</button>
+                </div>
+
+                <br/><hr/>
+
+                <div th:replace="~{fragments/customer/home-section-head :: head(#{home.coming_soon}, null, false, null)}"></div>
+                <p th:if="${#lists.isEmpty(comingSoon)}" class="home-section-status" th:text="#{home.coming_soon_empty}"></p>
+                <div class="parent currFilm upcoming-movies" id="comingSoonGrid">
+                    <th:block th:each="movie : ${comingSoon}">
+                        <div th:if="${movie != null and movie.tmdbId != null}"
+                             th:replace="~{fragments/customer/home-movie-card :: card(m=${movie}, showSchedule=false)}"></div>
+                    </th:block>
+                </div>
+                <div class="home-load-more-wrap" id="comingSoonLoadMoreWrap"
+                     th:classappend="${soonHasMore} ? '' : ' d-none'">
+                    <button type="button" class="button home-load-more" id="loadMoreComingSoon"
+                            th:text="#{home.load_more}"
+                            th:attr="data-loading-label=#{home.loading_more}">Tải thêm</button>
+                </div>
+            </div>
+
+            <aside class="sidebar">
+                <section class="sidebar-trending" th:classappend="${#lists.isEmpty(trending)} ? ' d-none' : ''">
+                    <div th:replace="~{fragments/customer/home-section-head :: head(#{home.trending}, null, true, ${trendingWindow})}"></div>
+                    <div class="trending-list" id="trendingList">
+                        <th:block th:each="movie : ${trending}">
+                            <div th:replace="~{fragments/customer/home-trending-item :: item(m=${movie})}"></div>
+                        </th:block>
+                    </div>
+                </section>
+
+                <div th:replace="~{fragments/customer/home-sidebar-carousel :: block(#{sidebar.promotions}, @{/customer/promotions}, ${sidebarPromoCarousel}, 'promotion')}"></div>
+
+                <div th:replace="~{fragments/customer/home-sidebar-carousel :: block(#{sidebar.events}, @{/customer/festival}, ${sidebarFestivalCarousel}, 'event')}"></div>
+
+                <div th:replace="~{fragments/customer/home-sidebar-carousel :: block(#{sidebar.news}, @{/customer/news}, ${sidebarNewsCarousel}, 'sidebar-news')}"></div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/customer/footer :: footer}"></div>
+<th:block th:replace="~{fragments/customer/scripts :: scripts}"></th:block>
+<script th:src="@{/js/home.js}" defer></script>
+</body>
+</html>
+

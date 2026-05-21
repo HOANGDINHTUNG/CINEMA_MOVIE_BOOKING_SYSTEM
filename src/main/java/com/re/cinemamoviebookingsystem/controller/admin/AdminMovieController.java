@@ -4,6 +4,7 @@ import com.re.cinemamoviebookingsystem.dto.request.MovieCinemaUpdateRequest;
 import com.re.cinemamoviebookingsystem.dto.response.AdminMoviePageResponse;
 import com.re.cinemamoviebookingsystem.enums.AdminMovieScreeningPhase;
 import com.re.cinemamoviebookingsystem.service.admin.AdminMovieCatalogService;
+import com.re.cinemamoviebookingsystem.service.admin.AdminTmdbImportService;
 import com.re.cinemamoviebookingsystem.service.CinemaMovieService;
 import com.re.cinemamoviebookingsystem.service.MovieService;
 import com.re.cinemamoviebookingsystem.service.ShowtimeScheduleService;
@@ -26,6 +27,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/movies")
@@ -35,6 +37,7 @@ public class AdminMovieController {
 
     private final MovieService movieService;
     private final AdminMovieCatalogService adminMovieCatalogService;
+    private final AdminTmdbImportService adminTmdbImportService;
     private final CinemaMovieService cinemaMovieService;
     private final TmdbCatalogService tmdbCatalogService;
     private final ShowtimeScheduleService showtimeScheduleService;
@@ -49,8 +52,11 @@ public class AdminMovieController {
                        Model model) {
         AppLanguage appLanguage = AppLanguage.fromParam(lang);
         String keyword = q != null ? q : "";
-        model.addAttribute("phaseCounts", adminMovieCatalogService.countByPhase());
+        model.addAttribute("phaseCounts", adminMovieCatalogService.countByPhase(keyword, appLanguage));
         model.addAttribute("lang", lang);
+        if (phase == AdminMovieScreeningPhase.INACTIVE && status == null) {
+            status = MovieStatus.INACTIVE;
+        }
         model.addAttribute("statusFilter", status);
         model.addAttribute("phaseFilter", phase);
         model.addAttribute("keyword", keyword);
@@ -64,24 +70,11 @@ public class AdminMovieController {
         model.addAttribute("hubView", hubView);
 
         if (hubView) {
-            var sort = Sort.by(Sort.Direction.DESC, "publishedAt");
-            var hasSchedulePage = adminMovieCatalogService.listHasSchedule(
-                    keyword, PageRequest.of(0, 200, sort), appLanguage);
-            var endedPage = adminMovieCatalogService.listEndedAtCinema(
-                    keyword, PageRequest.of(0, 60, sort), appLanguage);
-            var waitingFirst = adminMovieCatalogService.listWaitingSchedule(
-                    keyword,
-                    PageRequest.of(0, AdminMovieCatalogService.WAITING_SCHEDULE_PAGE_SIZE, sort),
-                    appLanguage);
-            model.addAttribute("hasScheduleMovies",
-                    hasSchedulePage.getContent().stream().filter(java.util.Objects::nonNull).toList());
-            model.addAttribute("endedMovies",
-                    endedPage.getContent().stream().filter(java.util.Objects::nonNull).toList());
-            model.addAttribute("endedTotal", endedPage.getTotalElements());
-            model.addAttribute("waitingMovies",
-                    waitingFirst.getContent().stream().filter(java.util.Objects::nonNull).toList());
-            model.addAttribute("waitingTotal", waitingFirst.getTotalElements());
-            model.addAttribute("waitingHasNext", waitingFirst.hasNext());
+            boolean showAll = phase == null;
+            model.addAttribute("showWaitingSection", showAll || phase == AdminMovieScreeningPhase.WAITING_SCHEDULE);
+            model.addAttribute("showHasScheduleSection", showAll || phase == AdminMovieScreeningPhase.HAS_SCHEDULE);
+            model.addAttribute("showEndedSection", showAll || phase == AdminMovieScreeningPhase.ENDED);
+            model.addAttribute("asyncHub", true);
         } else {
             var pageable = PageRequest.of(page, 15, Sort.by(Sort.Direction.DESC, "publishedAt"));
             model.addAttribute("movies",
@@ -90,19 +83,36 @@ public class AdminMovieController {
         return "admin/movies/list";
     }
 
+    @GetMapping(value = "/api/section", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public AdminMoviePageResponse sectionApi(@RequestParam AdminMovieScreeningPhase phase,
+                                             @RequestParam(defaultValue = "vi-VN") String lang,
+                                             @RequestParam(required = false) String q,
+                                             @RequestParam(defaultValue = "0") int page) {
+        AppLanguage appLanguage = AppLanguage.fromParam(lang);
+        String keyword = q != null ? q : "";
+        int size = phase == AdminMovieScreeningPhase.HAS_SCHEDULE ? 200 : AdminMovieCatalogService.WAITING_SCHEDULE_PAGE_SIZE;
+        var result = adminMovieCatalogService.listSection(
+                phase,
+                keyword,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "publishedAt")),
+                appLanguage);
+        return adminMovieCatalogService.toPageResponse(result);
+    }
+
     @GetMapping(value = "/api/waiting-schedule", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public AdminMoviePageResponse waitingScheduleApi(@RequestParam(defaultValue = "vi-VN") String lang,
                                                      @RequestParam(required = false) String q,
                                                      @RequestParam(defaultValue = "0") int page) {
-        AppLanguage appLanguage = AppLanguage.fromParam(lang);
-        String keyword = q != null ? q : "";
-        var result = adminMovieCatalogService.listWaitingSchedule(
-                keyword,
-                PageRequest.of(page, AdminMovieCatalogService.WAITING_SCHEDULE_PAGE_SIZE,
-                        Sort.by(Sort.Direction.DESC, "publishedAt")),
-                appLanguage);
-        return adminMovieCatalogService.toPageResponse(result);
+        return sectionApi(AdminMovieScreeningPhase.WAITING_SCHEDULE, lang, q, page);
+    }
+
+    @GetMapping(value = "/api/posters", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<Long, String> postersApi(@RequestParam List<Long> movieIds,
+                                       @RequestParam(defaultValue = "vi-VN") String lang) {
+        return adminMovieCatalogService.resolvePosterUrls(movieIds, AppLanguage.fromParam(lang));
     }
 
     @GetMapping("/{id}/showtimes")
@@ -147,18 +157,27 @@ public class AdminMovieController {
     @GetMapping("/import")
     public String importForm(@RequestParam(required = false) String q,
                              @RequestParam(defaultValue = "vi-VN") String lang,
+                             @RequestParam(defaultValue = "true") boolean onlyNew,
                              Model model) {
+        AppLanguage appLanguage = AppLanguage.fromParam(lang);
         model.addAttribute("searchQuery", q != null ? q : "");
         model.addAttribute("lang", lang);
+        model.addAttribute("onlyNew", onlyNew);
+        try {
+            model.addAttribute("hotMovies", adminTmdbImportService.listHotForImport(appLanguage, onlyNew));
+        } catch (Exception ex) {
+            model.addAttribute("tmdbError", ex.getMessage());
+            model.addAttribute("hotMovies", List.of());
+        }
         if (q != null && !q.isBlank()) {
             try {
-                model.addAttribute("searchResults",
-                        tmdbCatalogService.search(AppLanguage.fromParam(lang), 1, q.trim()));
+                var searchPage = tmdbCatalogService.search(appLanguage, 1, q.trim());
+                model.addAttribute("searchItems",
+                        adminTmdbImportService.enrichSearchResults(searchPage, appLanguage, onlyNew));
             } catch (TmdbApiException ex) {
                 model.addAttribute("tmdbError", ex.getMessage());
             }
         }
-        model.addAttribute("tmdbToMovieId", movieService.mapTmdbToMovieIds());
         return "admin/movies/import";
     }
 
@@ -166,16 +185,20 @@ public class AdminMovieController {
     public String doPublish(@RequestParam long tmdbId,
                             @RequestParam(defaultValue = "vi-VN") String lang,
                             @RequestParam(required = false) BigDecimal defaultBasePrice,
+                            @RequestParam(defaultValue = "false") boolean createSampleSchedule,
                             RedirectAttributes redirectAttributes) {
         try {
-            var dto = cinemaMovieService.publishToCinema(tmdbId, AppLanguage.fromParam(lang), defaultBasePrice);
+            var dto = cinemaMovieService.publishToCinema(
+                    tmdbId, AppLanguage.fromParam(lang), defaultBasePrice, createSampleSchedule);
+            String scheduleNote = createSampleSchedule
+                    ? " (đã tạo lịch mẫu 10 ngày — mục Đã có lịch chiếu)"
+                    : " — vào mục Đang đợi lịch chiếu; hãy tạo suất hoặc bấm Tạo lịch mẫu";
             redirectAttributes.addFlashAttribute("successMessage",
-                    "Đã đăng chiếu TMDB #" + tmdbId + " → movieId=" + dto.getMovieId()
-                            + " (đã tạo lịch chiếu mẫu 10 ngày)");
+                    "Đã đăng phim TMDB #" + tmdbId + " → movieId=" + dto.getMovieId() + scheduleNote);
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
-        return "redirect:/admin/movies";
+        return "redirect:/admin/movies?phase=WAITING_SCHEDULE";
     }
 
     @PostMapping("/{id}/sync-tmdb")
@@ -184,7 +207,8 @@ public class AdminMovieController {
                               RedirectAttributes redirectAttributes) {
         try {
             cinemaMovieService.refreshRuntimeFromTmdb(id, AppLanguage.fromParam(lang));
-            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật thời lượng / độ tuổi từ TMDB");
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã cập nhật thời lượng, poster và tiêu đề từ TMDB");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
@@ -193,14 +217,18 @@ public class AdminMovieController {
 
     @PostMapping("/{id}/regenerate-schedule")
     public String regenerateSchedule(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        String phase = "WAITING_SCHEDULE";
         try {
             int created = showtimeScheduleService.generateInitialSchedule(id);
+            if (created > 0) {
+                phase = "HAS_SCHEDULE";
+            }
             redirectAttributes.addFlashAttribute("successMessage",
                     created > 0 ? "Đã tạo " + created + " suất chiếu" : "Phim đã có suất — không tạo thêm");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
-        return "redirect:/admin/movies";
+        return "redirect:/admin/movies?phase=" + phase;
     }
 
     @GetMapping("/{id}/edit")
@@ -241,8 +269,12 @@ public class AdminMovieController {
 
     @PostMapping("/{id}/delete")
     public String deactivate(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        movieService.deactivate(id);
-        redirectAttributes.addFlashAttribute("successMessage", "Đã ẩn phim khỏi rạp (INACTIVE)");
+        try {
+            movieService.deactivate(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ẩn phim khỏi rạp (INACTIVE)");
+        } catch (com.re.cinemamoviebookingsystem.exception.BusinessException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
         return "redirect:/admin/movies";
     }
 

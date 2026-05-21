@@ -30,6 +30,7 @@ public class BookingService {
     private final ShowtimeStatusService showtimeStatusService;
     private final CinemaProperties cinemaProperties;
     private final EmailNotificationService emailNotificationService;
+    private final VoucherService voucherService;
 
     @Transactional(rollbackFor = Exception.class)
     public void lockSeats(Long showtimeId, List<Long> seatIds, Long userId) {
@@ -149,7 +150,17 @@ public class BookingService {
 
         BigDecimal ticketTotal = calculateTicketTotal(showtime, seats);
         BigDecimal comboTotal = calculateComboTotal(request.getComboQuantities());
-        BigDecimal total = ticketTotal.add(comboTotal);
+        BigDecimal subtotal = ticketTotal.add(comboTotal);
+        boolean hasCombo = comboTotal.compareTo(BigDecimal.ZERO) > 0;
+
+        BigDecimal discount = BigDecimal.ZERO;
+        UserVoucher appliedVoucher = null;
+        if (request.getUserVoucherId() != null) {
+            appliedVoucher = voucherService.resolveForCheckout(
+                    request.getUserVoucherId(), userId, subtotal, hasCombo);
+            discount = voucherService.calculateDiscount(appliedVoucher.getVoucher(), subtotal, hasCombo);
+        }
+        BigDecimal total = subtotal.subtract(discount);
 
         BookingStatus bookingStatus = request.getPaymentMode() == PaymentMode.ONLINE
                 ? BookingStatus.PAID : BookingStatus.PENDING;
@@ -162,7 +173,10 @@ public class BookingService {
                         .build());
         booking.setUser(user);
         booking.setShowtime(showtime);
+        booking.setSubtotalAmount(subtotal);
+        booking.setDiscountAmount(discount);
         booking.setTotalAmount(total);
+        booking.setUserVoucher(appliedVoucher);
         booking.setStatus(bookingStatus);
         booking.setBookingDate(LocalDateTime.now());
         booking.getTickets().clear();
@@ -202,6 +216,10 @@ public class BookingService {
 
         booking = bookingRepository.save(booking);
         showtimeSeatRepository.saveAll(seats);
+
+        if (appliedVoucher != null) {
+            voucherService.markUsed(appliedVoucher, booking);
+        }
 
         Payment payment = Payment.builder()
                 .booking(booking)
@@ -271,6 +289,7 @@ public class BookingService {
         }
         releaseSeatsForBooking(booking);
         booking.setStatus(BookingStatus.CANCELLED);
+        voucherService.restoreIfUsed(booking);
         bookingRepository.save(booking);
         if (booking.getPayment() != null) {
             booking.getPayment().setPaymentStatus(PaymentStatus.FAILED);
@@ -296,6 +315,7 @@ public class BookingService {
         }
         releaseSeatsForBooking(booking);
         booking.setStatus(BookingStatus.CANCELLED);
+        voucherService.restoreIfUsed(booking);
         bookingRepository.save(booking);
         showtimeStatusService.refreshShowtimeStatus(booking.getShowtime().getShowtimeId());
     }
@@ -320,6 +340,7 @@ public class BookingService {
 
         releaseSeatsForBooking(booking);
         booking.setStatus(BookingStatus.CANCELLED);
+        voucherService.restoreIfUsed(booking);
         bookingRepository.save(booking);
         showtimeStatusService.refreshShowtimeStatus(booking.getShowtime().getShowtimeId());
     }

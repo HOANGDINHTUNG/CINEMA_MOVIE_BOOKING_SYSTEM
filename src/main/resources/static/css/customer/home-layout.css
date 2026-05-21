@@ -448,3 +448,34 @@ a {
     z-index: 10;
     position: relative;
 }
+
+/* Sidebar khuyến mãi / sự kiện / tin — thẻ ảnh nhỏ, nền sáng hơn */
+.sidebar-block .home-image-card {
+    display: block;
+    max-width: 200px;
+}
+
+.home-image-card__box {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    height: 68px;
+    max-height: 68px;
+    background: linear-gradient(145deg, #2a3344 0%, #222b3a 100%);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    line-height: 0;
+}
+
+.home-image-card__box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    margin: 0;
+    filter: brightness(1.06) contrast(1.02);
+}
+
+.home-image-card__box img:hover {
+    transform: scale(1.03);
+    filter: brightness(1.1) contrast(1.02);
+}

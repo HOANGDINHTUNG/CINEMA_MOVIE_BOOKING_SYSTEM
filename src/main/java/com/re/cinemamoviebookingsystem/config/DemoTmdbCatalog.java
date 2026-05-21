@@ -1,18 +1,22 @@
 package com.re.cinemamoviebookingsystem.config;
 
 import java.util.List;
+import java.util.Set;
 
 /**
- * Danh sách TMDB id cho demo seed — sinh tự động bởi scripts/fetch_tmdb_demo_catalog.py.
- * Cập nhật: 100 đang chiếu (hot) + 100 sắp chiếu.
+ * Danh sách TMDB id cho demo seed — cập nhật bằng {@code scripts/fetch_tmdb_demo_catalog.py}.
+ * <ul>
+ *   <li>{@link #WAITING_SCHEDULE_TMDB_IDS} — TMDB now_playing, đăng rạp <strong>không</strong> tạo suất (admin: Đang đợi lịch chiếu)</li>
+ *   <li>{@link #DEMO_SCHEDULED_TMDB_IDS} — id riêng (không trùng waiting), có lịch mẫu nếu {@code demo-seed-scheduled-target &gt; 0}</li>
+ * </ul>
  */
 public final class DemoTmdbCatalog {
 
     private DemoTmdbCatalog() {
     }
 
-    /** Đăng kèm lịch chiếu → «Phim đang chiếu» (hot / trending / now playing). */
-    public static final List<Long> NOW_SHOWING_TMDB_IDS = List.of(
+    /** TMDB now_playing — «Đang đợi lịch chiếu» (không suất). */
+    public static final List<Long> WAITING_SCHEDULE_TMDB_IDS = List.of(
             1439930L, 687163L, 1304313L, 1339713L, 931285L, 936075L, 1226863L, 1228710L, 1314481L, 1007757L,
             1330021L, 1102883L, 1140521L, 855435L, 1455079L, 83533L, 1327819L, 1582770L, 1242332L, 1122573L,
             1083381L, 1684226L, 1273221L, 1325734L, 1301421L, 1266127L, 1368337L, 1317288L, 1159831L, 1198994L,
@@ -25,17 +29,38 @@ public final class DemoTmdbCatalog {
             157336L, 78192L, 318256L, 1579L, 24428L, 1171145L, 278L, 458293L, 1159559L, 1265609L
     );
 
-    /** Đăng không tạo suất → «Phim sắp chiếu» (upcoming hot). */
-    public static final List<Long> COMING_SOON_TMDB_IDS = List.of(
+    /**
+     * Phim demo «Đã có lịch» — id không nằm trong {@link #WAITING_SCHEDULE_TMDB_IDS} (trending, không dùng upcoming cho waiting).
+     */
+    public static final List<Long> DEMO_SCHEDULED_TMDB_IDS = List.of(
             372058L, 1145899L, 1497348L, 1532494L, 1671716L, 1575667L, 1689165L, 1698414L, 1698407L, 1110034L,
             1340206L, 1057265L, 1318413L, 1295400L, 13754L, 1284016L, 1119090L, 1694978L, 1440050L, 1541560L,
-            1470329L, 1083884L, 1245859L, 1665527L, 1329471L, 1679751L, 1633540L, 1596278L, 1598802L, 1422138L,
-            1338972L, 1274757L, 1636593L, 1470269L, 1453776L, 1448266L, 1661855L, 1441453L, 677558L, 1484708L,
-            1463188L, 1359353L, 1473878L, 1070754L, 1616215L, 1031084L, 1199539L, 1515590L, 1664011L, 1665627L,
-            1688280L, 1695768L, 1688039L, 1656888L, 1645668L, 1430224L, 1647583L, 1479653L, 1688095L, 1633499L,
-            1536053L, 1626170L, 1642406L, 1694460L, 1682667L, 1686401L, 1675335L, 1321870L, 1697227L, 1664518L,
-            1593045L, 1674159L, 1680804L, 1616538L, 1664449L, 1630475L, 1694240L, 1596392L, 1641451L, 1475374L,
-            1665540L, 1681162L, 1665651L, 1665645L, 1476536L, 1593711L, 1696358L, 1680030L, 1632759L, 1696305L,
-            1651613L, 1623718L, 1616481L, 1679828L, 1665419L, 1641960L, 1695763L, 1665633L, 1696466L, 1665650L
+            1470329L, 1083884L, 1245859L, 1665527L, 1329471L
     );
+
+    private static final Set<Long> WAITING_ID_SET = Set.copyOf(WAITING_SCHEDULE_TMDB_IDS);
+
+    static {
+        for (Long id : DEMO_SCHEDULED_TMDB_IDS) {
+            if (WAITING_ID_SET.contains(id)) {
+                throw new IllegalStateException("DEMO_SCHEDULED_TMDB_IDS trùng WAITING_SCHEDULE_TMDB_IDS: " + id);
+            }
+        }
+    }
+
+    /** @deprecated Dùng {@link #WAITING_SCHEDULE_TMDB_IDS}. */
+    @Deprecated
+    public static final List<Long> NOW_SHOWING_TMDB_IDS = WAITING_SCHEDULE_TMDB_IDS;
+
+    /** @deprecated Không dùng upcoming cho seed «đang đợi». */
+    @Deprecated
+    public static final List<Long> COMING_SOON_TMDB_IDS = List.of();
+
+    public static boolean isWaitingPoolTmdbId(long tmdbId) {
+        return WAITING_ID_SET.contains(tmdbId);
+    }
+
+    public static Set<Long> waitingIdSet() {
+        return WAITING_ID_SET;
+    }
 }

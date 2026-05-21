@@ -68,4 +68,29 @@ public final class CountryNames {
         }
         return FILTER_CODES.contains(isoCode.trim().toUpperCase(Locale.ROOT));
     }
+
+    /** JSON object code → label for client-side filter chips. */
+    public static String labelsJsonForLocale(Locale locale) {
+        Map<String, String> labels = locale != null && locale.getLanguage().startsWith("en")
+                ? EN_LABELS
+                : VI_LABELS;
+        StringBuilder sb = new StringBuilder("{");
+        for (int i = 0; i < FILTER_CODES.size(); i++) {
+            String code = FILTER_CODES.get(i);
+            if (i > 0) {
+                sb.append(',');
+            }
+            sb.append('"').append(code).append("\":\"")
+                    .append(escapeJson(labels.getOrDefault(code, code))).append('"');
+        }
+        sb.append('}');
+        return sb.toString();
+    }
+
+    private static String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
 }

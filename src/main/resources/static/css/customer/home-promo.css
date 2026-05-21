@@ -1,4 +1,4 @@
-/* Popup quảng cáo trang chủ */
+/* Popup quảng cáo trang chủ — thẻ ảnh nhỏ, nền phía sau sáng vừa phải */
 .home-promo-overlay {
     position: fixed;
     inset: 0;
@@ -6,9 +6,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.78);
-    backdrop-filter: blur(4px);
+    padding: 24px;
+    background:
+        radial-gradient(ellipse 85% 70% at 50% 45%, rgba(55, 65, 85, 0.38) 0%, rgba(18, 24, 36, 0.52) 55%, rgba(12, 16, 26, 0.58) 100%);
+    backdrop-filter: blur(10px) brightness(1.12) saturate(1.05);
+    -webkit-backdrop-filter: blur(10px) brightness(1.12) saturate(1.05);
     animation: home-promo-fade-in 0.35s ease;
 }
 
@@ -27,18 +29,15 @@ body.home-promo-open {
 
 .home-promo-modal {
     position: relative;
-    width: min(720px, 100%);
-    max-height: min(90vh, 520px);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+    width: min(400px, 88vw);
+    max-height: 78vh;
     animation: home-promo-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes home-promo-scale-in {
     from {
         opacity: 0;
-        transform: scale(0.92) translateY(12px);
+        transform: scale(0.96) translateY(8px);
     }
     to {
         opacity: 1;
@@ -48,166 +47,71 @@ body.home-promo-open {
 
 .home-promo-close {
     position: absolute;
-    top: 10px;
-    right: 12px;
+    top: 6px;
+    right: 6px;
     z-index: 5;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border: none;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
-    font-size: 1.5rem;
+    background: rgba(30, 41, 59, 0.75);
+    color: #f1f5f9;
+    font-size: 1.35rem;
     line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.2s, transform 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .home-promo-close:hover {
-    background: rgba(230, 57, 70, 0.85);
+    background: rgba(230, 57, 70, 0.92);
     transform: scale(1.05);
 }
 
-.home-promo-graphic {
-    position: relative;
-    min-height: 380px;
-    background: linear-gradient(160deg, #1a0508 0%, #3d0a12 35%, #120608 100%);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 28px 24px 32px;
-    overflow: hidden;
-}
-
-.home-promo-graphic__glow {
-    position: absolute;
-    inset: 0;
-    background:
-        radial-gradient(ellipse 80% 50% at 50% 100%, rgba(230, 57, 70, 0.35) 0%, transparent 70%),
-        radial-gradient(ellipse 60% 40% at 50% 20%, rgba(255, 200, 80, 0.12) 0%, transparent 60%);
-    pointer-events: none;
-}
-
-.home-promo-graphic__room {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.55;
-}
-
-.home-promo-graphic__room-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-}
-
-.home-promo-graphic__text {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    width: 100%;
-}
-
-.home-promo-title {
-    margin: 0 0 12px;
-    line-height: 1.1;
-}
-
-.home-promo-title__line {
+.home-promo-card {
     display: block;
-    font-size: clamp(1.6rem, 4.5vw, 2.35rem);
-    font-weight: 800;
-    color: #fff;
-    text-shadow: 0 2px 20px rgba(255, 255, 255, 0.25), 0 0 40px rgba(230, 57, 70, 0.4);
-    letter-spacing: 0.02em;
+    border-radius: 10px;
+    overflow: hidden;
+    line-height: 0;
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.28),
+        0 0 0 1px rgba(148, 163, 184, 0.18);
+    background: linear-gradient(160deg, #2a3344 0%, #1e2636 100%);
 }
 
-.home-promo-title__line--gold {
-    background: linear-gradient(180deg, #fff7c2 0%, #f5c542 45%, #d4a012 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 2px 8px rgba(212, 160, 18, 0.5));
+.home-promo-card__img {
+    width: 100%;
+    height: auto;
+    max-height: min(62vh, 320px);
+    object-fit: contain;
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
 }
 
-.home-promo-subtitle {
-    display: inline-block;
-    margin: 0 auto 20px;
-    padding: 8px 18px;
-    background: linear-gradient(90deg, #b91c1c, #e63946);
-    color: #fff;
-    font-weight: 700;
-    font-size: clamp(0.75rem, 2vw, 0.95rem);
-    letter-spacing: 0.04em;
-    border-radius: 4px;
-    box-shadow: 0 4px 16px rgba(230, 57, 70, 0.45);
-}
-
-.home-promo-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    max-width: 100%;
-    padding: 14px 22px;
-    background: linear-gradient(180deg, #fff 0%, #f1f5f9 100%);
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    color: #1a1f2e;
-    text-decoration: none;
-    font-weight: 800;
-    font-size: clamp(0.7rem, 1.8vw, 0.88rem);
-    letter-spacing: 0.02em;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.home-promo-cta:hover {
-    color: #1a1f2e;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(230, 57, 70, 0.35);
-}
-
-.home-promo-cta__icon {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #e63946, #9d0208);
-    color: #fff;
-    border-radius: 6px;
-    font-size: 1.1rem;
-}
-
-.home-promo-cta__text {
-    text-align: left;
-    line-height: 1.25;
+.home-promo-card:hover .home-promo-card__img {
+    filter: brightness(1.04);
 }
 
 @media (max-width: 576px) {
     .home-promo-overlay {
-        padding: 12px;
+        padding: 16px;
     }
 
-    .home-promo-graphic {
-        min-height: 340px;
-        padding: 24px 16px 28px;
+    .home-promo-modal {
+        width: min(340px, 92vw);
     }
 
-    .home-promo-cta {
-        flex-direction: column;
-        text-align: center;
-        padding: 12px 16px;
+    .home-promo-close {
+        top: 4px;
+        right: 4px;
+        width: 30px;
+        height: 30px;
     }
 
-    .home-promo-cta__text {
-        text-align: center;
+    .home-promo-card__img {
+        max-height: min(58vh, 260px);
     }
 }

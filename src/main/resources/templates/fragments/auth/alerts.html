@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Login: chỉ hiện alert khi có nội dung thật -->
+<div th:fragment="loginAlerts" class="auth-page-alerts" role="region" th:attr="aria-label=#{auth.alerts.region}">
+    <div th:if="${param.logout != null}" class="auth-alert auth-alert--success" role="status">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <span class="auth-alert__text" th:text="#{auth.login.logout_success}">Đã đăng xuất thành công.</span>
+    </div>
+    <div th:if="${param.error != null}" class="auth-alert auth-alert--error" role="alert">
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <span class="auth-alert__text" th:text="#{auth.login.error_credentials}">Sai tên đăng nhập hoặc mật khẩu.</span>
+    </div>
+    <div th:if="${successMessage != null and !#strings.isEmpty(successMessage)}"
+         class="auth-alert auth-alert--success" role="status">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <span class="auth-alert__text" th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
+         class="auth-alert auth-alert--error" role="alert">
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <span class="auth-alert__text" th:text="${errorMessage}"></span>
+    </div>
+</div>
+
+<!-- Register -->
+<div th:fragment="registerAlerts" class="auth-page-alerts" role="region" th:attr="aria-label=#{auth.alerts.region}">
+    <div th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
+         class="auth-alert auth-alert--error" role="alert">
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <span class="auth-alert__text" th:text="${errorMessage}"></span>
+    </div>
+    <div th:if="${#fields.hasGlobalErrors()}" class="auth-alert auth-alert--error" role="alert">
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <div class="auth-alert__text">
+            <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

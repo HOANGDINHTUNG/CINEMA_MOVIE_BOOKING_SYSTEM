@@ -67,6 +67,22 @@ body {
     margin: 0 auto;
 }
 
+.card--image-only {
+    border: none;
+    background: transparent;
+}
+
+.card--image-only img {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    min-height: 200px;
+    max-height: 280px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #151a24;
+}
+
 .text {
     padding: 16px;
 }

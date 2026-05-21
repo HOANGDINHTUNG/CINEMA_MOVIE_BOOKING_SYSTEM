@@ -34,6 +34,10 @@
             <i class="fas fa-history"></i>
             <span th:text="${item.totalShowtimes} + ' suất đã từng chiếu'"></span>
         </p>
+        <p class="text-xs text-amber-800 mt-2 font-medium" th:if="${item.audienceBookings > 0}">
+            <i class="fas fa-users"></i>
+            Đã có <span th:text="${item.audienceBookings}">0</span> đơn đặt vé — không thể ẩn phim
+        </p>
         <div class="mt-auto pt-3 flex flex-wrap gap-2 text-xs border-t border-gray-100 movie-card__actions">
             <a th:href="@{/admin/movies/{id}/showtimes(id=${item.movieId})}"
                class="text-blue-600 hover:underline">Suất</a>
@@ -46,12 +50,15 @@
                 <button type="submit" class="text-amber-700 hover:underline"
                         onclick="return confirm('Tạo lịch mẫu 10 ngày cho phim này?')">Tạo lịch mẫu</button>
             </form>
-            <form th:if="${item.status != null and item.status.name() == 'ACTIVE'}"
+            <form th:if="${item.status != null and item.status.name() == 'ACTIVE' and item.canDeactivate}"
                   th:action="@{/admin/movies/{id}/delete(id=${item.movieId})}" method="post" class="inline">
                 <input type="hidden" th:name="${csrfParam}" th:value="${csrfToken}"/>
                 <button type="submit" class="text-red-600 hover:underline"
-                        onclick="return confirm('Ẩn phim khỏi rạp?')">Ẩn</button>
+                        onclick="return confirm('Ẩn phim khỏi rạp? Phim chưa có khách đặt vé.')">Ẩn</button>
             </form>
+            <span th:if="${item.status != null and item.status.name() == 'ACTIVE' and !item.canDeactivate}"
+                  class="text-gray-400 cursor-not-allowed"
+                  title="Phim đã có người đặt vé — không thể ẩn">Ẩn</span>
             <form th:if="${item.status != null and item.status.name() == 'INACTIVE'}"
                   th:action="@{/admin/movies/{id}/activate(id=${item.movieId})}" method="post" class="inline">
                 <input type="hidden" th:name="${csrfParam}" th:value="${csrfToken}"/>

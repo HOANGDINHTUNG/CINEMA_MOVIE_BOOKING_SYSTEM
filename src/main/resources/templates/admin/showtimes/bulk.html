@@ -1,63 +1,84 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <th:block th:replace="~{fragments/admin/head :: head('Tạo suất hàng loạt')}"></th:block>
-</head>
-<body class="bg-gray-100">
-<div class="flex min-h-screen">
-    <div th:replace="~{fragments/admin/sidebar :: sidebar('showtimes')}"></div>
-    <div class="ml-64 flex-1 p-6 max-w-xl">
-        <h1 class="text-xl font-bold text-gray-800 mb-4">Tạo suất chiếu hàng loạt</h1>
-        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
-        <form th:action="@{/admin/showtimes/bulk}" th:object="${bulkRequest}" method="post"
-              class="bg-white rounded-lg shadow p-6 space-y-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Phim</label>
-                <select th:field="*{movieId}" class="w-full border rounded px-3 py-2" id="movieSelect">
-                    <option value="">-- Chọn phim --</option>
-                    <option th:each="m : ${movies}" th:value="${m.movieId}"
-                            th:attr="data-tmdb=${m.tmdbId}"
-                            th:text="${m.displayTitle}"
-                            th:selected="${bulkRequest.movieId != null and bulkRequest.movieId == m.movieId}"></option>
-                </select>
-                <input type="hidden" th:field="*{tmdbId}" id="tmdbIdField"/>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Phòng</label>
-                <select th:field="*{roomId}" class="w-full border rounded px-3 py-2">
-                    <option th:each="r : ${rooms}" th:value="${r.roomId}" th:text="${r.roomName}"></option>
-                </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-sm text-gray-600 mb-1">Từ ngày</label>
-                    <input th:field="*{startDate}" type="date" required class="w-full border rounded px-3 py-2"/>
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-600 mb-1">Đến ngày</label>
-                    <input th:field="*{endDate}" type="date" required class="w-full border rounded px-3 py-2"/>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Khung giờ (cách nhau dấu phẩy)</label>
-                <input th:field="*{timeSlots}" type="text" class="w-full border rounded px-3 py-2"
-                       placeholder="10:00,14:00,18:00,21:30"/>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">Giá cơ bản</label>
-                <input th:field="*{basePrice}" type="number" step="1000" required class="w-full border rounded px-3 py-2"/>
-            </div>
-            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg">Tạo suất</button>
-        </form>
-    </div>
-</div>
-<script>
-    document.getElementById('movieSelect')?.addEventListener('change', function () {
-        var opt = this.options[this.selectedIndex];
-        var tmdb = opt.getAttribute('data-tmdb');
-        if (tmdb) document.getElementById('tmdbIdField').value = tmdb;
-    });
-</script>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/admin/head :: head('Tạo suất hàng loạt')}"></th:block>
+</head>
+<body class="bg-gray-100 admin-showtimes-bulk-page" th:attr="data-today=${todayIso}">
+<div class="flex min-h-screen">
+    <div th:replace="~{fragments/admin/sidebar :: sidebar('showtimes')}"></div>
+    <div class="ml-64 flex-1 p-6 max-w-xl">
+        <h1 class="text-xl font-bold text-gray-800 mb-4">Tạo suất chiếu hàng loạt</h1>
+        <div th:replace="~{fragments/admin/alerts :: alerts}"></div>
+        <p class="text-xs text-gray-500 mb-3">Hệ thống tính thời lượng phim + 15 phút dọn phòng. Khung trùng phòng sẽ bị bỏ qua và báo chi tiết sau khi gửi.</p>
+        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3">
+            Từ ngày / Đến ngày: không chọn ngày đã qua. Đến ngày phải ≥ Từ ngày. Mọi khung giờ trong khoảng phải sau thời điểm hiện tại.
+        </p>
+        <form th:action="@{/admin/showtimes/bulk}" th:object="${bulkRequest}" method="post"
+              id="bulkShowtimeForm" class="bg-white rounded-lg shadow p-6 space-y-4"
+              data-bulk-date-validation="true">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Phim</label>
+                <select th:field="*{movieId}" class="w-full border rounded px-3 py-2" id="movieSelect" required>
+                    <option value="">-- Chọn phim --</option>
+                    <option th:each="m : ${movies}" th:value="${m.movieId}"
+                            th:attr="data-tmdb=${m.tmdbId},data-duration=${m.duration}"
+                            th:text="${m.displayTitle}"
+                            th:selected="${bulkRequest.movieId != null and bulkRequest.movieId == m.movieId}"></option>
+                </select>
+                <input type="hidden" th:field="*{tmdbId}" id="tmdbIdField"/>
+                <p th:if="${#fields.hasErrors('movieSelected')}" th:errors="*{movieSelected}"
+                   class="text-red-600 text-xs mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Phòng</label>
+                <select th:field="*{roomId}" class="w-full border rounded px-3 py-2" required>
+                    <option th:each="r : ${rooms}" th:value="${r.roomId}" th:text="${r.roomName}"></option>
+                </select>
+                <p th:if="${#fields.hasErrors('roomId')}" th:errors="*{roomId}" class="text-red-600 text-xs mt-1"></p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Từ ngày</label>
+                    <input th:field="*{startDate}" type="date" required
+                           id="bulkStartDate" class="w-full border rounded px-3 py-2"
+                           th:attr="min=${todayIso}"/>
+                    <p th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}" class="text-red-600 text-xs mt-1"></p>
+                    <p th:if="${#fields.hasErrors('startDateNotPast')}" th:errors="*{startDateNotPast}" class="text-red-600 text-xs mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Đến ngày</label>
+                    <input th:field="*{endDate}" type="date" required
+                           id="bulkEndDate" class="w-full border rounded px-3 py-2"
+                           th:attr="min=${todayIso}"/>
+                    <p th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}" class="text-red-600 text-xs mt-1"></p>
+                    <p th:if="${#fields.hasErrors('endDateNotPast')}" th:errors="*{endDateNotPast}" class="text-red-600 text-xs mt-1"></p>
+                    <p th:if="${#fields.hasErrors('endOnOrAfterStart')}" th:errors="*{endOnOrAfterStart}" class="text-red-600 text-xs mt-1"></p>
+                </div>
+            </div>
+            <p id="bulkDateClientError" class="hidden text-red-600 text-xs"></p>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Khung giờ (cách nhau dấu phẩy)</label>
+                <input th:field="*{timeSlots}" type="text" id="bulkTimeSlots" class="w-full border rounded px-3 py-2"
+                       placeholder="10:00,14:00,18:00,21:30" required/>
+                <p class="text-xs text-gray-400 mt-1">Ví dụ: 10:00,14:00,18:00 — ngày hôm nay chỉ chọn giờ chưa qua.</p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Giá cơ bản</label>
+                <input th:field="*{basePrice}" type="number" step="1000" min="0" required class="w-full border rounded px-3 py-2"/>
+                <p th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}" class="text-red-600 text-xs mt-1"></p>
+            </div>
+            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg">Tạo suất</button>
+        </form>
+    </div>
+</div>
+<script th:src="@{/js/admin-showtime-scheduling.js}"></script>
+<script>
+    document.getElementById('movieSelect')?.addEventListener('change', function () {
+        var opt = this.options[this.selectedIndex];
+        var tmdb = opt.getAttribute('data-tmdb');
+        if (tmdb) document.getElementById('tmdbIdField').value = tmdb;
+    });
+</script>
+</body>
+</html>

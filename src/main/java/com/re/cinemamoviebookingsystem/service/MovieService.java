@@ -2,11 +2,14 @@ package com.re.cinemamoviebookingsystem.service;
 
 import com.re.cinemamoviebookingsystem.dto.request.MovieCinemaUpdateRequest;
 import com.re.cinemamoviebookingsystem.dto.response.MovieDto;
+import com.re.cinemamoviebookingsystem.dto.response.MoviePicklistItemDto;
 import com.re.cinemamoviebookingsystem.entity.Movie;
 import com.re.cinemamoviebookingsystem.enums.MovieStatus;
 import com.re.cinemamoviebookingsystem.enums.ShowtimeStatus;
 import com.re.cinemamoviebookingsystem.exception.BusinessException;
 import com.re.cinemamoviebookingsystem.exception.ErrorCode;
+import com.re.cinemamoviebookingsystem.enums.BookingStatus;
+import com.re.cinemamoviebookingsystem.repository.BookingRepository;
 import com.re.cinemamoviebookingsystem.repository.MovieRepository;
 import com.re.cinemamoviebookingsystem.tmdb.enums.AppLanguage;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +28,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MovieService {
 
+    private static final List<BookingStatus> AUDIENCE_BOOKING_STATUSES =
+            List.of(BookingStatus.HELD, BookingStatus.PENDING, BookingStatus.PAID);
+
     private final MovieRepository movieRepository;
+    private final BookingRepository bookingRepository;
     private final MovieDisplayService movieDisplayService;
 
     @Transactional(readOnly = true)
@@ -64,6 +71,20 @@ public class MovieService {
     public List<MovieDto> listActive(AppLanguage lang) {
         return movieRepository.findByStatusOrderByPublishedAtDesc(MovieStatus.ACTIVE).stream()
                 .map(m -> toDto(m, lang))
+                .collect(Collectors.toList());
+    }
+
+    /** Dropdown phim admin — không gọi TMDB. */
+    @Transactional(readOnly = true)
+    public List<MoviePicklistItemDto> listActivePicklist() {
+        return movieRepository.findByStatusOrderByPublishedAtDesc(MovieStatus.ACTIVE).stream()
+                .map(m -> MoviePicklistItemDto.builder()
+                        .movieId(m.getMovieId())
+                        .tmdbId(m.getTmdbId())
+                        .duration(m.getDuration())
+                        .defaultBasePrice(m.getDefaultBasePrice())
+                        .displayTitle(movieDisplayService.resolveTitleLocal(m))
+                        .build())
                 .collect(Collectors.toList());
     }
 
@@ -115,9 +136,25 @@ public class MovieService {
         return toDto(movieRepository.save(movie), lang);
     }
 
+    @Transactional(readOnly = true)
+    public long countAudienceBookings(Long movieId) {
+        return bookingRepository.countByMovieIdAndStatusIn(movieId, AUDIENCE_BOOKING_STATUSES);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean canDeactivate(Long movieId) {
+        return countAudienceBookings(movieId) == 0;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void deactivate(Long id) {
         Movie movie = getMovie(id);
+        long audienceBookings = countAudienceBookings(id);
+        if (audienceBookings > 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "Phim đã có người đặt vé (" + audienceBookings + " đơn đang giữ / chờ thanh toán / đã thanh toán). "
+                            + "Không thể ẩn khi còn khách đặt lịch. Chỉ ẩn được khi đã có suất nhưng chưa có đơn đặt.");
+        }
         movie.setStatus(MovieStatus.INACTIVE);
         movie.setUnpublishedAt(LocalDateTime.now());
         movieRepository.save(movie);

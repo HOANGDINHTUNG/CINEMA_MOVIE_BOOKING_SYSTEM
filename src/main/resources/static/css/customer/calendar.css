@@ -1203,3 +1203,51 @@ a.showtime-btn:hover {
         font-size: 16px;
     }
 }
+
+/* Async shell — skeleton khi tải API */
+.schedule-page--async .date-btn--skeleton {
+    display: inline-block;
+    min-width: 72px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #1e2430 25%, #2a3344 50%, #1e2430 75%);
+    background-size: 200% 100%;
+    animation: schedule-shimmer 1.2s ease-in-out infinite;
+    border: none;
+    pointer-events: none;
+}
+
+.schedule-page--async #scheduleMoviesRoot.is-loading .movie-card--skeleton .poster-frame,
+.schedule-page--async #scheduleMoviesRoot .movie-card--skeleton .poster-frame {
+    display: block;
+    min-height: 140px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #1a2030 25%, #283040 50%, #1a2030 75%);
+    background-size: 200% 100%;
+    animation: schedule-shimmer 1.2s ease-in-out infinite;
+}
+
+.schedule-page--async #scheduleMoviesRoot .movie-card--skeleton .info {
+    display: block;
+    min-height: 80px;
+    margin-top: 8px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #151a24 25%, #222b3a 50%, #151a24 75%);
+    background-size: 200% 100%;
+    animation: schedule-shimmer 1.2s ease-in-out infinite;
+}
+
+.schedule-page--async .date-buttons button.date-btn {
+    border: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+.schedule-empty--error {
+    color: #fca5a5;
+}
+
+@keyframes schedule-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}

@@ -23,4 +23,7 @@ public class CheckoutRequest {
     private PaymentMode paymentMode;
 
     private Map<Integer, Integer> comboQuantities;
+
+    /** user_voucher_id — voucher trong ví khách (tùy chọn). */
+    private Long userVoucherId;
 }

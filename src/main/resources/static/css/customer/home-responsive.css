@@ -124,16 +124,16 @@
         height: 310px;
     }
 
-    .promotion .box,
-    .event .box {
-        width: 100%;
-        max-width: 220px;
+    .home-sidebar-carousel__root {
+        max-width: 100%;
     }
 
-    .promotion .box img,
-    .event .box img {
-        width: 100%;
-        height: auto;
-        max-height: 140px;
+    .home-sidebar-carousel__card {
+        height: 80px;
+    }
+
+    .home-sidebar-carousel__viewport,
+    .home-sidebar-carousel__track {
+        min-height: 262px;
     }
 }
